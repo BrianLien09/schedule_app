@@ -8,7 +8,7 @@ export default function SchedulePage() {
 
   // School Schedule Configuration
   const weekDays = ['一', '二', '三', '四', '五']; // Mon-Fri only
-  const timeSlots = Array.from({ length: 14 }, (_, i) => i + 9); // 09:00 to 22:00
+  const timeSlots = Array.from({ length: 11 }, (_, i) => i + 8); // 08:00 to 18:00
 
   // Helper to check if a course is in a specific time slot
   const getCourseAtTime = (day: number, hour: number) => {
@@ -136,12 +136,12 @@ export default function SchedulePage() {
         ) : (
           /* Work Month Calendar */
           <div>
-             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <button onClick={() => changeMonth(-1)} className="btn" style={{ background: 'rgba(255,255,255,0.5)' }}>&larr; 上個月</button>
+             <div className="calendar-header">
+                <button onClick={() => changeMonth(-1)} className="btn" style={{ background: 'rgba(255,255,255,0.3)', color: 'white' }}>&larr; 上個月</button>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
                    {currentMonth.getFullYear()} 年 {currentMonth.getMonth() + 1} 月
                 </h2>
-                <button onClick={() => changeMonth(1)} className="btn" style={{ background: 'rgba(255,255,255,0.5)' }}>下個月 &rarr;</button>
+                <button onClick={() => changeMonth(1)} className="btn" style={{ background: 'rgba(255,255,255,0.3)', color: 'white' }}>下個月 &rarr;</button>
              </div>
 
              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem' }}>

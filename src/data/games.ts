@@ -71,7 +71,7 @@ export const games: Game[] = [
     ],
     links: [
       { id: '1', title: 'Taptap 小丸犊几 - 攻略大佬', url: 'https://www.taptap.cn/user/8268254' },
-      { id: '2', title: '官方網站', url: 'https://re1999.bluepoch.com/tw/' },
+      { id: '2', title: '官方網站', url: 'https://re1999.bluepoch.com' },
     ]
   },
   {

@@ -122,3 +122,65 @@ a {
   opacity: 1;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
+
+/* Responsive Navbar */
+.navbar-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 1.5rem;
+  list-style: none;
+}
+
+@media (max-width: 640px) {
+  .navbar-content {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+  
+  .navbar-links {
+    gap: 0.25rem;
+    width: 100%;
+    justify-content: center; /* Centered for a cleaner look */
+    flex-wrap: wrap; /* Allow wrapping if absolutely necessary, but try to fit */
+  }
+
+  .nav-link {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.95rem;
+    white-space: nowrap; /* Prevent text wrapping inside the button */
+  }
+}
+
+/* Calendar Header Responsive */
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .calendar-header {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .calendar-header h2 {
+    width: 100%;
+    order: -1;
+    text-align: center;
+    margin-bottom: 0.5rem;
+  }
+  
+  .calendar-header .btn {
+    flex: 1;
+    text-align: center;
+    justify-content: center;
+    min-width: 80px;
+  }
+}

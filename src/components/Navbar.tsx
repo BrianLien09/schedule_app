@@ -8,11 +8,12 @@ export default function Navbar() {
 
   return (
     <nav className="glass" style={{ margin: '1rem', padding: '1rem', position: 'sticky', top: '1rem', zIndex: 100 }}>
-      <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* Use container + navbar-content class for responsive layout */}
+      <div className="container navbar-content">
         <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', background: 'linear-gradient(to right, #6366f1, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           Brian's Space
         </h1>
-        <ul style={{ display: 'flex', gap: '1.5rem', listStyle: 'none' }}>
+        <ul className="navbar-links">
           <li>
             <Link 
               href="/" 
