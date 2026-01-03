@@ -6,8 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "deploy": "next build && gh-pages -d out"
+    "lint": "next lint",
+    "deploy": "next build && gh-pages -d out --dotfiles"
   },
   "dependencies": {
     "next": "16.1.1",
