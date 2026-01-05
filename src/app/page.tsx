@@ -21,7 +21,9 @@ export default function Home() {
       <div className="grid-auto">
         {/* Today's Overview */}
         <section className="glass card" style={{ position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '100px', height: '100px', background: 'var(--color-primary)', borderRadius: '50%', opacity: 0.1 }} />
+          <div style={{ position: 'absolute', top: '-10px', right: '-10px', opacity: 0.2 }}>
+             <img src="/schedule_app/avatar.jpg" alt="Decoration" style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover' }} />
+          </div>
           <h3 style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.5rem' }}>
             今日概況
           </h3>

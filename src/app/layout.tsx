@@ -3,8 +3,11 @@ import Navbar from "@/components/Navbar";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "我的日程與遊戲助手",
+  title: "冥夜小助手",
   description: "個人日程表與遊戲攻略整理",
+  icons: {
+    icon: '/schedule_app/icon.jpg',
+  },
 };
 
 export default function RootLayout({

@@ -44,9 +44,22 @@ export default function Navbar() {
     >
       {/* Use container + navbar-content class for responsive layout */}
       <div className="container navbar-content">
-        <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', background: 'linear-gradient(to right, #6366f1, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          Brian's Space
-        </h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <img 
+            src="/schedule_app/avatar.jpg" 
+            alt="Avatar" 
+            style={{ 
+              width: '40px', 
+              height: '40px', 
+              borderRadius: '50%', 
+              objectFit: 'cover', 
+              border: '2px solid rgba(255,255,255,0.2)' 
+            }} 
+          />
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', background: 'linear-gradient(to right, #6366f1, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            冥夜小助手
+          </h1>
+        </div>
         <ul className="navbar-links">
           <li>
             <Link 
