@@ -22,13 +22,21 @@ export default function Navbar() {
               總覽
             </Link>
           </li>
-          <li>
+          <li className="dropdown">
             <Link 
-              href="/schedule" 
-              className={`nav-link ${pathname === '/schedule' ? 'active' : ''}`}
+              href="/schedule/school" 
+              className={`nav-link ${pathname.startsWith('/schedule') ? 'active' : ''}`}
             >
-              日程表
+              日程表 ▾
             </Link>
+            <div className="dropdown-content">
+              <Link href="/schedule/school" className="dropdown-item">
+                🏫 學校課表
+              </Link>
+              <Link href="/schedule/work" className="dropdown-item">
+                💼 打工月曆
+              </Link>
+            </div>
           </li>
           <li>
             <Link 
