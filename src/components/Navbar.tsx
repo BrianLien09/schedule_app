@@ -2,12 +2,46 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
 export default function Navbar() {
   const pathname = usePathname();
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Show navbar if scrolling up or at the very top
+      // Hide if scrolling down and past a threshold (e.g., 50px)
+      if (currentScrollY < lastScrollY || currentScrollY < 10) {
+        setIsVisible(true);
+      } else if (currentScrollY > lastScrollY && currentScrollY > 50) {
+        setIsVisible(false);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   return (
-    <nav className="glass" style={{ margin: '1rem', padding: '1rem', position: 'sticky', top: '1rem', zIndex: 100 }}>
+    <nav 
+      className="glass" 
+      style={{ 
+        margin: '1rem', 
+        padding: '1rem', 
+        position: 'sticky', 
+        top: '1rem', 
+        zIndex: 100,
+        transition: 'transform 0.5s ease-in-out, opacity 0.5s ease-in-out',
+        transform: isVisible ? 'translateY(0)' : 'translateY(-150%)',
+        opacity: isVisible ? 1 : 0
+      }}
+    >
       {/* Use container + navbar-content class for responsive layout */}
       <div className="container navbar-content">
         <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', background: 'linear-gradient(to right, #6366f1, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>

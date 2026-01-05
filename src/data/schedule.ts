@@ -46,7 +46,7 @@ export const schoolSchedule: Course[] = [
 
 export const workShifts: WorkShift[] = [
   // Autumn Class (Jan)
-  { id: 'aut-1', date: '2026-01-10', startTime: '09:00', endTime: '18:00', note: '秋季班' },
+  { id: 'aut-1', date: '2026-01-11', startTime: '09:00', endTime: '18:00', note: '秋季班' },
   { id: 'aut-2', date: '2026-01-17', startTime: '09:00', endTime: '18:00', note: '秋季班' },
   { id: 'aut-3', date: '2026-01-18', startTime: '09:00', endTime: '18:00', note: '秋季班' },
 
