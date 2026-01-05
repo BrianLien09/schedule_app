@@ -98,7 +98,7 @@ export default function SchedulePage() {
           /* School Schedule view - Mon-Fri Only */
           <div>
             <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>
-              每週課表 (週一至週五)
+              大一下學期課表
             </h2>
             <div style={{ overflowX: 'auto' }}>
               <div style={{ minWidth: '600px', display: 'grid', gridTemplateColumns: 'minmax(100px, auto) repeat(5, 1fr)', gap: '1px', backgroundColor: 'var(--glass-border)' }}>
@@ -146,18 +146,18 @@ export default function SchedulePage() {
                           <div key={`${day}-${period.id}`} style={{ 
                             gridRow: `span ${duration}`,
                             backgroundColor: course.color,
-                            color: 'white',
+                            color: course.textColor || 'white',
                             padding: '0.25rem',
                             margin: '2px',
                             borderRadius: '6px',
-                            fontSize: '0.8rem',
+                            fontSize: '0.9rem',
                             display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
                             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                             zIndex: 1,
                             position: 'relative'
                           }}>
-                            <div style={{ fontWeight: 'bold', marginBottom: '2px', textAlign: 'center', lineHeight: '1.2' }}>{course.name}</div>
-                            <div style={{ fontSize: '0.7rem', opacity: 0.9 }}>{course.location}</div>
+                            <div style={{ fontWeight: 'bold', marginBottom: '2px', textAlign: 'center', lineHeight: '1.2', fontSize: '1rem' }}>{course.name}</div>
+                            <div style={{ fontSize: '0.85rem', opacity: 0.9 }}>{course.location}</div>
                           </div>
                         );
                       }
