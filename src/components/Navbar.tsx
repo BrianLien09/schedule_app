@@ -93,6 +93,16 @@ export default function Navbar() {
               遊戲攻略
             </Link>
           </li>
+          <li>
+            <a 
+              href="https://brianlien09.github.io/Music_app" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="nav-link"
+            >
+              冥夜音樂 🎵
+            </a>
+          </li>
         </ul>
       </div>
     </nav>
