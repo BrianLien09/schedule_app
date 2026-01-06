@@ -1,0 +1,50 @@
+name: Deploy to GitHub Pages
+
+on:
+  # 當推送到 main 分支時觸發
+  push:
+    branches: ["main"]
+
+  # 允許在 Actions 頁面手動點擊按鈕觸發
+  workflow_dispatch:
+
+# 設定權限，允許 Action 修改 Repository (為了推送 gh-pages)
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 檢出程式碼
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+
+      # 2. 設定 Node.js 環境
+      - name: Setup Node.js ⚙️
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20" # 建議使用 LTS 版本
+          cache: 'npm'
+
+      # 3. 安裝依賴
+      - name: Install Dependencies 🔧
+        run: npm ci
+
+      # 4. 建置專案 (會生成 out 資料夾)
+      - name: Build 🏗️
+        run: npm run build
+
+      # 5. 修正 GitHub Pages 的 Jekyll 問題
+      # Next.js 生成的 _next 資料夾會被 GitHub Pages 預設的 Jekyll 忽略
+      # 建立 .nojekyll 檔案可以關閉這個行為
+      - name: Create .nojekyll file
+        run: touch out/.nojekyll
+
+      # 6. 部署到 gh-pages 分支
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: out # Next.js export 預設輸出的資料夾名稱
+          branch: gh-pages # 目標分支
