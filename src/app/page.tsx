@@ -51,7 +51,9 @@ export default function Home() {
         <section className="glass card">
           <h3 style={{ marginBottom: '1.5rem', color: 'var(--color-secondary)' }}>即將到來</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {importantEvents.map(event => (
+            {importantEvents
+              .filter(event => event.date >= new Date().toISOString().split('T')[0])
+              .map(event => (
               <div key={event.id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.5rem', borderRadius: '8px', transition: 'background 0.2s' }}>
                 <div style={{ 
                   backgroundColor: event.type === 'deadline' ? '#ef4444' : event.type === 'holiday' ? '#10b981' : '#8b5cf6',
