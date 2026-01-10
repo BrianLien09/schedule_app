@@ -34,7 +34,6 @@ export default function Navbar() {
       className="glass" 
       style={{ 
         margin: '0 var(--spacing-md) var(--spacing-md) var(--spacing-md)',
-        marginTop: '20px',  /* 增加頂部間距,視覺更舒適 */
         padding: 'var(--spacing-md)', 
         position: 'sticky', 
         top: '0',
