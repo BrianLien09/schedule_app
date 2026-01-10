@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { SchoolIcon, BriefcaseIcon, GamepadIcon, MusicIcon } from './Icons';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -32,10 +33,11 @@ export default function Navbar() {
     <nav 
       className="glass" 
       style={{ 
-        margin: '1rem', 
-        padding: '1rem', 
+        margin: '0 var(--spacing-md) var(--spacing-md) var(--spacing-md)',
+        marginTop: '20px',  /* 增加頂部間距,視覺更舒適 */
+        padding: 'var(--spacing-md)', 
         position: 'sticky', 
-        top: '1rem', 
+        top: '0',
         zIndex: 100,
         transition: 'transform 0.5s ease-in-out, opacity 0.5s ease-in-out',
         transform: isVisible ? 'translateY(0)' : 'translateY(-150%)',
@@ -44,7 +46,7 @@ export default function Navbar() {
     >
       {/* Use container + navbar-content class for responsive layout */}
       <div className="container navbar-content">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
           <img 
             src="/schedule_app/avatar.jpg" 
             alt="Avatar" 
@@ -56,7 +58,7 @@ export default function Navbar() {
               border: '2px solid rgba(255,255,255,0.2)' 
             }} 
           />
-          <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', background: 'linear-gradient(to right, #6366f1, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', background: 'linear-gradient(to right, var(--color-primary), var(--color-secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
             冥夜小助手
           </h1>
         </div>
@@ -78,10 +80,12 @@ export default function Navbar() {
             </Link>
             <div className="dropdown-content">
               <Link href="/schedule/school" className="dropdown-item">
-                🏫 學校課表
+                <SchoolIcon size={18} />
+                <span>學校課表</span>
               </Link>
               <Link href="/schedule/work" className="dropdown-item">
-                💼 打工月曆
+                <BriefcaseIcon size={18} />
+                <span>打工月曆</span>
               </Link>
             </div>
           </li>
@@ -90,7 +94,8 @@ export default function Navbar() {
               href="/games" 
               className={`nav-link ${pathname === '/games' ? 'active' : ''}`}
             >
-              遊戲攻略
+              <GamepadIcon size={18} />
+              <span>遊戲攻略</span>
             </Link>
           </li>
           <li>
@@ -100,7 +105,8 @@ export default function Navbar() {
               rel="noopener noreferrer"
               className="nav-link"
             >
-              冥夜音樂 🎵
+              <MusicIcon size={18} />
+              <span>冥夜音樂</span>
             </a>
           </li>
         </ul>

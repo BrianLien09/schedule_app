@@ -19,6 +19,30 @@ export default function SchoolSchedulePage() {
     { id: 10, label: '第 10 節', time: '1710-1800', start: '17:10', end: '18:00' },
   ];
 
+  // 根據背景色計算最佳文字顏色 (確保對比度)
+  const getTextColor = (bgColor: string | undefined): string => {
+    if (!bgColor) return 'white';
+    
+    // 處理 CSS 變數 (如 var(--color-primary))
+    if (bgColor.startsWith('var(')) {
+      return 'white';  // CSS 變數預設使用白色
+    }
+    
+    // 移除 # 符號
+    const hex = bgColor.replace('#', '');
+    
+    // 轉換為 RGB
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    
+    // 計算相對亮度 (WCAG 標準)
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    
+    // 亮度 > 0.5 使用深色文字,否則使用白色
+    return luminance > 0.5 ? '#1f2937' : 'white';
+  };
+
   // Helper to check if a course is in a specific period
   const getCourseAtPeriod = (day: number, periodStart: string) => {
     return schoolSchedule.find(c => {
@@ -97,11 +121,12 @@ export default function SchoolSchedulePage() {
                       
                       if (course) {
                          const duration = getPeriodSpan(course.startTime, course.endTime);
+                         
                          return (
                           <div key={`${day}-${period.id}`} style={{ 
                             gridRow: `span ${duration}`,
                             backgroundColor: course.color,
-                            color: course.textColor || 'white',
+                            color: '#1f2937',  // 統一使用深灰黑色文字
                             padding: '0.25rem',
                             margin: '2px',
                             borderRadius: '6px',
@@ -111,8 +136,24 @@ export default function SchoolSchedulePage() {
                             zIndex: 1,
                             position: 'relative'
                           }}>
-                            <div style={{ fontWeight: 'bold', marginBottom: '2px', textAlign: 'center', lineHeight: '1.2', fontSize: '1rem' }}>{course.name}</div>
-                            <div style={{ fontSize: '0.85rem', opacity: 0.9 }}>{course.location}</div>
+                            <div style={{ 
+                              fontWeight: 'bold',  // 粗體
+                              marginBottom: '2px', 
+                              textAlign: 'center', 
+                              lineHeight: '1.2', 
+                              fontSize: '1rem',
+                              textShadow: '0 1px 2px rgba(255,255,255,0.5)'  // 柔和的白色陰影
+                            }}>
+                              {course.name}
+                            </div>
+                            <div style={{ 
+                              fontSize: '0.85rem', 
+                              fontWeight: 'bold',  // 粗體
+                              opacity: 0.9,
+                              textShadow: '0 1px 1px rgba(255,255,255,0.4)'  // 柔和的陰影
+                            }}>
+                              {course.location}
+                            </div>
                           </div>
                         );
                       }

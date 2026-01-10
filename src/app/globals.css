@@ -1,50 +1,88 @@
+/* ========================================
+   Glassmorphism 2.0 (Pro Max) Design System
+   ======================================== */
+
 :root {
-  /* Force Dark Mode as Default */
-  --background: #1a202c;
-  --foreground: #edf2f7;
+  /* ===== Color Palette (Enhanced Contrast) ===== */
+  --foreground: #f8fafc; /* slate-50 - 更高對比度 */
+  --muted: #cbd5e1; /* slate-300 - 次要文字 */
+  --muted-dark: #94a3b8; /* slate-400 - 更暗的次要文字 */
 
-  --color-primary: #6366f1;
-  --color-secondary: #ec4899;
-  --color-accent: #10b981;
-  --color-highlight: #f59e0b;
+  /* Primary Colors (降低飽和度,更柔和) */
+  --color-primary: #818cf8; /* indigo-400 */
+  --color-secondary: #f472b6; /* pink-400 */
+  --color-accent: #10b981; /* emerald-500 */
+  --color-highlight: #fcd34d; /* amber-300 */
 
-  --glass-bg: rgba(26, 32, 44, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-  --glass-blur: blur(12px);
+  /* ===== Glass Effect (提升不透明度與邊框可見度) ===== */
+  --glass-bg: rgba(30, 41, 59, 0.6); /* 更高不透明度 */
+  --glass-bg-hover: rgba(30, 41, 59, 0.75); /* Hover 狀態更亮 */
+  --glass-border: rgba(248, 250, 252, 0.15); /* 更明顯的邊框 */
+  --glass-border-hover: rgba(248, 250, 252, 0.25);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --glass-shadow-hover: 0 12px 48px rgba(0, 0, 0, 0.5);
+  --glass-highlight: rgba(255, 255, 255, 0.05); /* 內發光 */
+  --glass-blur: blur(16px); /* 增強模糊度 */
 
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+  /* ===== Spacing System (4px Grid) ===== */
+  --spacing-xs: 0.5rem; /* 8px */
+  --spacing-sm: 0.75rem; /* 12px */
+  --spacing-md: 1rem; /* 16px */
+  --spacing-lg: 1.5rem; /* 24px */
+  --spacing-xl: 2rem; /* 32px */
+  --spacing-2xl: 3rem; /* 48px */
+
+  /* ===== Typography ===== */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto,
     "Helvetica Neue", Arial, sans-serif;
 }
 
-/* 
-   If you ever want light mode back, you can uncomment this or add a toggle.
-   But for now, we force the "Premium Dark" look.
-*/
-/*
-@media (prefers-color-scheme: light) {
-  :root {
-    --background: #f0f2f5;
-    --foreground: #2d3748;
-    ...
-  }
-}
-*/
-
+/* ===== Base Styles ===== */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
+/* 確保 HTML 元素也有底色,防止滾動時露出白色 */
+html {
+  background-color: #0F172A;  /* 設定底色與背景漸層起始色相同 */
+  min-height: 100%;
+  margin: 0;  /* 移除預設 margin */
+  padding: 0;  /* 移除預設 padding */
+}
+
+/* ===== Animated Gradient Background ===== */
+@keyframes gradient-shift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
 body {
   font-family: var(--font-sans);
-  background: var(--background);
   color: var(--foreground);
   min-height: 100vh;
-  /* background-image: radial-gradient(circle at 10% 20%, rgb(242, 235, 243) 0%, rgb(234, 241, 249) 90%); Use simple color for now */
-  padding-bottom: 2rem;
-  transition: background-color 0.3s, color 0.3s;
+  margin: 0;  /* 移除預設 margin,消除頂部黑邊 */
+  padding: 0;  /* 移除預設 padding */
+  padding-bottom: var(--spacing-xl);
+
+  /* 動態漸層背景 - 深藍到靛藍緩慢流動 */
+  background: linear-gradient(
+    135deg,
+    #0f172a 0%,
+    /* slate-900 */ #1e293b 25%,
+    /* slate-800 */ #312e81 50%,
+    /* indigo-900 */ #1e293b 75%,
+    #0f172a 100%
+  );
+  background-size: 200% 200%;
+  background-attachment: fixed;  /* 固定背景,不隨滾動移動,防止出現白條 */
+  animation: gradient-shift 15s ease infinite;
 }
 
 a {
@@ -52,7 +90,9 @@ a {
   text-decoration: none;
 }
 
-/* Utilities */
+/* ===== Utility Classes ===== */
+
+/* Glass Effect 主樣式 */
 .glass {
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
@@ -60,12 +100,22 @@ a {
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   border-radius: 16px;
+  position: relative;
+  transition: all 300ms ease;
+}
+
+/* Glass Hover 效果 - 提升亮度與邊框 */
+.glass:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--glass-shadow-hover),
+              inset 0 1px 0 var(--glass-highlight); /* 內高光 */
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 var(--spacing-md);
 }
 
 .flex-center {
@@ -77,38 +127,57 @@ a {
 .grid-auto {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
+  gap: var(--spacing-lg);
 }
 
+/* ===== Button 樣式 (Neumorphism 混合) ===== */
 .btn {
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
   cursor: pointer;
-  transition: transform 0.2s, opacity 0.2s;
   font-weight: 600;
+  transition: all 200ms ease;
+  background: var(--glass-bg);
+  color: var(--foreground);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1); /* 內高光 */
+}
+
+.btn:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .btn:active {
-  transform: scale(0.98);
+  transform: translateY(0) scale(0.98);
 }
 
+/* ===== Card 樣式 (雙層玻璃 + 互動效果) ===== */
 .card {
-  padding: 1.5rem;
-  transition: transform 0.3s ease;
+  padding: var(--spacing-lg);
+  transition: all 300ms ease;
+  cursor: default;
 }
 
 .card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-4px);
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
 }
 
+/* ===== Navigation 樣式 ===== */
 .nav-link {
   font-weight: 600;
-  padding: 0.5rem 1rem;
+  padding: var(--spacing-sm) var(--spacing-md);
   border-radius: 8px;
   transition: all 0.2s ease;
   color: var(--foreground);
   opacity: 0.7;
+  display: inline-flex;  /* 改為 inline-flex 以便 Icon 與文字對齊 */
+  align-items: center;   /* 垂直置中 */
+  gap: var(--spacing-xs); /* Icon 與文字間距 */
 }
 
 .nav-link:hover {
@@ -132,7 +201,8 @@ a {
 
 .navbar-links {
   display: flex;
-  gap: 1.5rem;
+  align-items: center;  /* 確保所有連結垂直置中 */
+  gap: var(--spacing-lg);
   list-style: none;
 }
 
@@ -221,10 +291,11 @@ a {
   color: var(--foreground);
   padding: 12px 16px;
   text-decoration: none;
-  display: block;
+  display: flex;           /* 使用 flex 排版 */
+  align-items: center;     /* Icon 與文字垂直置中 */
+  gap: var(--spacing-sm);  /* Icon 與文字間距 */
   border-radius: 8px;
   transition: background-color 0.2s;
-  text-align: center;
   font-weight: 500;
 }
 
