@@ -15,7 +15,11 @@ export const StatCard = ({ icon, label, value, subtext, color }: StatCardProps) 
       padding: 'var(--spacing-md)', 
       textAlign: 'center',
       borderTop: `3px solid ${color}`,
-      transition: 'all 300ms ease'
+      transition: 'all 300ms ease',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center'
     }}
   >
     <div style={{ 
@@ -26,14 +30,14 @@ export const StatCard = ({ icon, label, value, subtext, color }: StatCardProps) 
     }}>
       {icon}
     </div>
-    <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: 'var(--spacing-xs)' }}>
+    <div style={{ fontSize: '1rem', color: 'var(--muted)', marginBottom: 'var(--spacing-xs)', fontWeight: 'bold' }}>
       {label}
     </div>
-    <div style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: 'var(--spacing-xs)' }}>
+    <div style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: 'var(--spacing-xs)' }}>
       {value}
     </div>
     {subtext && (
-      <div style={{ fontSize: '0.75rem', color: 'var(--muted-dark)' }}>
+      <div style={{ fontSize: '0.9rem', color: 'var(--muted-dark)' }}>
         {subtext}
       </div>
     )}

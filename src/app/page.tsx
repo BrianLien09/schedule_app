@@ -91,7 +91,6 @@ export default function Home() {
         <div className="glass card" style={{ 
           padding: '0', // Removing padding here to let children control it
           borderTop: '3px solid var(--color-accent)',
-          background: 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(139, 92, 246, 0.1) 100%)',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden' // Ensure rounded corners
