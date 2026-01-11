@@ -1,7 +1,7 @@
 'use client';
 import { schoolSchedule, workShifts, importantEvents } from '../data/schedule';
 import Link from 'next/link';
-import { CalendarIcon, GamepadIcon } from '../components/Icons';
+import { CalendarIcon, GamepadIcon, SchoolIcon, BriefcaseIcon } from '../components/Icons';
 import { StatCard, CircularProgress, TimelineItem } from '../components/VisualComponents';
 
 export default function Home() {
@@ -9,29 +9,56 @@ export default function Home() {
   const nextClass = schoolSchedule[0]; 
   const nextShift = workShifts[0];
 
-  // 計算統計數據
-  const today = new Date().toISOString().split('T')[0];
-  
-  // 本週課程數 - 基於當前週的星期幾計算
-  const currentDay = new Date().getDay(); // 0 (Sun) - 6 (Sat)
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const currentMonthStr = `${currentYear}-${currentMonth.toString().padStart(2, '0')}`;
+  const todayDateStr = now.toISOString().split('T')[0];
+  const currentTimeStr = now.toTimeString().slice(0, 5); // "HH:MM"
+  const currentDayOfWeek = now.getDay(); // 0 (Sun) - 6 (Sat)
+
+  // 1. Calculate This Week's Classes
   const thisWeekClasses = schoolSchedule.filter(course => {
-    // 本週的課程 (假設週一到週日)
     return course.day >= 1 && course.day <= 7;
   }).length;
   
-  const thisMonthWorkDays = workShifts.filter(s => s.date.startsWith('2026-01')).length;
+  // 2. Calculate This Month's Work
+  const thisMonthWorkDays = workShifts.filter(s => s.date.startsWith(currentMonthStr)).length;
   
-  // 計算今日進度 (假設一天從 8:00 開始,到 22:00 結束)
-  const now = new Date();
-  const currentHour = now.getHours();
-  const dayProgress = Math.max(0, Math.min(100, ((currentHour - 8) / 14) * 100));
+  // 3. Find Next Event Logic (Replaces Progress)
+  const upcomingClasses = schoolSchedule
+      .filter(c => c.day === currentDayOfWeek && c.startTime > currentTimeStr)
+      .map(c => ({ type: 'class', time: c.startTime, title: c.name, location: c.location, id: c.id.toString() }));
 
-  // 今日課程時間軸 - 根據今天星期幾篩選
-  const currentDayOfWeek = now.getDay(); // 0 (日) - 6 (六)
+  const upcomingWork = workShifts
+      .filter(s => s.date === todayDateStr && s.startTime > currentTimeStr)
+      .map(s => ({ type: 'work', time: s.startTime, title: s.note || '打工', location: '工作地點', id: s.id }));
+
+  const allUpcoming = [...upcomingClasses, ...upcomingWork].sort((a,b) => a.time.localeCompare(b.time));
+  const nextEvent = allUpcoming[0];
+
+  // 4. Find Current Event Logic
+  // Helper to interpret "09:00 - 12:00" logic (assuming standard 1hr classes if no end time, but data has endTime usually implied or fixed duration)
+  // For simplicity, let's assume classes are 2 hours if not specified, or just check start times.
+  // Actually, schedule.ts likely has fixed slots. But here we have start times.
+  // Let's check ranges. workShifts has endTime. schoolSchedule usually implies slots.
+  // We'll define current if: currentTime >= start && currentTime < end
+  
+  const currentClasses = schoolSchedule
+      .filter(c => c.day === currentDayOfWeek && c.startTime <= currentTimeStr && (c.endTime || "23:59") > currentTimeStr)
+      .map(c => ({ type: 'class', time: `${c.startTime} - ${c.endTime || '?'}`, title: c.name, location: c.location, id: c.id.toString() }));
+
+  const currentWork = workShifts
+      .filter(s => s.date === todayDateStr && s.startTime <= currentTimeStr && s.endTime > currentTimeStr)
+      .map(s => ({ type: 'work', time: `${s.startTime} - ${s.endTime}`, title: s.note || '打工', location: '工作地點', id: s.id }));
+      
+  const currentEvent = [...currentClasses, ...currentWork][0];
+
+  // 4. Today's Schedule List
   const todaySchedule = schoolSchedule
-    .filter(course => course.day === currentDayOfWeek)  // 只顯示今天的課程
-    .sort((a, b) => a.startTime.localeCompare(b.startTime))  // 按時間排序
-    .slice(0, 5);  // 最多顯示5堂課
+    .filter(course => course.day === currentDayOfWeek)
+    .sort((a, b) => a.startTime.localeCompare(b.startTime))
+    .slice(0, 5);
 
 
   return (
@@ -62,19 +89,97 @@ export default function Home() {
           color="var(--color-highlight)"
         />
         <div className="glass card" style={{ 
-          padding: 'var(--spacing-md)', 
+          padding: '0', // Removing padding here to let children control it
+          borderTop: '3px solid var(--color-accent)',
+          background: 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(139, 92, 246, 0.1) 100%)',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderTop: '3px solid var(--color-accent)'
+          flexDirection: 'column',
+          overflow: 'hidden' // Ensure rounded corners
         }}>
-          <CircularProgress 
-            percentage={Math.round(dayProgress)}
-            size={100}
-            strokeWidth={8}
-            color="var(--color-accent)"
-            label="今日進度"
-          />
+          {/* Top Section: Current Event */}
+          <div style={{ padding: 'var(--spacing-md)', borderBottom: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)' }}>
+              <div style={{ fontSize: '0.85rem', color: 'var(--color-accent)', marginBottom: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span className="animate-pulse">●</span> {currentEvent ? '正在進行' : '目前狀態'}
+              </div>
+              
+              {currentEvent ? (
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ 
+                        width: '48px', height: '48px', 
+                        borderRadius: '12px', 
+                        background: currentEvent.type === 'class' ? 'rgba(124, 58, 237, 0.2)' : 'rgba(251, 191, 36, 0.2)',
+                        color: currentEvent.type === 'class' ? '#7c3aed' : '#b45309',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                        {currentEvent.type === 'class' ? <SchoolIcon size={28} /> : <BriefcaseIcon size={28} />}
+                    </div>
+                    <div>
+                       <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--foreground)' }}>{currentEvent.title}</div>
+                       <div style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
+                          {currentEvent.time}
+                       </div>
+                    </div>
+                 </div>
+              ) : (
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', opacity: 0.8 }}>
+                    <div style={{ 
+                        width: '48px', height: '48px', 
+                        borderRadius: '12px', 
+                        background: 'rgba(59, 130, 246, 0.1)',
+                        color: '#3b82f6',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                       <span style={{ fontSize: '24px' }}>☕</span>
+                    </div>
+                    <div>
+                       <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--foreground)' }}>目前空檔</div>
+                       <div style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>休息一下，準備迎接挑戰</div>
+                    </div>
+                 </div>
+              )}
+          </div>
+
+          {/* Bottom Section: Next Event */}
+          <div style={{ padding: 'var(--spacing-md)' }}>
+              <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '8px' }}>
+                {nextEvent ? '稍後行程' : '今日後續'}
+              </div>
+
+              {nextEvent ? (
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ 
+                        width: '40px', height: '40px', // Slightly smaller
+                        borderRadius: '10px', 
+                        background: nextEvent.type === 'class' ? 'rgba(124, 58, 237, 0.1)' : 'rgba(251, 191, 36, 0.1)',
+                        color: nextEvent.type === 'class' ? '#7c3aed' : '#b45309',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                        {nextEvent.type === 'class' ? <SchoolIcon size={20} /> : <BriefcaseIcon size={20} />}
+                    </div>
+                    <div>
+                       <div style={{ fontSize: '1rem', fontWeight: 'bold', color: 'var(--foreground)' }}>{nextEvent.title}</div>
+                       <div style={{ fontSize: '0.85rem', color: 'var(--color-primary)' }}>
+                          {nextEvent.time} <span style={{ color: 'var(--muted)' }}>@ {nextEvent.location}</span>
+                       </div>
+                    </div>
+                 </div>
+              ) : (
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', opacity: 0.6 }}>
+                    <div style={{ 
+                        width: '40px', height: '40px', 
+                        borderRadius: '10px', 
+                        background: 'rgba(16, 185, 129, 0.1)',
+                        color: '#059669',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                       <span style={{ fontSize: '20px' }}>🌙</span>
+                    </div>
+                    <div>
+                       <div style={{ fontSize: '1rem', fontWeight: 'bold', color: 'var(--foreground)' }}>今日行程已結束</div>
+                    </div>
+                 </div>
+              )}
+          </div>
         </div>
       </div>
 
@@ -82,7 +187,7 @@ export default function Home() {
         {/* 今日時間軸 */}
         <section className="glass card">
           <h3 style={{ marginBottom: 'var(--spacing-lg)', borderBottom: '1px solid var(--glass-border)', paddingBottom: 'var(--spacing-sm)' }}>
-            📅 今日行程
+            📅 今日課程
           </h3>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
@@ -153,11 +258,11 @@ export default function Home() {
       <section className="glass card">
         <h3 style={{ marginBottom: 'var(--spacing-lg)', color: 'var(--color-highlight)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
           <CalendarIcon size={24} />
-          <span>本月打工一覽 (1月)</span>
+          <span>本月打工一覽 ({currentMonth}月)</span>
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--spacing-md)' }}>
           {workShifts
-            .filter(s => s.date.startsWith('2026-01'))
+            .filter(s => s.date.startsWith(currentMonthStr))
             .sort((a,b) => a.date.localeCompare(b.date))
             .map(shift => (
             <div key={shift.id} style={{ 
