@@ -191,16 +191,21 @@ export default function Home() {
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
             {todaySchedule.length > 0 ? (
-              todaySchedule.map((item, idx) => (
-                <TimelineItem 
-                  key={item.id}
-                  time={item.startTime}
-                  title={item.name}
-                  location={item.location}
-                  isActive={idx === 0}  // 第一個項目標記為進行中
-                  isPast={false}
-                />
-              ))
+              todaySchedule.map((item) => {
+                const isPast = item.endTime < currentTimeStr;
+                const isActive = item.startTime <= currentTimeStr && item.endTime > currentTimeStr;
+                
+                return (
+                  <TimelineItem 
+                    key={item.id}
+                    time={item.startTime}
+                    title={item.name}
+                    location={item.location}
+                    isActive={isActive}
+                    isPast={isPast}
+                  />
+                );
+              })
             ) : (
               <div style={{ 
                 textAlign: 'center', 
