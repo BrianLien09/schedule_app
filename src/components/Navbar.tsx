@@ -2,13 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { SchoolIcon, BriefcaseIcon, GamepadIcon, MusicIcon } from './Icons';
 
 export default function Navbar() {
   const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const lastScrollYRef = useRef(0);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -16,18 +16,18 @@ export default function Navbar() {
       
       // Show navbar if scrolling up or at the very top
       // Hide if scrolling down and past a threshold (e.g., 50px)
-      if (currentScrollY < lastScrollY || currentScrollY < 10) {
+      if (currentScrollY < lastScrollYRef.current || currentScrollY < 10) {
         setIsVisible(true);
-      } else if (currentScrollY > lastScrollY && currentScrollY > 50) {
+      } else if (currentScrollY > lastScrollYRef.current && currentScrollY > 50) {
         setIsVisible(false);
       }
       
-      setLastScrollY(currentScrollY);
+      lastScrollYRef.current = currentScrollY;
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
+  }, []); // Empty deps array - no risk of infinite loop
 
   return (
     <nav 

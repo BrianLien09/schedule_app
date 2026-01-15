@@ -1,141 +1,352 @@
-.page {
-  --background: #fafafa;
-  --foreground: #fff;
+/* Home Page Styles - 抽離所有 inline styles */
 
-  --text-primary: #000;
-  --text-secondary: #666;
+/* ===== Header Section ===== */
+.header {
+  text-align: center;
+  margin: var(--spacing-xl) 0;
+}
 
-  --button-primary-hover: #383838;
-  --button-secondary-hover: #f2f2f2;
-  --button-secondary-border: #ebebeb;
+.headerTitle {
+  font-size: 2.5rem;
+  margin-bottom: var(--spacing-sm);
+  background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 
+.headerSubtitle {
+  color: var(--muted);
+  font-size: 1.2rem;
+}
+
+/* ===== Stat Cards Grid ===== */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+}
+
+/* ===== Current/Next Event Card ===== */
+.eventCard {
+  padding: 0;
+  border-top: 3px solid var(--color-accent);
   display: flex;
-  min-height: 100vh;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.eventSection {
+  padding: var(--spacing-md);
+}
+
+.eventSectionTop {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.eventLabel {
+  font-size: 0.85rem;
+  color: var(--color-accent);
+  margin-bottom: 8px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.eventLabelMuted {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.eventContent {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.eventContentFaded {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  opacity: 0.8;
+}
+
+.eventContentFadedMore {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  opacity: 0.6;
+}
+
+.eventIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-geist-sans);
-  background-color: var(--background);
 }
 
-.main {
-  display: flex;
-  min-height: 100vh;
-  width: 100%;
-  max-width: 800px;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
-  background-color: var(--foreground);
-  padding: 120px 60px;
-}
-
-.intro {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-  gap: 24px;
-}
-
-.intro h1 {
-  max-width: 320px;
-  font-size: 40px;
-  font-weight: 600;
-  line-height: 48px;
-  letter-spacing: -2.4px;
-  text-wrap: balance;
-  color: var(--text-primary);
-}
-
-.intro p {
-  max-width: 440px;
-  font-size: 18px;
-  line-height: 32px;
-  text-wrap: balance;
-  color: var(--text-secondary);
-}
-
-.intro a {
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.ctas {
-  display: flex;
-  flex-direction: row;
-  width: 100%;
-  max-width: 440px;
-  gap: 16px;
-  font-size: 14px;
-}
-
-.ctas a {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.eventIconSmall {
+  width: 40px;
   height: 40px;
-  padding: 0 16px;
-  border-radius: 128px;
-  border: 1px solid transparent;
-  transition: 0.2s;
-  cursor: pointer;
-  width: fit-content;
-  font-weight: 500;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-a.primary {
-  background: var(--text-primary);
-  color: var(--background);
-  gap: 8px;
+.eventIconClass {
+  background: rgba(124, 58, 237, 0.2);
+  color: #7c3aed;
 }
 
-a.secondary {
-  border-color: var(--button-secondary-border);
+.eventIconClassLight {
+  background: rgba(124, 58, 237, 0.1);
+  color: #7c3aed;
 }
 
-/* Enable hover only on non-touch devices */
-@media (hover: hover) and (pointer: fine) {
-  a.primary:hover {
-    background: var(--button-primary-hover);
-    border-color: transparent;
-  }
-
-  a.secondary:hover {
-    background: var(--button-secondary-hover);
-    border-color: transparent;
-  }
+.eventIconWork {
+  background: rgba(251, 191, 36, 0.2);
+  color: #b45309;
 }
 
-@media (max-width: 600px) {
-  .main {
-    padding: 48px 24px;
-  }
-
-  .intro {
-    gap: 16px;
-  }
-
-  .intro h1 {
-    font-size: 32px;
-    line-height: 40px;
-    letter-spacing: -1.92px;
-  }
+.eventIconWorkLight {
+  background: rgba(251, 191, 36, 0.1);
+  color: #b45309;
 }
 
-@media (prefers-color-scheme: dark) {
-  .logo {
-    filter: invert();
-  }
+.eventIconFree {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
 
-  .page {
-    --background: #000;
-    --foreground: #000;
+.eventIconDone {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+}
 
-    --text-primary: #ededed;
-    --text-secondary: #999;
+.eventTitle {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--foreground);
+}
 
-    --button-primary-hover: #ccc;
-    --button-secondary-hover: #1a1a1a;
-    --button-secondary-border: #1a1a1a;
-  }
+.eventTitleSmall {
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--foreground);
+}
+
+.eventTime {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.eventTimeNext {
+  font-size: 0.85rem;
+  color: var(--color-primary);
+}
+
+.eventLocationMuted {
+  color: var(--muted);
+}
+
+.eventEmoji {
+  font-size: 24px;
+}
+
+.eventEmojiSmall {
+  font-size: 20px;
+}
+
+/* ===== Today Schedule Section ===== */
+.sectionHeader {
+  margin-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: var(--spacing-sm);
+}
+
+.timelineContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.emptyState {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--muted);
+  font-size: 1.1rem;
+}
+
+.emptyStateIcon {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-sm);
+}
+
+.emptyStateTitle {
+  font-weight: bold;
+  margin-bottom: var(--spacing-xs);
+}
+
+.emptyStateSubtitle {
+  font-size: 0.9rem;
+}
+
+.linkButton {
+  background: var(--color-primary);
+  color: white;
+  text-align: center;
+  margin-top: var(--spacing-lg);
+  display: block;
+}
+
+/* ===== Important Events ===== */
+.eventsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.eventItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm);
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.eventDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.eventDotDeadline {
+  background-color: #ef4444;
+}
+
+.eventDotHoliday {
+  background-color: #10b981;
+}
+
+.eventDotOther {
+  background-color: #8b5cf6;
+}
+
+.eventDetails {
+  flex: 1;
+}
+
+.eventName {
+  font-weight: 600;
+}
+
+.eventDate {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.urgentBadge {
+  font-size: 0.8rem;
+  background: #fee2e2;
+  color: #ef4444;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* ===== Monthly Work Shifts ===== */
+.workShiftsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.workShiftCard {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background-color: rgba(251, 191, 36, 0.15);
+  border-radius: 12px;
+  border-left: 4px solid var(--color-highlight);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.workShiftDate {
+  font-weight: bold;
+  color: #b45309;
+  font-size: 1.2rem;
+  min-width: 50px;
+  text-align: center;
+}
+
+.workShiftName {
+  font-weight: bold;
+  color: var(--foreground);
+}
+
+.workShiftTime {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* ===== Games Section ===== */
+.gamesSection {
+  margin-top: var(--spacing-xl);
+  padding: var(--spacing-xl);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(129, 140, 248, 0.1) 0%, rgba(244, 114, 182, 0.1) 100%);
+  text-align: center;
+}
+
+.gamesSectionTitle {
+  margin-bottom: var(--spacing-md);
+}
+
+.gamesSectionSubtitle {
+  margin-bottom: var(--spacing-lg);
+  color: var(--muted);
+}
+
+.gamesButton {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+/* ===== Main Layout ===== */
+.pageContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.gridAuto {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.sectionTitle {
+  margin-bottom: var(--spacing-lg);
+  color: var(--color-secondary);
+}
+
+.monthTitle {
+  margin-bottom: var(--spacing-lg);
+  color: var(--color-highlight);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
