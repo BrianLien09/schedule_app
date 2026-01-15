@@ -1,4 +1,5 @@
 'use client';
+import { type WorkShift } from '../../../data/schedule';
 import { useWorkCalendar } from '../../../hooks/useWorkCalendar';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import styles from './page.module.css';
@@ -87,7 +88,7 @@ export default function WorkSchedulePage() {
           <div className={styles.detailsSection}>
             <h3 className={styles.sectionTitle}>本月詳細列表</h3>
             <div className={styles.shiftsGrid}>
-              {currentMonthShifts.map((shift: any) => {
+              {currentMonthShifts.map((shift: WorkShift) => {
                 const isSelected = selectedDate === shift.date;
                 return (
                   <div

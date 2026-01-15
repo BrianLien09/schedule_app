@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { workShifts, type WorkShift } from '../data/schedule';
 
 /**
@@ -6,7 +6,7 @@ import { workShifts, type WorkShift } from '../data/schedule';
  * 負責處理月曆資料與互動邏輯
  */
 export function useWorkCalendar() {
-  const [currentMonth, setCurrentMonth] = useState(new Date(2026, 0, 1)); // 預設 Jan 2026
+  const [currentMonth, setCurrentMonth] = useState(new Date()); // 使用當前日期而非寫死
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const scrollTargetRef = useRef<string | null>(null);
 
@@ -37,12 +37,14 @@ export function useWorkCalendar() {
   };
 
   // 取得當月所有班表 (已排序)
-  const currentMonthShifts = workShifts
-    .filter((s: WorkShift) => {
-      const d = new Date(s.date);
-      return d.getMonth() === currentMonth.getMonth() && d.getFullYear() === currentMonth.getFullYear();
-    })
-    .sort((a: WorkShift, b: WorkShift) => a.date.localeCompare(b.date));
+  const currentMonthShifts = useMemo(() => {
+    return workShifts
+      .filter((s: WorkShift) => {
+        const d = new Date(s.date);
+        return d.getMonth() === currentMonth.getMonth() && d.getFullYear() === currentMonth.getFullYear();
+      })
+      .sort((a: WorkShift, b: WorkShift) => a.date.localeCompare(b.date));
+  }, [currentMonth]);
 
   // 處理日期點擊 (設定 scroll 目標)
   const handleDateClick = (day: number) => {
