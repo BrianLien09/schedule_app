@@ -28,12 +28,24 @@ export function useWorkCalendar() {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + offset, 1));
   };
 
-  // 取得指定日期的班表
+  // 建立快速查詢表 (Lookup Map) 以優化效能 O(N) -> O(1)
+  const shiftsMap = useMemo(() => {
+    const map = new Map<string, WorkShift[]>();
+    workShifts.forEach((shift) => {
+      if (!map.has(shift.date)) {
+        map.set(shift.date, []);
+      }
+      map.get(shift.date)!.push(shift);
+    });
+    return map;
+  }, []);
+
+  // 取得指定日期的班表 (使用 Map 快速查詢)
   const getShiftsForDate = (day: number): WorkShift[] => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth() + 1;
     const dateStr = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-    return workShifts.filter((s) => s.date === dateStr);
+    return shiftsMap.get(dateStr) || [];
   };
 
   // 取得當月所有班表 (已排序)

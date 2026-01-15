@@ -1,20 +1,17 @@
 'use client';
 import { type WorkShift } from '../../../data/schedule';
 import { useWorkCalendar } from '../../../hooks/useWorkCalendar';
-import { useIsMobile } from '../../../hooks/useIsMobile';
 import styles from './page.module.css';
 
 export default function WorkSchedulePage() {
   const { currentMonth, selectedDate, changeMonth, getDaysInMonth, getShiftsForDate, currentMonthShifts, handleDateClick } =
     useWorkCalendar();
 
-  const isMobile = useIsMobile();
-
   const { days, startDay } = getDaysInMonth(currentMonth);
 
   return (
     <div className={styles.pageContainer}>
-      <div className={`glass ${isMobile ? styles.calendarContainerMobile : styles.calendarContainer}`}>
+      <div className={`glass ${styles.calendarContainer}`}>
         {/* Work Month Calendar */}
         <div>
           <div className="calendar-header">
@@ -38,19 +35,19 @@ export default function WorkSchedulePage() {
           </div>
 
           {/* 週標題 */}
-          <div className={isMobile ? styles.weekdaysGridMobile : styles.weekdaysGrid}>
+          <div className={styles.weekdaysGrid}>
             {['一', '二', '三', '四', '五', '六', '日'].map((d) => (
-              <div key={d} className={isMobile ? styles.weekdayLabelMobile : styles.weekdayLabel}>
+              <div key={d} className={styles.weekdayLabel}>
                 {d}
               </div>
             ))}
           </div>
 
           {/* 日期格子 */}
-          <div className={isMobile ? styles.daysGridMobile : styles.daysGrid}>
+          <div className={styles.daysGrid}>
             {/* 月初空白格 */}
             {Array.from({ length: startDay }).map((_, i) => (
-              <div key={`empty-${i}`} className={isMobile ? styles.emptyCellMobile : styles.emptyCell} />
+              <div key={`empty-${i}`} className={styles.emptyCell} />
             ))}
 
             {/* 日期 */}
@@ -63,19 +60,19 @@ export default function WorkSchedulePage() {
                 <div
                   key={day}
                   onClick={() => hasShifts && handleDateClick(day)}
-                  className={`${isMobile ? styles.dayCellMobile : styles.dayCell} ${
+                  className={`${styles.dayCell} ${
                     hasShifts ? styles.dayCellWithShift : styles.dayCellEmpty
                   } ${hasShifts ? 'card' : ''}`}
                 >
                   <div
-                    className={`${isMobile ? styles.dayNumberMobile : styles.dayNumber} ${
+                    className={`${styles.dayNumber} ${
                       hasShifts ? styles.dayNumberWithShift : styles.dayNumberEmpty
                     }`}
                   >
                     {day}
                   </div>
                   {shifts.map((shift) => (
-                    <div key={shift.id} className={isMobile ? styles.shiftBadgeMobile : styles.shiftBadge}>
+                    <div key={shift.id} className={styles.shiftBadge}>
                       {shift.note || '打工'}
                     </div>
                   ))}

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { schoolSchedule, workShifts, importantEvents } from '../data/schedule';
 
 // 行程事件類型定義
@@ -19,7 +19,15 @@ export interface CurrentEvent extends ScheduleEvent {
  * 負責計算所有儀表板相關的資料統計與行程資訊
  */
 export function useHomeDashboard() {
-  const now = useMemo(() => new Date(), []);
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    // 每一分鐘更新一次時間
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
   const currentMonthStr = `${currentYear}-${currentMonth.toString().padStart(2, '0')}`;
