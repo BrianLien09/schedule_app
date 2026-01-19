@@ -24,6 +24,12 @@
   --glass-highlight: rgba(255, 255, 255, 0.05); /* 內發光 */
   --glass-blur: blur(16px); /* 增強模糊度 */
 
+  /* Background colors */
+  --bg-base: #0F172A;
+  --bg-gradient-start: #0f172a;
+  --bg-gradient-mid: #1e293b;
+  --bg-gradient-accent: #312e81;
+
   /* ===== Spacing System (4px Grid) ===== */
   --spacing-xs: 0.5rem; /* 8px */
   --spacing-sm: 0.75rem; /* 12px */
@@ -37,6 +43,35 @@
     "Helvetica Neue", Arial, sans-serif;
 }
 
+/* ===== Light Theme ===== */
+[data-theme="light"] {
+  --foreground: #1e293b; /* slate-800 - 深色文字 */
+  --muted: #64748b; /* slate-500 - 次要文字 */
+  --muted-dark: #475569; /* slate-600 - 更暗的次要文字 */
+
+  /* Primary Colors */
+  --color-primary: #6366f1; /* indigo-500 */
+  --color-secondary: #ec4899; /* pink-500 */
+  --color-accent: #059669; /* emerald-600 */
+  --color-highlight: #f59e0b; /* amber-500 */
+
+  /* Glass Effect for Light Theme */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-bg-hover: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(30, 41, 59, 0.1);
+  --glass-border-hover: rgba(30, 41, 59, 0.2);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --glass-shadow-hover: 0 12px 48px rgba(0, 0, 0, 0.15);
+  --glass-highlight: rgba(255, 255, 255, 0.8);
+  --glass-blur: blur(16px);
+
+  /* Background colors for light theme */
+  --bg-base: #f1f5f9;
+  --bg-gradient-start: #f1f5f9;
+  --bg-gradient-mid: #e2e8f0;
+  --bg-gradient-accent: #ddd6fe;
+}
+
 /* ===== Base Styles ===== */
 * {
   box-sizing: border-box;
@@ -46,7 +81,7 @@
 
 /* 確保 HTML 元素也有底色,防止滾動時露出白色 */
 html {
-  background-color: #0F172A;  /* 設定底色與背景漸層起始色相同 */
+  background-color: var(--bg-base);  /* 使用 CSS 變數 */
   min-height: 100%;
   margin: 0;  /* 移除預設 margin */
   padding: 0;  /* 移除預設 padding */
@@ -74,15 +109,16 @@ body {
   /* 動態漸層背景 - 深藍到靛藍緩慢流動 */
   background: linear-gradient(
     135deg,
-    #0f172a 0%,
-    /* slate-900 */ #1e293b 25%,
-    /* slate-800 */ #312e81 50%,
-    /* indigo-900 */ #1e293b 75%,
-    #0f172a 100%
+    var(--bg-gradient-start) 0%,
+    var(--bg-gradient-mid) 25%,
+    var(--bg-gradient-accent) 50%,
+    var(--bg-gradient-mid) 75%,
+    var(--bg-gradient-start) 100%
   );
   background-size: 200% 200%;
   background-attachment: fixed;  /* 固定背景,不隨滾動移動,防止出現白條 */
   animation: gradient-shift 15s ease infinite;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 a {

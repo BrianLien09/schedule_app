@@ -1,8 +1,11 @@
 'use client';
 import { Fragment } from 'react';
-import { schoolSchedule } from '../../../data/schedule';
+import { useScheduleData } from '../../../hooks/useScheduleData';
 
 export default function SchoolSchedulePage() {
+  // 使用新的資料管理 hook
+  const { courses } = useScheduleData();
+  
   // School Schedule Configuration
   const weekDays = ['一', '二', '三', '四', '五']; // Mon-Fri only
   
@@ -45,7 +48,7 @@ export default function SchoolSchedulePage() {
 
   // Helper to check if a course is in a specific period
   const getCourseAtPeriod = (day: number, periodStart: string) => {
-    return schoolSchedule.find(c => {
+    return courses.find(c => {
       // Simple string match assumption since data matches period starts exactly
       // For more robustness, we could compare time values
       return c.day === day && c.startTime === periodStart;
@@ -103,7 +106,7 @@ export default function SchoolSchedulePage() {
                     {Array.from({ length: 5 }).map((_, dayIndex) => {
                       const day = dayIndex + 1;
                       const course = getCourseAtPeriod(day, period.start);
-                      const isOccupiedBySpan = schoolSchedule.some(c => {
+                      const isOccupiedBySpan = courses.some(c => {
                           if (c.day !== day) return false;
                            // Check if this period is inside a spanning course but NOT the start
                            const pStartIdx = periods.findIndex(p => p.start === c.startTime);

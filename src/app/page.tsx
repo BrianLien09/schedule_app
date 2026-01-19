@@ -3,9 +3,13 @@ import Link from 'next/link';
 import { CalendarIcon, GamepadIcon, SchoolIcon, BriefcaseIcon } from '../components/Icons';
 import { StatCard, TimelineItem } from '../components/VisualComponents';
 import { useHomeDashboard } from '../hooks/useHomeDashboard';
+import { useScheduleData } from '../hooks/useScheduleData';
 import styles from './page.module.css';
 
 export default function Home() {
+  // 使用新的資料管理 hook
+  const { courses, shifts, events } = useScheduleData();
+  
   const {
     currentTimeStr,
     currentDayOfWeek,
@@ -17,7 +21,7 @@ export default function Home() {
     todaySchedule,
     monthlyWorkShifts,
     upcomingImportantEvents,
-  } = useHomeDashboard();
+  } = useHomeDashboard(courses, shifts, events);
 
   return (
     <div className={styles.pageContainer}>

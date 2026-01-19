@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { schoolSchedule, workShifts, importantEvents } from '../data/schedule';
+import { Course, WorkShift, Event } from '../data/schedule';
 
 // 行程事件類型定義
 export interface ScheduleEvent {
@@ -18,7 +18,11 @@ export interface CurrentEvent extends ScheduleEvent {
  * Home Dashboard 資料處理 Hook
  * 負責計算所有儀表板相關的資料統計與行程資訊
  */
-export function useHomeDashboard() {
+export function useHomeDashboard(
+  schoolSchedule: Course[],
+  workShifts: WorkShift[],
+  importantEvents: Event[]
+) {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -38,12 +42,12 @@ export function useHomeDashboard() {
   // 1. 計算本週課程數量
   const thisWeekClasses = useMemo(() => {
     return schoolSchedule.filter(course => course.day >= 1 && course.day <= 7).length;
-  }, []);
+  }, [schoolSchedule]);
 
   // 2. 計算本月打工天數
   const thisMonthWorkDays = useMemo(() => {
     return workShifts.filter(s => s.date.startsWith(currentMonthStr)).length;
-  }, [currentMonthStr]);
+  }, [currentMonthStr, workShifts]);
 
   // 3. 篩選即將到來的課程與打工
   const upcomingEvents = useMemo((): ScheduleEvent[] => {
@@ -68,7 +72,7 @@ export function useHomeDashboard() {
       }));
 
     return [...upcomingClasses, ...upcomingWork].sort((a, b) => a.time.localeCompare(b.time));
-  }, [currentDayOfWeek, currentTimeStr, todayDateStr]);
+  }, [currentDayOfWeek, currentTimeStr, todayDateStr, schoolSchedule, workShifts]);
 
   // 4. 取得下一個行程
   const nextEvent = upcomingEvents[0] || null;
@@ -103,7 +107,7 @@ export function useHomeDashboard() {
       }));
 
     return [...currentClasses, ...currentWork][0] || null;
-  }, [currentDayOfWeek, currentTimeStr, todayDateStr]);
+  }, [currentDayOfWeek, currentTimeStr, todayDateStr, schoolSchedule, workShifts]);
 
   // 6. 今日課程列表 (最多顯示 5 筆)
   const todaySchedule = useMemo(() => {
@@ -111,20 +115,20 @@ export function useHomeDashboard() {
       .filter(course => course.day === currentDayOfWeek)
       .sort((a, b) => a.startTime.localeCompare(b.startTime))
       .slice(0, 5);
-  }, [currentDayOfWeek]);
+  }, [currentDayOfWeek, schoolSchedule]);
 
   // 7. 本月打工班表
   const monthlyWorkShifts = useMemo(() => {
     return workShifts
       .filter(s => s.date.startsWith(currentMonthStr))
       .sort((a, b) => a.date.localeCompare(b.date));
-  }, [currentMonthStr]);
+  }, [currentMonthStr, workShifts]);
 
   // 8. 即將到來的重要事件
   const upcomingImportantEvents = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
     return importantEvents.filter(event => event.date >= today);
-  }, []);
+  }, [importantEvents]);
 
   return {
     // 時間資訊

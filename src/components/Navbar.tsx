@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { SchoolIcon, BriefcaseIcon, GamepadIcon, MusicIcon } from './Icons';
+import ThemeToggle from './ThemeToggle';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -107,6 +108,9 @@ export default function Navbar() {
               <MusicIcon size={18} />
               <span>冥夜音樂</span>
             </a>
+          </li>
+          <li>
+            <ThemeToggle />
           </li>
         </ul>
       </div>

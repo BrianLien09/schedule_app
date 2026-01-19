@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { workShifts, type WorkShift } from '../data/schedule';
+import { type WorkShift } from '../data/schedule';
 
 /**
  * 打工月曆 Hook
  * 負責處理月曆資料與互動邏輯
  */
-export function useWorkCalendar() {
+export function useWorkCalendar(workShifts: WorkShift[]) {
   const [currentMonth, setCurrentMonth] = useState(new Date()); // 使用當前日期而非寫死
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const scrollTargetRef = useRef<string | null>(null);
@@ -38,7 +38,7 @@ export function useWorkCalendar() {
       map.get(shift.date)!.push(shift);
     });
     return map;
-  }, []);
+  }, [workShifts]);
 
   // 取得指定日期的班表 (使用 Map 快速查詢)
   const getShiftsForDate = (day: number): WorkShift[] => {
@@ -56,7 +56,7 @@ export function useWorkCalendar() {
         return d.getMonth() === currentMonth.getMonth() && d.getFullYear() === currentMonth.getFullYear();
       })
       .sort((a: WorkShift, b: WorkShift) => a.date.localeCompare(b.date));
-  }, [currentMonth]);
+  }, [currentMonth, workShifts]);
 
   // 處理日期點擊 (設定 scroll 目標)
   const handleDateClick = (day: number) => {

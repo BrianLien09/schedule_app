@@ -1,11 +1,15 @@
 'use client';
 import { type WorkShift } from '../../../data/schedule';
 import { useWorkCalendar } from '../../../hooks/useWorkCalendar';
+import { useScheduleData } from '../../../hooks/useScheduleData';
 import styles from './page.module.css';
 
 export default function WorkSchedulePage() {
+  // 使用新的資料管理 hook
+  const { shifts } = useScheduleData();
+  
   const { currentMonth, selectedDate, changeMonth, getDaysInMonth, getShiftsForDate, currentMonthShifts, handleDateClick } =
-    useWorkCalendar();
+    useWorkCalendar(shifts);
 
   const { days, startDay } = getDaysInMonth(currentMonth);
 

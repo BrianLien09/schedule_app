@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Navbar from "@/components/Navbar";
+import PWAHandler from "@/components/PWAHandler";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -8,6 +9,19 @@ export const metadata: Metadata = {
   icons: {
     icon: '/schedule_app/icon.jpg',
   },
+  manifest: '/schedule_app/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: '冥夜小助手',
+  },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: '#8b5cf6',
 };
 
 export default function RootLayout({
@@ -18,6 +32,7 @@ export default function RootLayout({
   return (
     <html lang="zh-TW">
       <body>
+        <PWAHandler />
         <Navbar />
         <main className="container" style={{ paddingTop: '1rem' }}>
           {children}

@@ -1,0 +1,30 @@
+{
+  "name": "冥夜小助手 - 個人日程管理",
+  "short_name": "冥夜小助手",
+  "description": "整合課表、打工排班與遊戲攻略的個人助手",
+  "start_url": "/schedule_app/",
+  "display": "standalone",
+  "background_color": "#1e293b",
+  "theme_color": "#8b5cf6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/schedule_app/icon.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/schedule_app/icon.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "education", "lifestyle"],
+  "screenshots": [],
+  "share_target": {
+    "action": "/schedule_app/",
+    "method": "GET"
+  }
+}
