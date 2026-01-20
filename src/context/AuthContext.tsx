@@ -22,7 +22,7 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged 
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, isFirebaseConfigured } from '@/lib/firebase';
 
 /**
  * AuthContext 的值型別定義
@@ -67,6 +67,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * 這確保了即使使用者重新整理頁面，登入狀態也能保持。
    */
   useEffect(() => {
+    // 如果 Firebase 未設定，直接結束載入
+    if (!isFirebaseConfigured || !auth) {
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
@@ -83,6 +89,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * 會彈出 Google 登入視窗，使用者選擇帳號後完成登入。
    */
   const signInWithGoogle = async () => {
+    if (!isFirebaseConfigured || !auth) {
+      throw new Error('Firebase 未設定，無法使用登入功能');
+    }
+    
     try {
       const provider = new GoogleAuthProvider();
       // 設定為繁體中文介面
@@ -102,6 +112,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * 清除 Firebase Auth 的登入狀態。
    */
   const signOut = async () => {
+    if (!isFirebaseConfigured || !auth) {
+      throw new Error('Firebase 未設定，無法使用登出功能');
+    }
+    
     try {
       await firebaseSignOut(auth);
     } catch (error) {

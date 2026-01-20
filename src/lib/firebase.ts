@@ -37,16 +37,30 @@ const firebaseConfig = {
 };
 
 /**
+ * 檢查 Firebase 是否已正確設定
+ * 
+ * 在未設定環境變數時（例如 GitHub Actions build），
+ * 應用程式仍可正常 build，但無法使用 Firebase 功能。
+ */
+export const isFirebaseConfigured = Boolean(
+  firebaseConfig.apiKey &&
+  firebaseConfig.authDomain &&
+  firebaseConfig.projectId
+);
+
+/**
  * 初始化 Firebase App
  * 
  * 使用 getApps() 檢查是否已經初始化，避免在開發環境中
  * 因 Hot Reload 而重複初始化導致錯誤。
  */
-let app: FirebaseApp;
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApps()[0];
+let app: FirebaseApp | null = null;
+if (isFirebaseConfigured) {
+  if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = getApps()[0];
+  }
 }
 
 /**
@@ -54,19 +68,25 @@ if (!getApps().length) {
  * 
  * 用於存取雲端資料庫，所有的課表、打工班表、薪資記錄
  * 都會儲存在 Firestore 中。
+ * 
+ * 注意：如果 Firebase 未設定，此值為 null
  */
-export const db: Firestore = getFirestore(app);
+export const db: Firestore | null = app ? getFirestore(app) : null;
 
 /**
  * Firebase Authentication 實例
  * 
  * 用於使用者登入/登出，確保每個使用者只能存取自己的資料。
+ * 
+ * 注意：如果 Firebase 未設定，此值為 null
  */
-export const auth: Auth = getAuth(app);
+export const auth: Auth | null = app ? getAuth(app) : null;
 
 /**
  * 匯出 Firebase App 實例
  * 
  * 某些進階功能可能需要直接存取 app 實例。
+ * 
+ * 注意：如果 Firebase 未設定，此值為 null
  */
 export default app;

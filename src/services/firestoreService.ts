@@ -30,15 +30,19 @@ import {
   DocumentData,
   Unsubscribe,
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, isFirebaseConfigured } from '@/lib/firebase';
 
 /**
  * 取得使用者的 Collection 參考
  * 
  * @param userId - 使用者 UID
  * @param collectionName - Collection 名稱（courses, workShifts, salaryRecords, events）
+ * @throws 如果 Firebase 未設定
  */
 export function getUserCollection(userId: string, collectionName: string) {
+  if (!isFirebaseConfigured || !db) {
+    throw new Error('Firebase 未設定，請檢查環境變數');
+  }
   return collection(db, 'users', userId, collectionName);
 }
 
@@ -73,6 +77,7 @@ export async function addDocument(
  * @param collectionName - Collection 名稱
  * @param docId - 文件 ID
  * @param data - 要儲存的資料
+ * @throws 如果 Firebase 未設定
  */
 export async function setDocument(
   userId: string,
@@ -80,6 +85,9 @@ export async function setDocument(
   docId: string,
   data: DocumentData
 ): Promise<void> {
+  if (!isFirebaseConfigured || !db) {
+    throw new Error('Firebase 未設定，請檢查環境變數');
+  }
   const docRef = doc(db, 'users', userId, collectionName, docId);
   await setDoc(docRef, {
     ...data,
@@ -94,12 +102,16 @@ export async function setDocument(
  * @param collectionName - Collection 名稱
  * @param docId - 文件 ID
  * @returns 文件資料，如果不存在則回傳 null
+ * @throws 如果 Firebase 未設定
  */
 export async function getDocument<T>(
   userId: string,
   collectionName: string,
   docId: string
 ): Promise<T | null> {
+  if (!isFirebaseConfigured || !db) {
+    throw new Error('Firebase 未設定，請檢查環境變數');
+  }
   const docRef = doc(db, 'users', userId, collectionName, docId);
   const docSnap = await getDoc(docRef);
   
@@ -139,6 +151,7 @@ export async function getDocuments<T>(
  * @param collectionName - Collection 名稱
  * @param docId - 文件 ID
  * @param data - 要更新的欄位
+ * @throws 如果 Firebase 未設定
  */
 export async function updateDocument(
   userId: string,
@@ -146,6 +159,9 @@ export async function updateDocument(
   docId: string,
   data: Partial<DocumentData>
 ): Promise<void> {
+  if (!isFirebaseConfigured || !db) {
+    throw new Error('Firebase 未設定，請檢查環境變數');
+  }
   const docRef = doc(db, 'users', userId, collectionName, docId);
   await updateDoc(docRef, {
     ...data,
@@ -159,12 +175,16 @@ export async function updateDocument(
  * @param userId - 使用者 UID
  * @param collectionName - Collection 名稱
  * @param docId - 文件 ID
+ * @throws 如果 Firebase 未設定
  */
 export async function deleteDocument(
   userId: string,
   collectionName: string,
   docId: string
 ): Promise<void> {
+  if (!isFirebaseConfigured || !db) {
+    throw new Error('Firebase 未設定，請檢查環境變數');
+  }
   const docRef = doc(db, 'users', userId, collectionName, docId);
   await deleteDoc(docRef);
 }
