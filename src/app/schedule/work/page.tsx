@@ -2,9 +2,13 @@
 import { type WorkShift } from '../../../data/schedule';
 import { useWorkCalendar } from '../../../hooks/useWorkCalendar';
 import { useScheduleData } from '../../../hooks/useScheduleData';
+import { useAuth } from '../../../context/AuthContext';
+import LoginPrompt from '../../../components/LoginPrompt';
 import styles from './page.module.css';
 
 export default function WorkSchedulePage() {
+  const { user, loading: authLoading } = useAuth();
+  
   // 使用新的資料管理 hook
   const { shifts } = useScheduleData();
   
@@ -12,6 +16,15 @@ export default function WorkSchedulePage() {
     useWorkCalendar(shifts);
 
   const { days, startDay } = getDaysInMonth(currentMonth);
+
+  // 檢查登入狀態
+  if (authLoading) {
+    return <div style={{ padding: '2rem', textAlign: 'center' }}>載入中...</div>;
+  }
+
+  if (!user) {
+    return <LoginPrompt />;
+  }
 
   return (
     <div className={styles.pageContainer}>

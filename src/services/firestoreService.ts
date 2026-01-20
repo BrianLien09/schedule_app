@@ -6,11 +6,11 @@
  * - 即時監聽資料變更
  * - 批次操作
  * 
- * 資料結構：
- * /users/{userId}/courses/{courseId}
- * /users/{userId}/workShifts/{shiftId}
- * /users/{userId}/salaryRecords/{recordId}
- * /users/{userId}/events/{eventId}
+ * 資料結構（新）：
+ * /shared/data/courses/{courseId}
+ * /shared/data/workShifts/{shiftId}
+ * /shared/data/salaryRecords/{recordId}
+ * /shared/data/events/{eventId}
  */
 
 import {
@@ -33,9 +33,9 @@ import {
 import { db, isFirebaseConfigured } from '@/lib/firebase';
 
 /**
- * 取得使用者的 Collection 參考
+ * 取得共用資料的 Collection 參考
  * 
- * @param userId - 使用者 UID
+ * @param userId - 保留參數以兼容舊 API（實際上不使用，因為改用共用路徑）
  * @param collectionName - Collection 名稱（courses, workShifts, salaryRecords, events）
  * @throws 如果 Firebase 未設定
  */
@@ -43,7 +43,8 @@ export function getUserCollection(userId: string, collectionName: string) {
   if (!isFirebaseConfigured || !db) {
     throw new Error('Firebase 未設定，請檢查環境變數');
   }
-  return collection(db, 'users', userId, collectionName);
+  // 新路徑：/shared/data/{collectionName}
+  return collection(db, 'shared', 'data', collectionName);
 }
 
 /**
@@ -88,7 +89,8 @@ export async function setDocument(
   if (!isFirebaseConfigured || !db) {
     throw new Error('Firebase 未設定，請檢查環境變數');
   }
-  const docRef = doc(db, 'users', userId, collectionName, docId);
+  // 新路徑：/shared/data/{collectionName}/{docId}
+  const docRef = doc(db, 'shared', 'data', collectionName, docId);
   await setDoc(docRef, {
     ...data,
     updatedAt: new Date().toISOString(),
@@ -112,7 +114,8 @@ export async function getDocument<T>(
   if (!isFirebaseConfigured || !db) {
     throw new Error('Firebase 未設定，請檢查環境變數');
   }
-  const docRef = doc(db, 'users', userId, collectionName, docId);
+  // 新路徑：/shared/data/{collectionName}/{docId}
+  const docRef = doc(db, 'shared', 'data', collectionName, docId);
   const docSnap = await getDoc(docRef);
   
   if (docSnap.exists()) {
@@ -162,7 +165,8 @@ export async function updateDocument(
   if (!isFirebaseConfigured || !db) {
     throw new Error('Firebase 未設定，請檢查環境變數');
   }
-  const docRef = doc(db, 'users', userId, collectionName, docId);
+  // 新路徑：/shared/data/{collectionName}/{docId}
+  const docRef = doc(db, 'shared', 'data', collectionName, docId);
   await updateDoc(docRef, {
     ...data,
     updatedAt: new Date().toISOString(),
@@ -185,7 +189,8 @@ export async function deleteDocument(
   if (!isFirebaseConfigured || !db) {
     throw new Error('Firebase 未設定，請檢查環境變數');
   }
-  const docRef = doc(db, 'users', userId, collectionName, docId);
+  // 新路徑：/shared/data/{collectionName}/{docId}
+  const docRef = doc(db, 'shared', 'data', collectionName, docId);
   await deleteDoc(docRef);
 }
 

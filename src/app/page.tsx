@@ -4,9 +4,13 @@ import { CalendarIcon, GamepadIcon, SchoolIcon, BriefcaseIcon } from '../compone
 import { StatCard, TimelineItem } from '../components/VisualComponents';
 import { useHomeDashboard } from '../hooks/useHomeDashboard';
 import { useScheduleData } from '../hooks/useScheduleData';
+import { useAuth } from '../context/AuthContext';
+import LoginPrompt from '../components/LoginPrompt';
 import styles from './page.module.css';
 
 export default function Home() {
+  const { user, loading: authLoading } = useAuth();
+  
   // 使用新的資料管理 hook
   const { courses, shifts, events } = useScheduleData();
   
@@ -22,6 +26,19 @@ export default function Home() {
     monthlyWorkShifts,
     upcomingImportantEvents,
   } = useHomeDashboard(courses, shifts, events);
+
+  // 檢查登入狀態
+  if (authLoading) {
+    return (
+      <div className={styles.pageContainer}>
+        <div className={styles.loadingContainer}>載入中...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginPrompt />;
+  }
 
   return (
     <div className={styles.pageContainer}>

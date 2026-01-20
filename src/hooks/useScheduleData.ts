@@ -9,15 +9,24 @@ import {
   subscribeToCollection,
   batchSetDocuments,
 } from '@/services/firestoreService';
+import { hasWriteAccess } from '@/config/permissions';
+
+/**
+ * 共用資料路徑
+ * 
+ * 所有家人共用同一份資料，儲存在 Firestore 的 /shared/ 路徑下。
+ * 權限控制由 Firestore Security Rules 處理。
+ */
+const SHARED_DATA_PATH = 'shared';
 
 /**
  * Schedule Data Management Hook
  * 
  * 管理課程、打工班表和重要事件的資料，支援：
- * - Firestore 雲端同步
+ * - Firestore 雲端同步（必須登入）
  * - 即時監聽資料變更
- * - 自動從 localStorage 遷移至 Firestore（首次登入時）
- * - 未登入時使用 localStorage 作為本地端儲存
+ * - 共用資料（所有白名單成員共用同一份資料）
+ * - 首次使用時自動初始化預設資料
  */
 export function useScheduleData() {
   const { user } = useAuth();
@@ -26,63 +35,26 @@ export function useScheduleData() {
   const [shifts, setShifts] = useState<WorkShift[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [canEdit, setCanEdit] = useState(false);
 
   /**
-   * 從 localStorage 遷移資料至 Firestore（僅首次登入時執行）
+   * 初始化預設資料（首次使用時執行）
    */
-  const migrateFromLocalStorage = async (userId: string) => {
+  const initializeDefaultData = async () => {
     try {
-      // 檢查是否已經遷移過
-      const migrated = localStorage.getItem('firestore_migrated');
-      if (migrated) return;
-
-      // 讀取 localStorage 中的資料
-      const localCourses = localStorage.getItem('schedule_courses');
-      const localShifts = localStorage.getItem('schedule_workShifts');
-      const localEvents = localStorage.getItem('schedule_events');
-
-      // 如果 localStorage 有資料，則遷移至 Firestore
-      if (localCourses) {
-        const coursesData = JSON.parse(localCourses);
-        await batchSetDocuments(userId, 'courses', coursesData);
-      }
-
-      if (localShifts) {
-        const shiftsData = JSON.parse(localShifts);
-        await batchSetDocuments(userId, 'workShifts', shiftsData);
-      }
-
-      if (localEvents) {
-        const eventsData = JSON.parse(localEvents);
-        await batchSetDocuments(userId, 'events', eventsData);
-      }
-
-      // 標記已遷移
-      localStorage.setItem('firestore_migrated', 'true');
-      console.log('✅ 資料已成功遷移至 Firestore');
-    } catch (error) {
-      console.error('❌ 資料遷移失敗:', error);
-    }
-  };
-
-  /**
-   * 初始化預設資料（如果 Firestore 中沒有資料）
-   */
-  const initializeDefaultData = async (userId: string) => {
-    try {
-      const existingCourses = await getDocuments<Course>(userId, 'courses');
-      const existingShifts = await getDocuments<WorkShift>(userId, 'workShifts');
-      const existingEvents = await getDocuments<Event>(userId, 'events');
+      const existingCourses = await getDocuments<Course>(SHARED_DATA_PATH, 'courses');
+      const existingShifts = await getDocuments<WorkShift>(SHARED_DATA_PATH, 'workShifts');
+      const existingEvents = await getDocuments<Event>(SHARED_DATA_PATH, 'events');
 
       // 如果 Firestore 是空的，寫入預設資料
       if (existingCourses.length === 0) {
-        await batchSetDocuments(userId, 'courses', schoolSchedule);
+        await batchSetDocuments(SHARED_DATA_PATH, 'courses', schoolSchedule);
       }
       if (existingShifts.length === 0) {
-        await batchSetDocuments(userId, 'workShifts', workShifts);
+        await batchSetDocuments(SHARED_DATA_PATH, 'workShifts', workShifts);
       }
       if (existingEvents.length === 0) {
-        await batchSetDocuments(userId, 'events', importantEvents);
+        await batchSetDocuments(SHARED_DATA_PATH, 'events', importantEvents);
       }
     } catch (error) {
       console.error('❌ 初始化預設資料失敗:', error);
@@ -94,46 +66,39 @@ export function useScheduleData() {
    */
   useEffect(() => {
     if (!user) {
-      // 未登入時，從 localStorage 讀取資料
-      setLoading(true);
-      const localCourses = localStorage.getItem('schedule_courses');
-      const localShifts = localStorage.getItem('schedule_workShifts');
-      const localEvents = localStorage.getItem('schedule_events');
-
-      setCourses(localCourses ? JSON.parse(localCourses) : schoolSchedule);
-      setShifts(localShifts ? JSON.parse(localShifts) : workShifts);
-      setEvents(localEvents ? JSON.parse(localEvents) : importantEvents);
+      // 未登入：不顯示任何資料
+      setCourses([]);
+      setShifts([]);
+      setEvents([]);
       setLoading(false);
+      setCanEdit(false);
       return;
     }
 
-    // 已登入：使用 Firestore
-    const userId = user.uid;
+    // 已登入：使用共用資料路徑
     setLoading(true);
+    setCanEdit(hasWriteAccess(user.email));
 
-    // 首次登入時，嘗試從 localStorage 遷移資料
-    migrateFromLocalStorage(userId).then(() => {
-      // 確保有預設資料
-      return initializeDefaultData(userId);
-    }).then(() => {
+    // 首次使用時，確保有預設資料
+    initializeDefaultData().then(() => {
       setLoading(false);
     });
 
     // 訂閱即時資料變更
     const unsubscribeCourses = subscribeToCollection<Course>(
-      userId,
+      SHARED_DATA_PATH,
       'courses',
       (data) => setCourses(data)
     );
 
     const unsubscribeShifts = subscribeToCollection<WorkShift>(
-      userId,
+      SHARED_DATA_PATH,
       'workShifts',
       (data) => setShifts(data)
     );
 
     const unsubscribeEvents = subscribeToCollection<Event>(
-      userId,
+      SHARED_DATA_PATH,
       'events',
       (data) => setEvents(data)
     );
@@ -148,124 +113,86 @@ export function useScheduleData() {
 
   // ========== 課程管理 ==========
   const addCourse = async (course: Course) => {
-    if (!user) {
-      // 未登入：更新 localStorage
-      const newCourses = [...courses, course];
-      setCourses(newCourses);
-      localStorage.setItem('schedule_courses', JSON.stringify(newCourses));
+    if (!user || !canEdit) {
+      console.warn('❌ 無編輯權限');
       return;
     }
 
-    // 已登入：寫入 Firestore（subscribeToCollection 會自動更新 state）
-    await setDocument(user.uid, 'courses', course.id, course);
+    await setDocument(SHARED_DATA_PATH, 'courses', course.id, course);
   };
 
   const updateCourse = async (id: string, updatedCourse: Partial<Course>) => {
-    if (!user) {
-      const newCourses = courses.map(c => (c.id === id ? { ...c, ...updatedCourse } : c));
-      setCourses(newCourses);
-      localStorage.setItem('schedule_courses', JSON.stringify(newCourses));
+    if (!user || !canEdit) {
+      console.warn('❌ 無編輯權限');
       return;
     }
 
-    await updateDocument(user.uid, 'courses', id, updatedCourse);
+    await updateDocument(SHARED_DATA_PATH, 'courses', id, updatedCourse);
   };
 
   const deleteCourse = async (id: string) => {
-    if (!user) {
-      const newCourses = courses.filter(c => c.id !== id);
-      setCourses(newCourses);
-      localStorage.setItem('schedule_courses', JSON.stringify(newCourses));
+    if (!user || !canEdit) {
+      console.warn('❌ 無編輯權限');
       return;
     }
 
-    await deleteDocument(user.uid, 'courses', id);
+    await deleteDocument(SHARED_DATA_PATH, 'courses', id);
   };
 
   // ========== 打工班表管理 ==========
   const addWorkShift = async (shift: WorkShift) => {
-    if (!user) {
-      const newShifts = [...shifts, shift];
-      setShifts(newShifts);
-      localStorage.setItem('schedule_workShifts', JSON.stringify(newShifts));
+    if (!user || !canEdit) {
+      console.warn('❌ 無編輯權限');
       return;
     }
 
-    await setDocument(user.uid, 'workShifts', shift.id, shift);
+    await setDocument(SHARED_DATA_PATH, 'workShifts', shift.id, shift);
   };
 
   const updateWorkShift = async (id: string, updatedShift: Partial<WorkShift>) => {
-    if (!user) {
-      const newShifts = shifts.map(s => (s.id === id ? { ...s, ...updatedShift } : s));
-      setShifts(newShifts);
-      localStorage.setItem('schedule_workShifts', JSON.stringify(newShifts));
+    if (!user || !canEdit) {
+      console.warn('❌ 無編輯權限');
       return;
     }
 
-    await updateDocument(user.uid, 'workShifts', id, updatedShift);
+    await updateDocument(SHARED_DATA_PATH, 'workShifts', id, updatedShift);
   };
 
   const deleteWorkShift = async (id: string) => {
-    if (!user) {
-      const newShifts = shifts.filter(s => s.id !== id);
-      setShifts(newShifts);
-      localStorage.setItem('schedule_workShifts', JSON.stringify(newShifts));
+    if (!user || !canEdit) {
+      console.warn('❌ 無編輯權限');
       return;
     }
 
-    await deleteDocument(user.uid, 'workShifts', id);
+    await deleteDocument(SHARED_DATA_PATH, 'workShifts', id);
   };
 
   // ========== 重要事件管理 ==========
   const addEvent = async (event: Event) => {
-    if (!user) {
-      const newEvents = [...events, event];
-      setEvents(newEvents);
-      localStorage.setItem('schedule_events', JSON.stringify(newEvents));
+    if (!user || !canEdit) {
+      console.warn('❌ 無編輯權限');
       return;
     }
 
-    await setDocument(user.uid, 'events', event.id, event);
+    await setDocument(SHARED_DATA_PATH, 'events', event.id, event);
   };
 
   const updateEvent = async (id: string, updatedEvent: Partial<Event>) => {
-    if (!user) {
-      const newEvents = events.map(e => (e.id === id ? { ...e, ...updatedEvent } : e));
-      setEvents(newEvents);
-      localStorage.setItem('schedule_events', JSON.stringify(newEvents));
+    if (!user || !canEdit) {
+      console.warn('❌ 無編輯權限');
       return;
     }
 
-    await updateDocument(user.uid, 'events', id, updatedEvent);
+    await updateDocument(SHARED_DATA_PATH, 'events', id, updatedEvent);
   };
 
   const deleteEvent = async (id: string) => {
-    if (!user) {
-      const newEvents = events.filter(e => e.id !== id);
-      setEvents(newEvents);
-      localStorage.setItem('schedule_events', JSON.stringify(newEvents));
+    if (!user || !canEdit) {
+      console.warn('❌ 無編輯權限');
       return;
     }
 
-    await deleteDocument(user.uid, 'events', id);
-  };
-
-  // ========== 重置為預設資料 ==========
-  const resetToDefault = async () => {
-    if (!user) {
-      setCourses(schoolSchedule);
-      setShifts(workShifts);
-      setEvents(importantEvents);
-      localStorage.setItem('schedule_courses', JSON.stringify(schoolSchedule));
-      localStorage.setItem('schedule_workShifts', JSON.stringify(workShifts));
-      localStorage.setItem('schedule_events', JSON.stringify(importantEvents));
-      return;
-    }
-
-    // 寫入預設資料至 Firestore
-    await batchSetDocuments(user.uid, 'courses', schoolSchedule);
-    await batchSetDocuments(user.uid, 'workShifts', workShifts);
-    await batchSetDocuments(user.uid, 'events', importantEvents);
+    await deleteDocument(SHARED_DATA_PATH, 'events', id);
   };
 
   return {
@@ -274,6 +201,7 @@ export function useScheduleData() {
     shifts,
     events,
     loading,
+    canEdit, // 新增：是否有編輯權限
     
     // 課程管理方法
     addCourse,
@@ -289,8 +217,5 @@ export function useScheduleData() {
     addEvent,
     updateEvent,
     deleteEvent,
-    
-    // 重置方法
-    resetToDefault,
   };
 }

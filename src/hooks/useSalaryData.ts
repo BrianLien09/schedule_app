@@ -8,6 +8,15 @@ import {
   subscribeToCollection,
   batchSetDocuments,
 } from '@/services/firestoreService';
+import { hasWriteAccess } from '@/config/permissions';
+
+/**
+ * 共用資料路徑
+ * 
+ * 所有家人共用同一份資料，儲存在 Firestore 的 /shared/ 路徑下。
+ * 權限控制由 Firestore Security Rules 處理。
+ */
+const SHARED_DATA_PATH = 'shared';
 
 /** 身份類型 */
 type RoleType = 'assistant' | 'instructor';
@@ -29,167 +38,110 @@ export interface SalaryRecord {
  * Salary Data Management Hook
  * 
  * 管理薪資記錄的資料，支援：
- * - Firestore 雲端同步
+ * - Firestore 雲端同步（必須登入）
  * - 即時監聽資料變更
- * - 自動從 localStorage 遷移至 Firestore（首次登入時）
- * - 未登入時使用 localStorage 作為本地端儲存
+ * - 共用資料（所有白名單成員共用同一份資料）
  */
 export function useSalaryData() {
   const { user } = useAuth();
   const [records, setRecords] = useState<SalaryRecord[]>([]);
   const [loading, setLoading] = useState(true);
-
-  /**
-   * 從 localStorage 遷移資料至 Firestore（僅首次登入時執行）
-   */
-  const migrateFromLocalStorage = async (userId: string) => {
-    try {
-      // 檢查是否已經遷移過薪資記錄
-      const migrated = localStorage.getItem('salary_firestore_migrated');
-      if (migrated) return;
-
-      // 讀取 localStorage 中的薪資記錄
-      const localRecords = localStorage.getItem('salary_records');
-
-      // 如果 localStorage 有資料，則遷移至 Firestore
-      if (localRecords) {
-        const recordsData = JSON.parse(localRecords);
-        await batchSetDocuments(userId, 'salaryRecords', recordsData);
-        console.log(`✅ 成功遷移 ${recordsData.length} 筆薪資記錄至 Firestore`);
-      }
-
-      // 標記已遷移
-      localStorage.setItem('salary_firestore_migrated', 'true');
-    } catch (error) {
-      console.error('❌ 薪資記錄遷移失敗:', error);
-    }
-  };
+  const [canEdit, setCanEdit] = useState(false);
 
   /**
    * 當使用者登入時，訂閱 Firestore 資料變更
    */
   useEffect(() => {
     if (!user) {
-      // 未登入時，從 localStorage 讀取資料
-      setLoading(true);
-      const localRecords = localStorage.getItem('salary_records');
-      setRecords(localRecords ? JSON.parse(localRecords) : []);
+      // 未登入：不顯示任何資料
+      setRecords([]);
       setLoading(false);
+      setCanEdit(false);
       return;
     }
 
-    // 已登入：使用 Firestore
-    const userId = user.uid;
+    // 已登入：使用共用資料路徑
     setLoading(true);
-
-    // 首次登入時，嘗試從 localStorage 遷移資料
-    migrateFromLocalStorage(userId).then(() => {
-      setLoading(false);
-    });
+    setCanEdit(hasWriteAccess(user.email));
 
     // 訂閱即時資料變更
     const unsubscribe = subscribeToCollection<SalaryRecord>(
-      userId,
+      SHARED_DATA_PATH,
       'salaryRecords',
-      (data) => setRecords(data)
+      (data) => {
+        setRecords(data);
+        setLoading(false);
+      }
     );
 
     // 清理函數：元件卸載時取消訂閱
     return () => unsubscribe();
   }, [user]);
 
-  /**
-   * 將 records 同步到 localStorage（未登入時使用）
-   */
-  useEffect(() => {
-    if (!user && records.length > 0) {
-      localStorage.setItem('salary_records', JSON.stringify(records));
-    }
-  }, [records, user]);
-
   // ========== 薪資記錄管理 ==========
   
   const addRecord = async (record: SalaryRecord) => {
-    if (!user) {
-      // 未登入：更新 localStorage
-      const newRecords = [...records, record];
-      setRecords(newRecords);
-      localStorage.setItem('salary_records', JSON.stringify(newRecords));
+    if (!user || !canEdit) {
+      console.warn('❌ 無編輯權限');
       return;
     }
 
-    // 已登入：寫入 Firestore
-    await setDocument(user.uid, 'salaryRecords', record.id, record);
+    await setDocument(SHARED_DATA_PATH, 'salaryRecords', record.id, record);
   };
 
   const updateRecord = async (id: string, updatedRecord: Partial<SalaryRecord>) => {
-    if (!user) {
-      const newRecords = records.map(r => (r.id === id ? { ...r, ...updatedRecord } : r));
-      setRecords(newRecords);
-      localStorage.setItem('salary_records', JSON.stringify(newRecords));
+    if (!user || !canEdit) {
+      console.warn('❌ 無編輯權限');
       return;
     }
 
-    await updateDocument(user.uid, 'salaryRecords', id, updatedRecord);
+    await updateDocument(SHARED_DATA_PATH, 'salaryRecords', id, updatedRecord);
   };
 
   const deleteRecord = async (id: string) => {
-    if (!user) {
-      const newRecords = records.filter(r => r.id !== id);
-      setRecords(newRecords);
-      localStorage.setItem('salary_records', JSON.stringify(newRecords));
+    if (!user || !canEdit) {
+      console.warn('❌ 無編輯權限');
       return;
     }
 
-    await deleteDocument(user.uid, 'salaryRecords', id);
+    await deleteDocument(SHARED_DATA_PATH, 'salaryRecords', id);
   };
 
   const batchAddRecords = async (newRecords: SalaryRecord[]) => {
-    if (!user) {
-      const allRecords = [...records, ...newRecords];
-      setRecords(allRecords);
-      localStorage.setItem('salary_records', JSON.stringify(allRecords));
+    if (!user || !canEdit) {
+      console.warn('❌ 無編輯權限');
       return;
     }
 
-    // 批次寫入 Firestore
-    await batchSetDocuments(user.uid, 'salaryRecords', newRecords);
+    await batchSetDocuments(SHARED_DATA_PATH, 'salaryRecords', newRecords);
   };
 
   const batchUpdateRecords = async (updates: Array<{ id: string; data: Partial<SalaryRecord> }>) => {
-    if (!user) {
-      const newRecords = records.map(r => {
-        const update = updates.find(u => u.id === r.id);
-        return update ? { ...r, ...update.data } : r;
-      });
-      setRecords(newRecords);
-      localStorage.setItem('salary_records', JSON.stringify(newRecords));
+    if (!user || !canEdit) {
+      console.warn('❌ 無編輯權限');
       return;
     }
 
-    // 批次更新 Firestore
     const promises = updates.map(({ id, data }) => 
-      updateDocument(user.uid!, 'salaryRecords', id, data)
+      updateDocument(SHARED_DATA_PATH, 'salaryRecords', id, data)
     );
     await Promise.all(promises);
   };
 
   const batchDeleteRecords = async (ids: string[]) => {
-    if (!user) {
-      const newRecords = records.filter(r => !ids.includes(r.id));
-      setRecords(newRecords);
-      localStorage.setItem('salary_records', JSON.stringify(newRecords));
+    if (!user || !canEdit) {
+      console.warn('❌ 無編輯權限');
       return;
     }
 
-    // 批次刪除 Firestore
-    const promises = ids.map(id => deleteDocument(user.uid!, 'salaryRecords', id));
+    const promises = ids.map(id => deleteDocument(SHARED_DATA_PATH, 'salaryRecords', id));
     await Promise.all(promises);
   };
 
   return {
     records,
     loading,
+    canEdit, // 新增：是否有編輯權限
     addRecord,
     updateRecord,
     deleteRecord,

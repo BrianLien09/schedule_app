@@ -2,10 +2,22 @@
 import { useState } from 'react';
 import CourseManager from '../../components/CourseManager';
 import WorkShiftManager from '../../components/WorkShiftManager';
+import { useAuth } from '../../context/AuthContext';
+import LoginPrompt from '../../components/LoginPrompt';
 import styles from './page.module.css';
 
 export default function ManagePage() {
+  const { user, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<'courses' | 'work'>('courses');
+
+  // 檢查登入狀態
+  if (authLoading) {
+    return <div style={{ padding: '2rem', textAlign: 'center' }}>載入中...</div>;
+  }
+
+  if (!user) {
+    return <LoginPrompt />;
+  }
 
   return (
     <div className={styles.pageContainer}>

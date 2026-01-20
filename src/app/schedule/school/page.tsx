@@ -1,10 +1,23 @@
 'use client';
 import { Fragment } from 'react';
 import { useScheduleData } from '../../../hooks/useScheduleData';
+import { useAuth } from '../../../context/AuthContext';
+import LoginPrompt from '../../../components/LoginPrompt';
 
 export default function SchoolSchedulePage() {
+  const { user, loading: authLoading } = useAuth();
+  
   // 使用新的資料管理 hook
   const { courses } = useScheduleData();
+  
+  // 檢查登入狀態
+  if (authLoading) {
+    return <div style={{ padding: '2rem', textAlign: 'center' }}>載入中...</div>;
+  }
+
+  if (!user) {
+    return <LoginPrompt />;
+  }
   
   // School Schedule Configuration
   const weekDays = ['一', '二', '三', '四', '五']; // Mon-Fri only
