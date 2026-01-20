@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
-import { SchoolIcon, BriefcaseIcon, GamepadIcon, MusicIcon } from './Icons';
+import { SchoolIcon, BriefcaseIcon, GamepadIcon, MusicIcon, ToolboxIcon, CalculatorIcon } from './Icons';
 import ThemeToggle from './ThemeToggle';
 
 export default function Navbar() {
@@ -86,6 +86,21 @@ export default function Navbar() {
               <Link href="/schedule/work" className="dropdown-item">
                 <BriefcaseIcon size={18} />
                 <span>打工月曆</span>
+              </Link>
+            </div>
+          </li>
+          <li className="dropdown">
+            <Link 
+              href="/tools/salary" 
+              className={`nav-link ${pathname.startsWith('/tools') ? 'active' : ''}`}
+            >
+              <ToolboxIcon size={18} />
+              <span>工具箱 ▾</span>
+            </Link>
+            <div className="dropdown-content">
+              <Link href="/tools/salary" className="dropdown-item">
+                <CalculatorIcon size={18} />
+                <span>薪資計算</span>
               </Link>
             </div>
           </li>
