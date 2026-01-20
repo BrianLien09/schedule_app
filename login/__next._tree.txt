@@ -1,0 +1,3 @@
+:HL["/schedule_app/_next/static/chunks/c8e9509a805b6b4b.css","style"]
+:HL["/schedule_app/_next/static/chunks/faf1d535988b39b2.css","style"]
+0:{"buildId":"SRpb1c5q3DrWVtFAnFwNB","tree":{"name":"","paramType":null,"paramKey":"","hasRuntimePrefetch":false,"slots":{"children":{"name":"login","paramType":null,"paramKey":"login","hasRuntimePrefetch":false,"slots":{"children":{"name":"__PAGE__","paramType":null,"paramKey":"__PAGE__","hasRuntimePrefetch":false,"slots":null,"isRootLayout":false}},"isRootLayout":false}},"isRootLayout":true},"staleTime":300}
