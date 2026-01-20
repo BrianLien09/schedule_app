@@ -5,11 +5,21 @@ import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { SchoolIcon, BriefcaseIcon, GamepadIcon, MusicIcon, ToolboxIcon, CalculatorIcon } from './Icons';
 import ThemeToggle from './ThemeToggle';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { user, loading, signOut } = useAuth();
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollYRef = useRef(0);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      alert('登出失敗，請稍後再試');
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -134,6 +144,60 @@ export default function Navbar() {
           <li>
             <ThemeToggle />
           </li>
+          {!loading && (
+            <li>
+              {user ? (
+                <div className="dropdown">
+                  <button className="nav-link" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                    <img 
+                      src={user.photoURL || '/schedule_app/avatar.jpg'} 
+                      alt="User Avatar"
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        border: '2px solid var(--color-primary)'
+                      }}
+                    />
+                  </button>
+                  <div className="dropdown-content" style={{ right: 0, left: 'auto' }}>
+                    <div className="dropdown-item" style={{ cursor: 'default', opacity: 0.7 }}>
+                      <span>{user.displayName || user.email}</span>
+                    </div>
+                    <button 
+                      onClick={handleSignOut}
+                      className="dropdown-item"
+                      style={{ 
+                        width: '100%', 
+                        textAlign: 'left', 
+                        background: 'none', 
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'var(--color-accent)'
+                      }}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                      </svg>
+                      <span>登出</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <Link href="/login" className="nav-link">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                    <polyline points="10 17 15 12 10 7" />
+                    <line x1="15" y1="12" x2="3" y2="12" />
+                  </svg>
+                  <span>登入</span>
+                </Link>
+              )}
+            </li>
+          )}
         </ul>
       </div>
     </nav>

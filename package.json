@@ -10,6 +10,7 @@
     "deploy": "next build && gh-pages -d out --dotfiles"
   },
   "dependencies": {
+    "firebase": "^12.8.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.0.0",
     "jspdf-autotable": "^5.0.7",

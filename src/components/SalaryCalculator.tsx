@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useScheduleData } from '@/hooks/useScheduleData';
+import { useSalaryData, type SalaryRecord } from '@/hooks/useSalaryData';
 import { type WorkShift } from '@/data/schedule';
 
 /** 身份類型 */
@@ -16,23 +17,19 @@ const ROLE_HOURLY_RATES: Record<RoleType, number> = {
   instructor: 350,   // 講師
 };
 
-/** 單筆工作記錄 */
-interface WorkRecord {
-  id: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  hourlyRate: number;
-  breakMinutes: number;
-  role: RoleType; // 身份：助教或講師
-  shiftCategory?: string; // 班別類別（可重複選擇）
-  workShiftId?: string; // 關聯的打工班表 ID（保留向後相容）
-}
-
 export default function SalaryCalculator() {
   const { shifts } = useScheduleData();
-  const [records, setRecords] = useState<WorkRecord[]>([]);
-  const [currentRecord, setCurrentRecord] = useState<Omit<WorkRecord, 'id'>>({
+  const { 
+    records, 
+    loading: salaryLoading,
+    addRecord, 
+    updateRecord, 
+    deleteRecord,
+    batchAddRecords,
+    batchUpdateRecords,
+    batchDeleteRecords 
+  } = useSalaryData();
+  const [currentRecord, setCurrentRecord] = useState<Omit<SalaryRecord, 'id'>>({
     date: new Date().toISOString().split('T')[0],
     startTime: '09:00',
     endTime: '18:00',
@@ -53,7 +50,7 @@ export default function SalaryCalculator() {
   ]);
   
   const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7)); // YYYY-MM
-  const [editingRecord, setEditingRecord] = useState<WorkRecord | null>(null);
+  const [editingRecord, setEditingRecord] = useState<SalaryRecord | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showStats, setShowStats] = useState(true); // 控制統計圖表顯示
   const [selectedRecordIds, setSelectedRecordIds] = useState<Set<string>>(new Set()); // 批次選擇
@@ -62,27 +59,8 @@ export default function SalaryCalculator() {
   const [isPrintMode, setIsPrintMode] = useState(false); // 列印模式
   const pdfContentRef = useRef<HTMLDivElement>(null);
 
-  // 從 localStorage 載入薪資記錄
-  useEffect(() => {
-    const saved = localStorage.getItem('salary_records');
-    if (saved) {
-      try {
-        setRecords(JSON.parse(saved));
-      } catch (e) {
-        console.error('Failed to load salary records:', e);
-      }
-    }
-  }, []);
-
-  // 儲存薪資記錄到 localStorage
-  useEffect(() => {
-    if (records.length > 0) {
-      localStorage.setItem('salary_records', JSON.stringify(records));
-    }
-  }, [records]);
-
   /** 計算工作時數 (小時) */
-  const calculateHours = (record: Omit<WorkRecord, 'id'>): number => {
+  const calculateHours = (record: Omit<SalaryRecord, 'id'>): number => {
     const [startHour, startMin] = record.startTime.split(':').map(Number);
     const [endHour, endMin] = record.endTime.split(':').map(Number);
     
@@ -94,27 +72,27 @@ export default function SalaryCalculator() {
   };
 
   /** 計算薪資 */
-  const calculatePay = (record: Omit<WorkRecord, 'id'>): number => {
+  const calculatePay = (record: Omit<SalaryRecord, 'id'>): number => {
     const hours = calculateHours(record);
     return Math.round(hours * record.hourlyRate);
   };
 
   /** 新增記錄 */
   const handleAddRecord = () => {
-    const newRecord: WorkRecord = {
+    const newRecord: SalaryRecord = {
       ...currentRecord,
       id: Date.now().toString(),
     };
-    setRecords([...records, newRecord]);
+    addRecord(newRecord);
   };
 
   /** 刪除記錄 */
   const handleDeleteRecord = (id: string) => {
-    setRecords(records.filter(r => r.id !== id));
+    deleteRecord(id);
   };
 
   /** 複製記錄 - 將資料填入新增表單 */
-  const handleCopyRecord = (record: WorkRecord) => {
+  const handleCopyRecord = (record: SalaryRecord) => {
     setCurrentRecord({
       date: record.date,
       startTime: record.startTime,
@@ -150,7 +128,7 @@ export default function SalaryCalculator() {
     }
 
     // 將打工班表轉換為薪資記錄
-    const newRecords: WorkRecord[] = monthShifts.map(shift => ({
+    const newRecords: SalaryRecord[] = monthShifts.map(shift => ({
       id: `shift-${shift.id}-${Date.now()}`,
       date: shift.date,
       startTime: shift.startTime,
@@ -162,12 +140,12 @@ export default function SalaryCalculator() {
       workShiftId: shift.id,
     }));
 
-    setRecords([...records, ...newRecords]);
+    batchAddRecords(newRecords);
     alert(`成功匯入 ${newRecords.length} 筆 ${year} 年 ${month} 月的打工記錄！`);
   };
 
   /** 取得顯示的班別名稱 */
-  const getDisplayShiftName = (record: WorkRecord): string => {
+  const getDisplayShiftName = (record: SalaryRecord): string => {
     if (record.shiftCategory) return record.shiftCategory;
     // 向後相容：若有 workShiftId，從班表取得 note
     if (record.workShiftId) {
@@ -178,7 +156,7 @@ export default function SalaryCalculator() {
   };
 
   /** 開啟編輯模式 */
-  const handleEditRecord = (record: WorkRecord) => {
+  const handleEditRecord = (record: SalaryRecord) => {
     setEditingRecord({ ...record });
     setShowEditModal(true);
   };
@@ -186,7 +164,7 @@ export default function SalaryCalculator() {
   /** 儲存編輯 */
   const handleSaveEdit = () => {
     if (!editingRecord) return;
-    setRecords(records.map(r => r.id === editingRecord.id ? editingRecord : r));
+    updateRecord(editingRecord.id, editingRecord);
     setShowEditModal(false);
     setEditingRecord(null);
   };
@@ -233,14 +211,12 @@ export default function SalaryCalculator() {
       return;
     }
 
-    const updatedRecords = records.map(record => {
-      if (selectedRecordIds.has(record.id)) {
-        return { ...record, hourlyRate: batchNewHourlyRate };
-      }
-      return record;
-    });
+    const updates = Array.from(selectedRecordIds).map(id => ({
+      id,
+      data: { hourlyRate: batchNewHourlyRate }
+    }));
 
-    setRecords(updatedRecords);
+    batchUpdateRecords(updates);
     setShowBatchEditModal(false);
     setSelectedRecordIds(new Set());
     alert(`已成功更新 ${selectedRecordIds.size} 筆記錄的時薪！`);
@@ -262,10 +238,8 @@ export default function SalaryCalculator() {
     const confirmDelete = window.confirm(`確定要刪除 ${selectedRecordIds.size} 筆記錄嗎？此操作無法復原！`);
     if (!confirmDelete) return;
 
-    const updatedRecords = records.filter(record => !selectedRecordIds.has(record.id));
-    setRecords(updatedRecords);
+    batchDeleteRecords(Array.from(selectedRecordIds));
     setSelectedRecordIds(new Set());
-    alert(`已成功刪除 ${selectedRecordIds.size} 筆記錄！`);
   };
 
   /** 開啟列印預覽 */

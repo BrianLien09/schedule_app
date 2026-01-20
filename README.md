@@ -49,12 +49,20 @@
 
 ## 🎯 進階功能
 
-### 💾 資料持久化
-#### LocalStorage 自動儲存
+### 💾 資料持久化與雲端同步
+#### 🔥 Firebase 雲端同步（已登入）
+- **Google 登入**：一鍵使用 Google 帳號登入
+- **即時同步**：所有資料自動儲存至 Firestore 雲端資料庫
+- **多裝置支援**：手機、平板、電腦自動同步，隨時隨地存取
+- **資料隔離**：每個使用者的資料完全獨立，安全有保障
+- **自動遷移**：首次登入時自動從 localStorage 轉移資料至雲端
+
+#### 💿 LocalStorage 本地儲存（未登入）
 - 所有課表、打工班表和事件自動儲存在瀏覽器
 - 關閉瀏覽器後資料仍保留
 - 支援完整的 CRUD 操作
 - 透過「日程表 ▾ → 資料管理」進入編輯介面
+- **向後相容**：未登入時仍可正常使用所有功能
 
 ### ✏️ 互動式編輯介面
 #### 課程管理
@@ -123,13 +131,16 @@
 - **框架**: [Next.js 16.1.1](https://nextjs.org/) (App Router)
 - **語言**: TypeScript 5
 - **樣式**: Vanilla CSS (CSS Modules & CSS Variables)
+- **後端服務**: [Firebase](https://firebase.google.com/) (Firestore + Authentication)
 - **部署**: GitHub Pages (Static Export)
 - **圖表/匯出**: xlsx, jspdf, jspdf-autotable, html2canvas
 
 ### 關鍵特性
 - **Client-side Rendering**: 使用 `'use client'` 指令
 - **Custom Hooks**: 抽離業務邏輯與狀態管理
-- **LocalStorage**: 瀏覽器本地資料持久化
+- **Firebase Authentication**: Google OAuth 登入
+- **Firestore Database**: NoSQL 雲端資料庫，支援即時同步
+- **LocalStorage Fallback**: 未登入時的本地資料持久化
 - **Service Worker**: PWA 離線支援
 - **CSS Variables**: 動態主題切換
 
@@ -142,6 +153,33 @@
 ```bash
 npm install
 ```
+
+### 環境設定（啟用雲端同步）
+
+如果你想使用 **Firebase 雲端同步功能**，請按照以下步驟設定：
+
+1. **建立 Firebase 專案**（詳細步驟請參閱 [FIREBASE_SETUP.md](FIREBASE_SETUP.md)）
+   - 前往 [Firebase Console](https://console.firebase.google.com/)
+   - 建立新專案並啟用 Firestore 與 Authentication (Google)
+
+2. **複製環境變數範例檔案**
+   ```bash
+   cp .env.local.example .env.local
+   ```
+
+3. **填入 Firebase 設定**
+   
+   編輯 `.env.local`，將你的 Firebase 專案設定填入：
+   ```env
+   NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+   NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+   NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+   ```
+
+> 💡 **提示**：如果不設定 Firebase，應用程式仍可正常使用，資料會儲存在瀏覽器的 localStorage。
 
 ### 啟動開發伺服器
 
@@ -178,8 +216,9 @@ schedule/
 │   └── sw.js                   # Service Worker
 ├── src/
 │   ├── app/                    # Next.js App Router 頁面
-│   │   ├── layout.tsx         # 根佈局（含 Navbar）
+│   │   ├── layout.tsx         # 根佈局（含 AuthProvider）
 │   │   ├── page.tsx           # 首頁儀表板
+│   │   ├── login/             # 登入頁面
 │   │   ├── globals.css        # 全域樣式與主題系統
 │   │   ├── games/             # 遊戲攻略頁面
 │   │   ├── manage/            # 資料管理頁面
@@ -189,7 +228,7 @@ schedule/
 │   │       ├── school/        # 學校課表
 │   │       └── work/          # 打工月曆
 │   ├── components/            # React 元件
-│   │   ├── Navbar.tsx         # 導航列（自動隱藏、下拉選單）
+│   │   ├── Navbar.tsx         # 導航列（自動隱藏、下拉選單、使用者頭像）
 │   │   ├── Icons.tsx          # SVG 圖示元件
 │   │   ├── VisualComponents.tsx    # 視覺元件（卡片、時間軸）
 │   │   ├── ThemeToggle.tsx    # 主題切換按鈕
@@ -199,16 +238,25 @@ schedule/
 │   │   ├── WorkShiftEditor.tsx      # 班表編輯對話框
 │   │   ├── WorkShiftManager.tsx     # 班表管理元件
 │   │   └── SalaryCalculator.tsx     # 薪資計算器元件
+│   ├── context/               # React Context
+│   │   └── AuthContext.tsx    # 身份驗證全域狀態（useAuth Hook）
 │   ├── hooks/                 # Custom React Hooks
 │   │   ├── useLocalStorage.ts       # LocalStorage 管理
-│   │   ├── useScheduleData.ts       # 資料管理（CRUD）
+│   │   ├── useScheduleData.ts       # 資料管理（整合 Firestore + localStorage）
+│   │   ├── useSalaryData.ts         # 薪資資料管理（整合 Firestore）
 │   │   ├── useHomeDashboard.ts      # 儀表板邏輯
 │   │   ├── useWorkCalendar.ts       # 月曆邏輯
 │   │   ├── useTheme.ts             # 主題管理
 │   │   └── useIsMobile.ts          # 響應式偵測
+│   ├── lib/                   # 第三方服務初始化
+│   │   └── firebase.ts        # Firebase SDK 初始化（db, auth）
+│   ├── services/              # 業務邏輯服務
+│   │   └── firestoreService.ts      # Firestore CRUD 封裝（通用資料操作）
 │   └── data/                  # 資料定義與預設資料
 │       ├── schedule.ts        # 課程、班表、事件資料與型別
 │       └── games.ts           # 遊戲攻略資料
+├── .env.local.example         # 環境變數範例檔案
+├── FIREBASE_SETUP.md          # Firebase 設定完整指南
 ├── next.config.ts             # Next.js 配置
 ├── tsconfig.json              # TypeScript 配置
 ├── eslint.config.mjs          # ESLint 配置
@@ -218,6 +266,28 @@ schedule/
 ---
 
 ## 📱 使用指南
+
+### 🔐 雲端同步與登入
+
+#### 登入（啟用雲端同步）
+1. 點擊導覽列右上角的「**登入**」按鈕
+2. 選擇 Google 帳號完成登入
+3. 首次登入時，系統會自動將 localStorage 中的資料遷移至雲端
+4. 登入後，所有資料會即時同步到 Firestore
+
+#### 多裝置同步
+- 在手機登入後新增的課表，會立即在電腦上顯示
+- 修改或刪除資料時，所有裝置會自動同步更新
+- 無需手動「同步」按鈕，一切都是自動的
+
+#### 登出
+- 點擊導覽列右上角的使用者頭像
+- 選擇「登出」
+- 登出後會回到 localStorage 模式，資料仍保留在本地
+
+> 💡 **提示**：建議登入使用雲端同步，資料更安全且支援多裝置存取。
+
+---
 
 ### 資料管理
 
@@ -307,8 +377,11 @@ schedule/
 - ✅ 打工月曆（月份切換、日期點擊）
 - ✅ 遊戲攻略（版本分類、一鍵複製）
 - ✅ 薪資計算器（工時計算、統計圖表、批次操作、匯出）
+- ✅ **Firebase 身份驗證**（Google 登入/登出）
+- ✅ **Firestore 雲端同步**（即時多裝置同步）
+- ✅ **自動資料遷移**（localStorage → Firestore）
 - ✅ 自動隱藏導航列
-- ✅ LocalStorage 資料持久化
+- ✅ LocalStorage 資料持久化（向後相容）
 - ✅ PWA 支援（離線瀏覽、安裝到主畫面）
 - ✅ 深色/淺色主題切換
 - ✅ 互動式課程編輯（新增/編輯/刪除）
@@ -354,6 +427,7 @@ schedule/
 ## 🙏 致謝
 
 - [Next.js](https://nextjs.org/) - React 框架
+- [Firebase](https://firebase.google.com/) - 雲端資料庫與身份驗證
 - [Vercel](https://vercel.com/) - 部署平台
 - [GitHub Pages](https://pages.github.com/) - 靜態網站託管
 
