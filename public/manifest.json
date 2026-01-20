@@ -5,7 +5,7 @@
   "start_url": "/schedule_app/",
   "display": "standalone",
   "background_color": "#1e293b",
-  "theme_color": "#8b5cf6",
+  "theme_color": "#0f111a",
   "orientation": "portrait-primary",
   "icons": [
     {
