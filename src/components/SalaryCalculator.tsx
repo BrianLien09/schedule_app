@@ -7,6 +7,15 @@ import html2canvas from 'html2canvas';
 import { useScheduleData } from '@/hooks/useScheduleData';
 import { type WorkShift } from '@/data/schedule';
 
+/** 身份類型 */
+type RoleType = 'assistant' | 'instructor';
+
+/** 身份時薪對應 */
+const ROLE_HOURLY_RATES: Record<RoleType, number> = {
+  assistant: 200,    // 助教
+  instructor: 350,   // 講師
+};
+
 /** 單筆工作記錄 */
 interface WorkRecord {
   id: string;
@@ -15,8 +24,9 @@ interface WorkRecord {
   endTime: string;
   hourlyRate: number;
   breakMinutes: number;
-  workShiftId?: string; // 關聯的打工班表 ID
-  customShiftName?: string; // 自訂班別名稱
+  role: RoleType; // 身份：助教或講師
+  shiftCategory?: string; // 班別類別（可重複選擇）
+  workShiftId?: string; // 關聯的打工班表 ID（保留向後相容）
 }
 
 export default function SalaryCalculator() {
@@ -26,10 +36,22 @@ export default function SalaryCalculator() {
     date: new Date().toISOString().split('T')[0],
     startTime: '09:00',
     endTime: '18:00',
-    hourlyRate: 200, // 基本時薪
+    role: 'assistant' as RoleType,
+    hourlyRate: 200,
     breakMinutes: 60,
-    customShiftName: '',
+    shiftCategory: '',
   });
+  
+  // 班別類別選項（可自由新增）
+  const [shiftCategories, setShiftCategories] = useState<string[]>([
+    '秋季班',
+    '冬令營',
+    '春季班',
+    '夏令營',
+    '寒假班',
+    '暑假班',
+  ]);
+  
   const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7)); // YYYY-MM
   const [editingRecord, setEditingRecord] = useState<WorkRecord | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -97,9 +119,10 @@ export default function SalaryCalculator() {
       date: record.date,
       startTime: record.startTime,
       endTime: record.endTime,
+      role: record.role,
       hourlyRate: record.hourlyRate,
       breakMinutes: record.breakMinutes,
-      customShiftName: record.customShiftName || '',
+      shiftCategory: record.shiftCategory || '',
       workShiftId: record.workShiftId,
     });
     
@@ -132,8 +155,10 @@ export default function SalaryCalculator() {
       date: shift.date,
       startTime: shift.startTime,
       endTime: shift.endTime,
-      hourlyRate: 200, // 預設時薪
+      role: 'assistant' as RoleType, // 預設助教
+      hourlyRate: 200, // 預設助教時薪
       breakMinutes: 60, // 預設休息時間
+      shiftCategory: shift.note || '', // 使用班表的 note 作為班別
       workShiftId: shift.id,
     }));
 
@@ -141,17 +166,15 @@ export default function SalaryCalculator() {
     alert(`成功匯入 ${newRecords.length} 筆 ${year} 年 ${month} 月的打工記錄！`);
   };
 
-  /** 取得關聯的打工班表資訊 */
-  const getWorkShiftNote = (workShiftId?: string): string | undefined => {
-    if (!workShiftId) return undefined;
-    const shift = shifts.find(s => s.id === workShiftId);
-    return shift?.note;
-  };
-
   /** 取得顯示的班別名稱 */
   const getDisplayShiftName = (record: WorkRecord): string => {
-    if (record.customShiftName) return record.customShiftName;
-    return getWorkShiftNote(record.workShiftId) || '-';
+    if (record.shiftCategory) return record.shiftCategory;
+    // 向後相容：若有 workShiftId，從班表取得 note
+    if (record.workShiftId) {
+      const shift = shifts.find(s => s.id === record.workShiftId);
+      return shift?.note || '-';
+    }
+    return '-';
   };
 
   /** 開啟編輯模式 */
@@ -771,6 +794,35 @@ export default function SalaryCalculator() {
 
           <div>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+              身份
+            </label>
+            <select
+              value={currentRecord.role}
+              onChange={(e) => {
+                const newRole = e.target.value as RoleType;
+                setCurrentRecord({ 
+                  ...currentRecord, 
+                  role: newRole,
+                  hourlyRate: ROLE_HOURLY_RATES[newRole],
+                });
+              }}
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                borderRadius: '8px',
+                border: '1px solid rgba(255,255,255,0.2)',
+                background: 'rgba(255,255,255,0.05)',
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="assistant" style={{ background: '#1a1a2e', color: 'white' }}>助教 ($200/hr)</option>
+              <option value="instructor" style={{ background: '#1a1a2e', color: 'white' }}>講師 ($350/hr)</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
               開始時間
             </label>
             <input 
@@ -849,11 +901,9 @@ export default function SalaryCalculator() {
             <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
               班別 (選填)
             </label>
-            <input 
-              type="text"
-              value={currentRecord.customShiftName}
-              onChange={(e) => setCurrentRecord({ ...currentRecord, customShiftName: e.target.value })}
-              placeholder="例如：秋季班、冬令營"
+            <select
+              value={currentRecord.shiftCategory || ''}
+              onChange={(e) => setCurrentRecord({ ...currentRecord, shiftCategory: e.target.value })}
               style={{
                 width: '100%',
                 padding: '0.5rem',
@@ -861,8 +911,14 @@ export default function SalaryCalculator() {
                 border: '1px solid rgba(255,255,255,0.2)',
                 background: 'rgba(255,255,255,0.05)',
                 color: 'var(--text-primary)',
+                cursor: 'pointer',
               }}
-            />
+            >
+              <option value="" style={{ background: '#1a1a2e', color: 'white' }}>-- 無班別 --</option>
+              {shiftCategories.map((category) => (
+                <option key={category} value={category} style={{ background: '#1a1a2e', color: 'white' }}>{category}</option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -1089,6 +1145,12 @@ export default function SalaryCalculator() {
                     textAlign: 'left',
                     border: isPrintMode ? '1px solid #333' : 'none',
                     color: isPrintMode ? 'black' : 'inherit',
+                  }}>身份</th>
+                  <th style={{ 
+                    padding: '0.75rem', 
+                    textAlign: 'left',
+                    border: isPrintMode ? '1px solid #333' : 'none',
+                    color: isPrintMode ? 'black' : 'inherit',
                   }}>班別</th>
                   <th style={{ 
                     padding: '0.75rem', 
@@ -1131,7 +1193,15 @@ export default function SalaryCalculator() {
                 </tr>
               </thead>
               <tbody>
-                {records.map((record) => {
+                {[...records]
+                  .sort((a, b) => {
+                    // 先按日期排序（舊到新）
+                    const dateCompare = a.date.localeCompare(b.date);
+                    if (dateCompare !== 0) return dateCompare;
+                    // 日期相同則按開始時間排序（早到晚）
+                    return a.startTime.localeCompare(b.startTime);
+                  })
+                  .map((record) => {
                   const displayShiftName = getDisplayShiftName(record);
                   const isSelected = selectedRecordIds.has(record.id);
                   return (
@@ -1167,6 +1237,22 @@ export default function SalaryCalculator() {
                         border: isPrintMode ? '1px solid #ddd' : 'none',
                         color: isPrintMode ? 'black' : 'inherit',
                       }}>{record.date}</td>
+                      <td style={{ 
+                        padding: '0.75rem',
+                        border: isPrintMode ? '1px solid #ddd' : 'none',
+                        color: isPrintMode ? 'black' : 'inherit',
+                      }}>
+                        <span style={{
+                          padding: '0.25rem 0.5rem',
+                          borderRadius: '4px',
+                          background: isPrintMode ? 'transparent' : (record.role === 'instructor' ? 'rgba(251, 191, 36, 0.2)' : 'rgba(6, 182, 212, 0.2)'),
+                          color: isPrintMode ? 'black' : (record.role === 'instructor' ? '#fbbf24' : '#06b6d4'),
+                          fontSize: '0.85rem',
+                          fontWeight: '600',
+                        }}>
+                          {record.role === 'instructor' ? '講師' : '助教'}
+                        </span>
+                      </td>
                       <td style={{ 
                         padding: '0.75rem',
                         border: isPrintMode ? '1px solid #ddd' : 'none',
@@ -1293,7 +1379,7 @@ export default function SalaryCalculator() {
                   fontWeight: '700'
                 }}>
                   {!isPrintMode && <td></td>}
-                  <td colSpan={isPrintMode ? 6 : 6} style={{ 
+                  <td colSpan={isPrintMode ? 7 : 7} style={{ 
                     padding: '1rem', 
                     textAlign: 'right', 
                     fontSize: '1.1rem',
@@ -1560,6 +1646,51 @@ export default function SalaryCalculator() {
                   fontWeight: '600',
                   color: 'rgba(255, 255, 255, 0.9)'
                 }}>
+                  身份
+                </label>
+                <select
+                  value={editingRecord.role}
+                  onChange={(e) => {
+                    const newRole = e.target.value as RoleType;
+                    setEditingRecord({ 
+                      ...editingRecord, 
+                      role: newRole,
+                      hourlyRate: ROLE_HOURLY_RATES[newRole],
+                    });
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    borderRadius: '8px',
+                    border: '2px solid rgba(139, 92, 246, 0.3)',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    color: '#ffffff',
+                    fontSize: '0.95rem',
+                    transition: 'all 0.2s',
+                    cursor: 'pointer',
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.6)';
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                  }}
+                >
+                  <option value="assistant" style={{ background: '#1a1a2e', color: 'white' }}>助教 ($200/hr)</option>
+                  <option value="instructor" style={{ background: '#1a1a2e', color: 'white' }}>講師 ($350/hr)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '0.5rem', 
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  color: 'rgba(255, 255, 255, 0.9)'
+                }}>
                   開始時間
                 </label>
                 <input 
@@ -1702,11 +1833,9 @@ export default function SalaryCalculator() {
                 }}>
                   班別 (選填)
                 </label>
-                <input 
-                  type="text"
-                  value={editingRecord.customShiftName || ''}
-                  onChange={(e) => setEditingRecord({ ...editingRecord, customShiftName: e.target.value })}
-                  placeholder="例如：秋季班、冬令營"
+                <select
+                  value={editingRecord.shiftCategory || ''}
+                  onChange={(e) => setEditingRecord({ ...editingRecord, shiftCategory: e.target.value })}
                   style={{
                     width: '100%',
                     padding: '0.75rem',
@@ -1716,6 +1845,7 @@ export default function SalaryCalculator() {
                     color: '#ffffff',
                     fontSize: '0.95rem',
                     transition: 'all 0.2s',
+                    cursor: 'pointer',
                   }}
                   onFocus={(e) => {
                     e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.6)';
@@ -1725,7 +1855,12 @@ export default function SalaryCalculator() {
                     e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
                   }}
-                />
+                >
+                  <option value="" style={{ background: '#1a1a2e', color: 'white' }}>-- 無班別 --</option>
+                  {shiftCategories.map((category) => (
+                    <option key={category} value={category} style={{ background: '#1a1a2e', color: 'white' }}>{category}</option>
+                  ))}
+                </select>
               </div>
             </div>
 

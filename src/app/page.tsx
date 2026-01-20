@@ -4,7 +4,6 @@ import { CalendarIcon, GamepadIcon, SchoolIcon, BriefcaseIcon } from '../compone
 import { StatCard, TimelineItem } from '../components/VisualComponents';
 import { useHomeDashboard } from '../hooks/useHomeDashboard';
 import { useScheduleData } from '../hooks/useScheduleData';
-import ExportImport from '../components/ExportImport';
 import styles from './page.module.css';
 
 export default function Home() {
@@ -219,9 +218,6 @@ export default function Home() {
           <span>前往攻略中心</span>
         </Link>
       </section>
-
-      {/* Export/Import Manager */}
-      <ExportImport />
     </div>
   );
 }
