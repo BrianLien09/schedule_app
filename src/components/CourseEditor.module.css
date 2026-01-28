@@ -115,7 +115,7 @@
 .formGroup select:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.2);
+  box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.2);
 }
 
 .formRow {
@@ -167,7 +167,7 @@
   background: var(--color-secondary);
   border-color: var(--color-secondary);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(212, 165, 116, 0.4);
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.4);
 }
 
 @media (max-width: 640px) {

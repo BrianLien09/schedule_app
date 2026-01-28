@@ -22,7 +22,7 @@ export default function CourseEditor({ isOpen, onClose, onSave, course, mode }: 
     startTime: '08:10',
     endTime: '10:00',
     location: '',
-    color: '#d4a574',
+    color: '#0891B2',
   });
 
   useEffect(() => {
@@ -35,7 +35,7 @@ export default function CourseEditor({ isOpen, onClose, onSave, course, mode }: 
         startTime: '08:10',
         endTime: '10:00',
         location: '',
-        color: '#d4a574',
+        color: '#0891B2',
       });
     }
   }, [course, mode]);

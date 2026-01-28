@@ -4,31 +4,31 @@
 
 :root {
   /* ===== Color Palette (Enhanced Contrast) ===== */
-  --foreground: #f8fafc; /* slate-50 - 更高對比度 */
-  --muted: #cbd5e1; /* slate-300 - 次要文字 */
-  --muted-dark: #94a3b8; /* slate-400 - 更暗的次要文字 */
+  --foreground: #164E63; /* 深青綠文字 - 高對比 */
+  --muted: #0E7490; /* 中青綠 - 次要文字 */
+  --muted-dark: #155E75; /* 深青綠 - 更暗的次要文字 */
 
-  /* Primary Colors (溫暖深棕色系) */
-  --color-primary: #d4a574; /* 棕金色 */
-  --color-secondary: #e8b4a8; /* 柔和粉棕色 */
-  --color-accent: #c9a577; /* 暖棕色 */
-  --color-highlight: #e6c79c; /* 淺棕金色 */
+  /* Primary Colors (平衡舒適型 - 海洋青綠系) */
+  --color-primary: #0891B2; /* 青綠 - Cyan */
+  --color-secondary: #22D3EE; /* 亮青 - Light Cyan */
+  --color-accent: #059669; /* 翠綠 - Emerald */
+  --color-highlight: #F59E0B; /* 暖橙 - Amber */
 
-  /* ===== Glass Effect (深棕色玻璃效果) ===== */
-  --glass-bg: rgba(26, 22, 18, 0.65); /* 深棕色背景 */
-  --glass-bg-hover: rgba(26, 22, 18, 0.8); /* Hover 狀態 */
-  --glass-border: rgba(212, 165, 116, 0.25); /* 棕金色邊框 */
-  --glass-border-hover: rgba(212, 165, 116, 0.4);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  --glass-shadow-hover: 0 12px 48px rgba(0, 0, 0, 0.6);
-  --glass-highlight: rgba(230, 199, 156, 0.08); /* 暖色內發光 */
+  /* ===== Glass Effect (柔和青綠玻璃效果) ===== */
+  --glass-bg: rgba(236, 254, 255, 0.75); /* 極淺青綠背景 */
+  --glass-bg-hover: rgba(236, 254, 255, 0.9); /* Hover 狀態 */
+  --glass-border: rgba(8, 145, 178, 0.2); /* 青綠邊框 */
+  --glass-border-hover: rgba(8, 145, 178, 0.35);
+  --glass-shadow: 0 8px 32px rgba(8, 145, 178, 0.15);
+  --glass-shadow-hover: 0 12px 48px rgba(8, 145, 178, 0.25);
+  --glass-highlight: rgba(34, 211, 238, 0.1); /* 亮青內發光 */
   --glass-blur: blur(16px); /* 增強模糊度 */
 
-  /* Background colors (深咖啡色漸層) */
-  --bg-base: #1a1612;
-  --bg-gradient-start: #1a1612;
-  --bg-gradient-mid: #2d231b;
-  --bg-gradient-accent: #3d2f24;
+  /* Background colors (柔和青綠漸層) */
+  --bg-base: #ECFEFF;
+  --bg-gradient-start: #ECFEFF;
+  --bg-gradient-mid: #CFFAFE;
+  --bg-gradient-accent: #A5F3FC;
 
   /* ===== Spacing System (4px Grid) ===== */
   --spacing-xs: 0.5rem; /* 8px */
