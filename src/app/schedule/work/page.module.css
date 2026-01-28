@@ -204,3 +204,134 @@
   opacity: 0.8;
   color: var(--foreground);
 }
+
+/* ========== 新功能樣式 ========== */
+
+/* 多選狀態 */
+.dayCellSelected {
+  background-color: rgba(212, 165, 116, 0.3) !important;
+  border: 2px solid var(--color-primary) !important;
+  position: relative;
+}
+
+.selectedOverlay {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: var(--color-primary);
+  color: white;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* 拖曳 hover 效果 */
+.dayCellDragOver {
+  background-color: rgba(230, 199, 156, 0.4) !important;
+  border: 2px dashed var(--color-primary) !important;
+  transform: scale(1.05);
+}
+
+.shiftBadge {
+  cursor: grab;
+}
+
+.shiftBadge:active {
+  cursor: grabbing;
+}
+
+/* 多選操作列 */
+.multiSelectBar {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.multiSelectInfo {
+  font-weight: bold;
+  color: var(--color-primary);
+  font-size: 1.1rem;
+}
+
+.multiSelectActions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.templateButton {
+  background: var(--color-accent);
+  color: white;
+  border-color: var(--color-accent);
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+}
+
+.templateButton:hover {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.cancelButton {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--glass-border);
+}
+
+.cancelButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* 功能提示 */
+.hints {
+  display: flex;
+  gap: 1rem;
+  margin: 1rem 0;
+  flex-wrap: wrap;
+}
+
+.hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+}
+
+@media (max-width: 768px) {
+  .multiSelectBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .multiSelectActions {
+    width: 100%;
+  }
+
+  .multiSelectActions button {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .hints {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .hint {
+    font-size: 0.75rem;
+    text-align: center;
+  }
+}
