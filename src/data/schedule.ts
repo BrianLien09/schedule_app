@@ -26,23 +26,23 @@ export interface Event {
 
 export const schoolSchedule: Course[] = [
   // Monday
-  { id: 'mon-1', name: '職涯分析與規劃', day: 1, startTime: '08:10', endTime: '10:00', location: '博愛CB105D', color: '#fca5a5' },
-  { id: 'mon-2', name: '國文(II)：語文表達', day: 1, startTime: '10:10', endTime: '12:00', location: '博愛C306', color: '#fda4af' },
+  { id: 'mon-1', name: '職涯分析與規劃', day: 1, startTime: '08:10', endTime: '10:00', location: '博愛CB105D', color: '#e6a08c' },
+  { id: 'mon-2', name: '國文(II)：語文表達', day: 1, startTime: '10:10', endTime: '12:00', location: '博愛C306', color: '#e8b4a8' },
   { id: 'mon-3', name: '數位電子學', day: 1, startTime: '13:10', endTime: '16:00', location: '博愛G313', color: 'var(--color-primary)' },
 
   // Tuesday
-  { id: 'tue-1', name: '網際網路概論', day: 2, startTime: '08:10', endTime: '10:00', location: '博愛G512電腦教室', color: '#fdba74' },
+  { id: 'tue-1', name: '網際網路概論', day: 2, startTime: '08:10', endTime: '10:00', location: '博愛G512電腦教室', color: '#d4a574' },
   { id: 'tue-2', name: '大學生活學習與輔導', day: 2, startTime: '13:10', endTime: '15:00', location: '博愛G313', color: 'var(--color-highlight)' },
 
   // Wednesday
-  { id: 'wed-1', name: '英文(II)', day: 3, startTime: '08:10', endTime: '10:00', location: '博愛C608', color: '#86efac' },
-  { id: 'wed-2', name: '羽球', day: 3, startTime: '10:10', endTime: '12:00', location: '博愛公誠樓籃球場', color: '#bef264' },
+  { id: 'wed-1', name: '英文(II)', day: 3, startTime: '08:10', endTime: '10:00', location: '博愛C608', color: '#b8c9a3' },
+  { id: 'wed-2', name: '羽球', day: 3, startTime: '10:10', endTime: '12:00', location: '博愛公誠樓籃球場', color: '#c9d4a8' },
   { id: 'wed-3', name: '資料結構', day: 3, startTime: '15:10', endTime: '18:00', location: '博愛G513電腦教室', color: 'var(--color-secondary)' },
 
   // Friday
-  { id: 'fri-1', name: '民歌與吉他', day: 5, startTime: '08:10', endTime: '10:00', location: '博愛M304', color: '#93c5fd' },
-  { id: 'fri-2', name: 'Python資料視覺化', day: 5, startTime: '10:10', endTime: '12:00', location: '博愛G521電腦教室', color: '#c4b5fd' },
-  { id: 'fri-3', name: 'C程式設計', day: 5, startTime: '13:10', endTime: '16:00', location: '博愛G512電腦教室', color: '#a78bfa' },
+  { id: 'fri-1', name: '民歌與吉他', day: 5, startTime: '08:10', endTime: '10:00', location: '博愛M304', color: '#a8b8c9' },
+  { id: 'fri-2', name: 'Python資料視覺化', day: 5, startTime: '10:10', endTime: '12:00', location: '博愛G521電腦教室', color: '#c9b8d4' },
+  { id: 'fri-3', name: 'C程式設計', day: 5, startTime: '13:10', endTime: '16:00', location: '博愛G512電腦教室', color: '#b8a8c9' },
 ];
 
 export const workShifts: WorkShift[] = [

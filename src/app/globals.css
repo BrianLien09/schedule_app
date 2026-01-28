@@ -8,27 +8,27 @@
   --muted: #cbd5e1; /* slate-300 - 次要文字 */
   --muted-dark: #94a3b8; /* slate-400 - 更暗的次要文字 */
 
-  /* Primary Colors (降低飽和度,更柔和) */
-  --color-primary: #818cf8; /* indigo-400 */
-  --color-secondary: #f472b6; /* pink-400 */
-  --color-accent: #10b981; /* emerald-500 */
-  --color-highlight: #fcd34d; /* amber-300 */
+  /* Primary Colors (溫暖深棕色系) */
+  --color-primary: #d4a574; /* 棕金色 */
+  --color-secondary: #e8b4a8; /* 柔和粉棕色 */
+  --color-accent: #c9a577; /* 暖棕色 */
+  --color-highlight: #e6c79c; /* 淺棕金色 */
 
-  /* ===== Glass Effect (提升不透明度與邊框可見度) ===== */
-  --glass-bg: rgba(30, 41, 59, 0.6); /* 更高不透明度 */
-  --glass-bg-hover: rgba(30, 41, 59, 0.75); /* Hover 狀態更亮 */
-  --glass-border: rgba(248, 250, 252, 0.15); /* 更明顯的邊框 */
-  --glass-border-hover: rgba(248, 250, 252, 0.25);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  --glass-shadow-hover: 0 12px 48px rgba(0, 0, 0, 0.5);
-  --glass-highlight: rgba(255, 255, 255, 0.05); /* 內發光 */
+  /* ===== Glass Effect (深棕色玻璃效果) ===== */
+  --glass-bg: rgba(26, 22, 18, 0.65); /* 深棕色背景 */
+  --glass-bg-hover: rgba(26, 22, 18, 0.8); /* Hover 狀態 */
+  --glass-border: rgba(212, 165, 116, 0.25); /* 棕金色邊框 */
+  --glass-border-hover: rgba(212, 165, 116, 0.4);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --glass-shadow-hover: 0 12px 48px rgba(0, 0, 0, 0.6);
+  --glass-highlight: rgba(230, 199, 156, 0.08); /* 暖色內發光 */
   --glass-blur: blur(16px); /* 增強模糊度 */
 
-  /* Background colors */
-  --bg-base: #0F172A;
-  --bg-gradient-start: #0f172a;
-  --bg-gradient-mid: #1e293b;
-  --bg-gradient-accent: #312e81;
+  /* Background colors (深咖啡色漸層) */
+  --bg-base: #1a1612;
+  --bg-gradient-start: #1a1612;
+  --bg-gradient-mid: #2d231b;
+  --bg-gradient-accent: #3d2f24;
 
   /* ===== Spacing System (4px Grid) ===== */
   --spacing-xs: 0.5rem; /* 8px */

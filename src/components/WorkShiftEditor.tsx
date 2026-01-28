@@ -36,11 +36,32 @@ export default function WorkShiftEditor({ isOpen, onClose, onSave, shift, mode }
     }
   }, [shift, mode]);
 
+  // 鍵盤快捷鍵：Esc 關閉對話框
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.date || !formData.startTime || !formData.endTime) {
       alert('請填寫所有必填欄位');
+      return;
+    }
+
+    // 驗證結束時間必須大於開始時間
+    if (formData.startTime && formData.endTime && formData.startTime >= formData.endTime) {
+      alert('結束時間必須晚於開始時間');
       return;
     }
 
