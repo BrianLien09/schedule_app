@@ -38,6 +38,12 @@
   font-weight: bold;
   opacity: 0.7;
   font-size: 1rem;
+  color: var(--foreground); /* 使用主題文字色 */
+}
+
+/* 深色模式下的週標題 */
+:global([data-theme="dark"]) .weekdayLabel {
+  opacity: 0.8; /* 稍微提高透明度，讓文字更清晰 */
 }
 
 @media (max-width: 768px) {
@@ -92,14 +98,26 @@
 }
 
 .dayCellEmpty {
-  background: rgba(165, 243, 252, 0.2); /* 淺青綠背景 */
-  border: 2px solid rgba(8, 145, 178, 0.3); /* 明顯的青綠邊框 */
+  background: rgba(248, 250, 252, 0.8); /* 淺灰背景 - slate-50 */
+  border: 2px solid var(--glass-border); /* 一致的邊框色 */
+}
+
+/* 深色模式下的空白日期 */
+:global([data-theme="dark"]) .dayCellEmpty {
+  background: rgba(30, 41, 59, 0.5); /* 深灰半透明 - slate-800 */
+  border: 1px solid rgba(71, 85, 105, 0.6); /* 深色邊框 - slate-600 */
 }
 
 .dayCellWithShift {
-  background: linear-gradient(135deg, rgba(8, 145, 178, 0.2), rgba(5, 150, 105, 0.2)); /* 青綠到翠綠漸層 */
-  border: 2px solid var(--color-accent); /* 翠綠邊框 */
+  background: linear-gradient(135deg, rgba(8, 145, 178, 0.15), rgba(5, 150, 105, 0.15)); /* 降低飽和度 */
+  border: 2px solid var(--color-accent-light); /* 翠綠邊框保留 */
   cursor: pointer;
+}
+
+/* 深色模式下的有班次日期 */
+:global([data-theme="dark"]) .dayCellWithShift {
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.2), rgba(52, 211, 153, 0.2)); /* 螢光青綠漸層 */
+  border: 2px solid var(--color-accent); /* 螢光綠邊框 */
 }
 
 .dayNumber {
@@ -116,17 +134,27 @@
 }
 
 .dayNumberEmpty {
-  color: inherit;
+  color: var(--foreground); /* 使用主題文字色 */
+}
+
+/* 深色模式下的空白日期數字 */
+:global([data-theme="dark"]) .dayNumberEmpty {
+  color: #cbd5e1; /* slate-300 - 淺灰色，與深灰背景有足夠對比 */
 }
 
 .dayNumberWithShift {
   color: var(--color-accent); /* 翠綠色 */
 }
 
+/* 深色模式下的有班次日期數字 */
+:global([data-theme="dark"]) .dayNumberWithShift {
+  color: var(--color-accent-light); /* 螢光綠 - Emerald-300 */
+}
+
 /* 班次標籤 */
 .shiftBadge {
   font-size: 0.75rem;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent)); /* 青綠到翠綠漸層 */
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent)); /* 深青到深翠綠漸層 (WCAG AA) */
   color: white;
   padding: 2px 4px;
   border-radius: 4px;
@@ -134,6 +162,12 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 深色模式下的班次標籤 - 螢光效果 */
+:global([data-theme="dark"]) .shiftBadge {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent)); /* 螢光漸層 */
+  box-shadow: 0 0 8px rgba(45, 212, 191, 0.4); /* 發光效果 */
 }
 
 @media (max-width: 768px) {
@@ -166,21 +200,45 @@
   gap: 1rem;
   padding: 1rem;
   border-radius: 12px;
-  border-left: 4px solid var(--color-accent); /* 翠綠左邊框 */
+  border-left: 4px solid var(--color-accent-light); /* 翠綠左邊框 */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
   transform: scale(1);
 }
 
+/* 深色模式下的卡片 Hover 效果 */
+:global([data-theme="dark"]) .shiftCard {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+:global([data-theme="dark"]) .shiftCard:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6),
+              0 0 16px rgba(45, 212, 191, 0.15); /* 螢光青綠光暈 */
+}
+
 .shiftCardNormal {
-  background: linear-gradient(135deg, rgba(8, 145, 178, 0.1), rgba(5, 150, 105, 0.1)); /* 青綠漸層 */
+  background: rgba(248, 250, 252, 0.9); /* 白色系背景 */
+}
+
+/* 深色模式下的普通卡片 */
+:global([data-theme="dark"]) .shiftCardNormal {
+  background: rgba(30, 41, 59, 0.6); /* slate-800 半透明 */
+  border-left-color: var(--color-accent); /* 螢光綠邊框 */
 }
 
 .shiftCardSelected {
-  background: linear-gradient(135deg, rgba(8, 145, 178, 0.25), rgba(5, 150, 105, 0.25)); /* 更深的青綠漸層 */
-  border-left: 4px solid var(--color-primary);
-  box-shadow: 0 0 15px rgba(8, 145, 178, 0.4);
+  background: linear-gradient(135deg, rgba(8, 145, 178, 0.2), rgba(5, 150, 105, 0.2)); /* 保留青綠漸層強調選中狀態 */
+  border-left: 4px solid var(--color-primary-light);
+  box-shadow: 0 0 15px rgba(8, 145, 178, 0.35);
   transform: scale(1.02);
+}
+
+/* 深色模式下的選中卡片 */
+:global([data-theme="dark"]) .shiftCardSelected {
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.25), rgba(52, 211, 153, 0.25)); /* 螢光漸層 */
+  border-left-color: var(--color-primary-light); /* Teal-300 */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6),
+              0 0 24px rgba(45, 212, 191, 0.4); /* 強烈發光 */
 }
 
 .shiftDate {
@@ -210,9 +268,15 @@
 
 /* 多選狀態 */
 .dayCellSelected {
-  background: rgba(8, 145, 178, 0.3) !important; /* 青綠半透明 */
-  border: 2px solid var(--color-primary) !important;
+  background: rgba(8, 145, 178, 0.25) !important; /* 青綠半透明 */
+  border: 2px solid var(--color-primary-light) !important;
   position: relative;
+}
+
+/* 深色模式下的多選狀態 */
+:global([data-theme="dark"]) .dayCellSelected {
+  background: rgba(45, 212, 191, 0.25) !important; /* 螢光青綠半透明 */
+  border: 2px solid var(--color-primary) !important; /* Teal-400 邊框 */
 }
 
 .selectedOverlay {
@@ -229,13 +293,27 @@
   justify-content: center;
   font-size: 12px;
   font-weight: bold;
+  box-shadow: 0 2px 6px rgba(8, 145, 178, 0.4); /* 加上陰影讓勾選標記更明顯 */
+}
+
+/* 深色模式下的勾選標記發光效果 */
+:global([data-theme="dark"]) .selectedOverlay {
+  box-shadow: 0 2px 8px rgba(45, 212, 191, 0.6),
+              0 0 12px rgba(45, 212, 191, 0.3); /* 螢光發光 */
 }
 
 /* 拖曳 hover 效果 */
 .dayCellDragOver {
-  background: rgba(34, 211, 238, 0.4) !important; /* 亮青半透明 */
-  border: 2px dashed var(--color-secondary) !important;
+  background: rgba(224, 242, 254, 0.5) !important; /* 極淺青色 */
+  border: 2px dashed var(--color-primary) !important;
   transform: scale(1.05);
+}
+
+/* 深色模式下的拖曳 Hover 效果 */
+:global([data-theme="dark"]) .dayCellDragOver {
+  background: rgba(45, 212, 191, 0.2) !important; /* 螢光青綠 */
+  border: 2px dashed var(--color-primary-light) !important; /* Teal-300 虛線 */
+  box-shadow: 0 0 16px rgba(45, 212, 191, 0.4); /* 發光效果 */
 }
 
 .shiftBadge {
@@ -260,10 +338,23 @@
   flex-wrap: wrap;
 }
 
+/* 深色模式下的多選操作列 */
+:global([data-theme="dark"]) .multiSelectBar {
+  background: rgba(30, 41, 59, 0.8); /* slate-800 半透明 */
+  border-color: rgba(71, 85, 105, 0.6); /* slate-600 */
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
 .multiSelectInfo {
   font-weight: bold;
   color: var(--color-primary);
   font-size: 1.1rem;
+}
+
+/* 深色模式下的提示文字發光 */
+:global([data-theme="dark"]) .multiSelectInfo {
+  color: var(--color-primary-light); /* Teal-300 */
+  text-shadow: 0 0 8px rgba(45, 212, 191, 0.3); /* 微弱發光 */
 }
 
 .multiSelectActions {
@@ -275,14 +366,14 @@
 .templateButton {
   background: var(--color-accent);
   color: white;
-  border-color: var(--color-accent);
+  border-color: var(--color-accent-light);
   font-size: 0.9rem;
   padding: 0.5rem 1rem;
 }
 
 .templateButton:hover {
   background: var(--color-primary);
-  border-color: var(--color-primary);
+  border-color: var(--color-primary-light);
 }
 
 .cancelButton {
@@ -305,10 +396,16 @@
 .hint {
   font-size: 0.85rem;
   color: var(--muted);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(248, 250, 252, 0.8); /* 淺灰背景 */
   padding: 0.5rem 0.75rem;
   border-radius: 8px;
   border: 1px solid var(--glass-border);
+}
+
+/* 深色模式下的提示框 */
+:global([data-theme="dark"]) .hint {
+  background: rgba(30, 41, 59, 0.6); /* slate-800 半透明 */
+  border-color: rgba(71, 85, 105, 0.6); /* slate-600 */
 }
 
 @media (max-width: 768px) {

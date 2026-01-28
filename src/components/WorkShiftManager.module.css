@@ -28,13 +28,15 @@
 .addButton {
   background: var(--color-primary);
   color: white;
-  border-color: var(--color-primary);
+  border-color: var(--color-primary-light);
   font-weight: 600;
 }
 
 .addButton:hover {
-  background: var(--color-secondary);
-  border-color: var(--color-secondary);
+  background: var(--color-primary-light); /* 改用 Cyan-500 Hover */
+  border-color: var(--color-primary-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
 }
 
 .copyButton {
@@ -46,7 +48,7 @@
 
 .copyButton:hover {
   background: var(--color-accent);
-  border-color: var(--color-accent);
+  border-color: var(--color-accent-light);
   color: white;
 }
 
@@ -167,7 +169,7 @@
 
 .editButton:hover {
   background: var(--color-primary);
-  border-color: var(--color-primary);
+  border-color: var(--color-primary-light);
   color: white;
   transform: scale(1.1);
 }

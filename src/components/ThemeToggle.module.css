@@ -20,6 +20,12 @@
   box-shadow: var(--glass-shadow-hover);
 }
 
+/* 深色模式下的 Hover 發光效果 */
+:global([data-theme="dark"]) .themeToggle:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6),
+              0 0 20px rgba(45, 212, 191, 0.3); /* 螢光青綠光暈 */
+}
+
 .themeToggle:active {
   transform: scale(0.95) rotate(0deg);
 }

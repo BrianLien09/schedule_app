@@ -74,8 +74,13 @@
 }
 
 .closeButton:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(226, 232, 240, 0.3); /* 淺灰 Hover */
   transform: rotate(90deg);
+}
+
+/* 深色模式下的 Hover 效果 */
+:global([data-theme="dark"]) .closeButton:hover {
+  background: rgba(71, 85, 105, 0.5); /* 深灰 Hover */
 }
 
 .form {
@@ -114,7 +119,7 @@
 .formGroup input:focus,
 .formGroup select:focus {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: var(--color-primary-light);
   box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.2);
 }
 
@@ -160,14 +165,14 @@
 .saveButton {
   background: var(--color-primary);
   color: white;
-  border: 1px solid var(--color-primary);
+  border: 1px solid var(--color-primary-light);
 }
 
 .saveButton:hover {
-  background: var(--color-secondary);
-  border-color: var(--color-secondary);
+  background: var(--color-primary-light); /* 改用 Cyan-500 Hover */
+  border-color: var(--color-primary-light);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.4);
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
 }
 
 @media (max-width: 640px) {

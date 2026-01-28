@@ -9,10 +9,11 @@
 .headerTitle {
   font-size: 2.5rem;
   margin-bottom: var(--spacing-sm);
-  background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  font-weight: 700; /* 加粗讓漸層更明顯 */
 }
 
 .headerSubtitle {
@@ -30,26 +31,38 @@
 /* ===== Current/Next Event Card ===== */
 .eventCard {
   padding: 0;
-  border-top: 3px solid var(--color-accent);
+  border-top: 3px solid var(--color-primary); /* 改用青色強調 */
   display: flex;
   flex-direction: column;
+  gap: 0; /* 不使用 gap，讓上下兩個 section 緊密連接 */
   overflow: hidden;
 }
 
 .eventSection {
   padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem; /* 12px - 標題與內容之間的間距 */
 }
 
 .eventSectionTop {
   padding: var(--spacing-md);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--glass-border); /* 改用一致的邊框色 */
+  background: rgba(248, 250, 252, 0.5); /* 極淺灰背景 */
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem; /* 12px - 標題與內容之間的間距 */
+}
+
+/* 深色模式下的頂部區塊 - 更深的背景 */
+:global([data-theme="dark"]) .eventSectionTop {
+  background: rgba(15, 23, 42, 0.4); /* slate-900 極淺透明 - 更深更通透 */
+  border-bottom: 1px solid rgba(71, 85, 105, 0.4); /* slate-600 半透明邊框 */
 }
 
 .eventLabel {
   font-size: 0.85rem;
-  color: var(--color-accent);
-  margin-bottom: 8px;
+  color: var(--color-primary); /* 改用青色強調 */
   font-weight: bold;
   display: flex;
   align-items: center;
@@ -59,7 +72,6 @@
 .eventLabelMuted {
   font-size: 0.85rem;
   color: var(--muted);
-  margin-bottom: 8px;
 }
 
 .eventContent {

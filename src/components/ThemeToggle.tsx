@@ -1,4 +1,5 @@
 'use client';
+import { useEffect, useState } from 'react';
 import { useTheme } from '../hooks/useTheme';
 import styles from './ThemeToggle.module.css';
 
@@ -8,6 +9,39 @@ import styles from './ThemeToggle.module.css';
  */
 export default function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  // 等待客戶端渲染完成後才顯示（避免 hydration mismatch）
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // 在客戶端渲染完成前，顯示佔位符（避免閃爍）
+  // 預設深色模式，顯示月亮圖示
+  if (!mounted) {
+    return (
+      <button
+        className={styles.themeToggle}
+        aria-label="Toggle theme"
+        disabled
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ opacity: 0.5 }}
+        >
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+      </button>
+    );
+  }
 
   return (
     <button
