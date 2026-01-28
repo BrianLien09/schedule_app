@@ -14,21 +14,21 @@
   --color-accent: #059669; /* 翠綠 - Emerald */
   --color-highlight: #F59E0B; /* 暖橙 - Amber */
 
-  /* ===== Glass Effect (柔和青綠玻璃效果) ===== */
-  --glass-bg: rgba(236, 254, 255, 0.75); /* 極淺青綠背景 */
-  --glass-bg-hover: rgba(236, 254, 255, 0.9); /* Hover 狀態 */
-  --glass-border: rgba(8, 145, 178, 0.2); /* 青綠邊框 */
-  --glass-border-hover: rgba(8, 145, 178, 0.35);
-  --glass-shadow: 0 8px 32px rgba(8, 145, 178, 0.15);
-  --glass-shadow-hover: 0 12px 48px rgba(8, 145, 178, 0.25);
-  --glass-highlight: rgba(34, 211, 238, 0.1); /* 亮青內發光 */
+  /* ===== Glass Effect (柔和青綠玻璃效果 - 調暗版) ===== */
+  --glass-bg: rgba(207, 250, 254, 0.85); /* 調暗的青綠背景 */
+  --glass-bg-hover: rgba(207, 250, 254, 0.95); /* Hover 狀態 */
+  --glass-border: rgba(8, 145, 178, 0.3); /* 更明顯的青綠邊框 */
+  --glass-border-hover: rgba(8, 145, 178, 0.5);
+  --glass-shadow: 0 8px 32px rgba(8, 145, 178, 0.2);
+  --glass-shadow-hover: 0 12px 48px rgba(8, 145, 178, 0.3);
+  --glass-highlight: rgba(34, 211, 238, 0.15); /* 亮青內發光 */
   --glass-blur: blur(16px); /* 增強模糊度 */
 
-  /* Background colors (柔和青綠漸層) */
-  --bg-base: #ECFEFF;
-  --bg-gradient-start: #ECFEFF;
-  --bg-gradient-mid: #CFFAFE;
-  --bg-gradient-accent: #A5F3FC;
+  /* Background colors (調暗的青綠漸層) */
+  --bg-base: #CFFAFE;
+  --bg-gradient-start: #CFFAFE;
+  --bg-gradient-mid: #A5F3FC;
+  --bg-gradient-accent: #67E8F9;
 
   /* ===== Spacing System (4px Grid) ===== */
   --spacing-xs: 0.5rem; /* 8px */
@@ -304,13 +304,13 @@ a {
   left: 50%;
   /* Start slightly lower and invisible */
   transform: translateX(-50%) translateY(10px);
-  background-color: rgba(26, 32, 44, 0.95);
+  background: var(--glass-bg); /* 使用玻璃效果背景 */
   min-width: 160px;
-  box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+  box-shadow: var(--glass-shadow);
   z-index: 100;
   border-radius: 12px;
   border: 1px solid var(--glass-border);
-  backdrop-filter: blur(12px);
+  backdrop-filter: var(--glass-blur);
   padding: 0.5rem;
   opacity: 0;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); /* Smooth Modern Ease */
@@ -336,6 +336,6 @@ a {
 }
 
 .dropdown-item:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background: var(--glass-bg-hover);
   color: var(--color-primary);
 }

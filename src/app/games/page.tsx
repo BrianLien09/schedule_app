@@ -26,9 +26,10 @@ export default function GamesPage() {
             {game.versions && game.versions.length > 0 && (
               <div style={{ 
                 padding: '1.5rem', 
-                backgroundColor: 'rgba(0, 0, 0, 0.6)', 
+                background: 'var(--glass-bg)', 
                 borderRadius: '16px', 
-                border: '1px solid rgba(255,255,255,0.1)',
+                border: '1px solid var(--glass-border)',
+                backdropFilter: 'var(--glass-blur)',
                 display: 'flex', flexDirection: 'column', gap: '2.5rem' // Added gap here for spacing between versions
               }}>
                 {game.versions.map((ver, idx) => (
@@ -50,10 +51,10 @@ export default function GamesPage() {
                        {ver.characters.map((char, cIdx) => (
                          <div key={cIdx} style={{
                            padding: '0.5rem 1.2rem',
-                           backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                           border: '1px solid rgba(255,255,255,0.2)',
+                           background: 'linear-gradient(135deg, rgba(8, 145, 178, 0.25), rgba(5, 150, 105, 0.25))',
+                           border: '1px solid var(--glass-border)',
                            borderRadius: '8px',
-                           color: '#fff',
+                           color: 'var(--foreground)',
                            fontWeight: 'bold',
                            display: 'flex', alignItems: 'center', gap: '0.8rem'
                          }}>
@@ -68,19 +69,19 @@ export default function GamesPage() {
                                     alert(`已複製 ${char.name} 的共鳴譜代碼：\n${char.resonanceCode}`);
                                   }
                                 }}
-                                title="點擊複製共鳴譜代碼"
+                                 title="點擊複製共鳴譜代碼"
                                 style={{
-                                  background: 'rgba(255,255,255,0.2)',
+                                  background: 'var(--color-secondary)',
                                   border: 'none',
                                   borderRadius: '4px',
                                   padding: '2px 6px',
-                                  color: '#aaaaff', // Light blue tint
+                                  color: 'white',
                                   cursor: 'pointer',
                                   fontSize: '0.8rem',
                                   transition: 'background 0.2s'
                                 }}
-                                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
-                                onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
+                                onMouseOver={(e) => e.currentTarget.style.background = 'var(--color-primary)'}
+                                onMouseOut={(e) => e.currentTarget.style.background = 'var(--color-secondary)'}
                               >
                                 📋 複製共鳴譜分享碼
                               </button>
@@ -101,15 +102,15 @@ export default function GamesPage() {
                               style={{
                                  display: 'block',
                                  textDecoration: 'none',
-                                 backgroundColor: 'rgba(255,255,255,0.05)',
+                                 background: 'var(--glass-bg)',
                                  padding: '1rem',
                                  borderRadius: '8px',
-                                 border: '1px solid rgba(255,255,255,0.1)',
-                                 color: '#e2e8f0'
+                                 border: '1px solid var(--glass-border)',
+                                 color: 'var(--foreground)'
                               }}
                             >
-                               <div style={{ fontSize: '0.95rem', fontWeight: 'bold', marginBottom: '0.3rem', color: '#60a5fa' }}>{vLink.title}</div>
-                               <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>{vLink.description}</div>
+                               <div style={{ fontSize: '0.95rem', fontWeight: 'bold', marginBottom: '0.3rem', color: 'var(--color-primary)' }}>{vLink.title}</div>
+                               <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>{vLink.description}</div>
                             </a>
                          ))}
                       </div>
@@ -129,27 +130,29 @@ export default function GamesPage() {
                   rel="noopener noreferrer"
                   className="card"
                   style={{
-                    backgroundColor: 'rgba(30, 41, 59, 0.9)', // Much darker and opaque for contrast
+                    background: 'var(--glass-bg)',
                     padding: '1.5rem',
                     textDecoration: 'none',
-                    border: '1px solid rgba(255,255,255,0.1)',
+                    border: '1px solid var(--glass-border)',
                     transition: 'all 0.2s ease',
-                    color: 'white'
+                    color: 'var(--foreground)'
                   }}
                   onMouseOver={(e) => {
                     e.currentTarget.style.transform = 'translateY(-5px)';
                     e.currentTarget.style.borderColor = 'var(--color-primary)';
+                    e.currentTarget.style.background = 'var(--glass-bg-hover)';
                   }}
                   onMouseOut={(e) => {
                     e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                    e.currentTarget.style.borderColor = 'var(--glass-border)';
+                    e.currentTarget.style.background = 'var(--glass-bg)';
                   }}
                 >
-                  <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#60a5fa' }}>{link.title}</h3>
-                  <p style={{ fontSize: '0.9rem', color: '#cbd5e1', lineHeight: '1.5' }}>
+                  <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: 'var(--color-primary)' }}>{link.title}</h3>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--muted)', lineHeight: '1.5' }}>
                     {link.description || '點擊前往連結'}
                   </p>
-                  <div style={{ marginTop: '1rem', textAlign: 'right', fontSize: '0.9rem', color: '#94a3b8' }}>
+                  <div style={{ marginTop: '1rem', textAlign: 'right', fontSize: '0.9rem', color: 'var(--color-accent)' }}>
                     前往 &rarr;
                   </div>
                 </a>
