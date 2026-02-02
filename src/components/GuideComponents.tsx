@@ -15,7 +15,7 @@ interface CategoryBadgeProps {
   category: GuideCategory;
 }
 
-const CategoryBadgeComponent = ({ category }: CategoryBadgeProps) => {
+export const CategoryBadge = ({ category }: CategoryBadgeProps) => {
   const colors = CATEGORY_COLORS[category];
 
   return (
@@ -31,9 +31,6 @@ const CategoryBadgeComponent = ({ category }: CategoryBadgeProps) => {
   );
 };
 
-export const CategoryBadge = memo(CategoryBadgeComponent);
-CategoryBadge.displayName = 'CategoryBadge';
-
 // ============================================================
 // 星級評分元件
 // ============================================================
@@ -44,7 +41,7 @@ interface StarRatingProps {
   onChange?: (rating: number) => void;
 }
 
-const StarRatingComponent = ({ rating, interactive = false, onChange }: StarRatingProps) => {
+export const StarRating = ({ rating, interactive = false, onChange }: StarRatingProps) => {
   const handleClick = (star: number) => {
     if (interactive && onChange) {
       onChange(star);
@@ -67,9 +64,6 @@ const StarRatingComponent = ({ rating, interactive = false, onChange }: StarRati
     </div>
   );
 };
-
-export const StarRating = memo(StarRatingComponent);
-StarRating.displayName = 'StarRating';
 
 // ============================================================
 // 進度條元件
@@ -99,7 +93,7 @@ interface TagListProps {
   tags: string[];
 }
 
-const TagListComponent = ({ tags }: TagListProps) => {
+export const TagList = ({ tags }: TagListProps) => {
   if (tags.length === 0) return null;
 
   return (
@@ -124,9 +118,6 @@ const TagListComponent = ({ tags }: TagListProps) => {
   );
 };
 
-export const TagList = memo(TagListComponent);
-TagList.displayName = 'TagList';
-
 // ============================================================
 // 完成標記元件
 // ============================================================
@@ -135,7 +126,7 @@ interface CompletedOverlayProps {
   completed: boolean;
 }
 
-const CompletedOverlayComponent = ({ completed }: CompletedOverlayProps) => {
+export const CompletedOverlay = ({ completed }: CompletedOverlayProps) => {
   if (!completed) return null;
 
   return (
@@ -144,9 +135,6 @@ const CompletedOverlayComponent = ({ completed }: CompletedOverlayProps) => {
     </div>
   );
 };
-
-export const CompletedOverlay = memo(CompletedOverlayComponent);
-CompletedOverlay.displayName = 'CompletedOverlay';
 
 // ============================================================
 // 攻略卡片完整元件

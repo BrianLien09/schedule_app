@@ -35,6 +35,17 @@ const GuideEditFormComponent = ({ guide, gameId, version, onSave, onCancel }: Gu
     }
   }, [gameId, version, guide]);
 
+  // 🔧 修復：當 guide prop 改變時，重新初始化表單資料
+  useEffect(() => {
+    if (guide) {
+      // 編輯模式：使用傳入的 guide 資料
+      setFormData(guide);
+    } else {
+      // 新增模式：使用預設值
+      setFormData(createDefaultGuide(gameId, version));
+    }
+  }, [guide, gameId, version]); // 監聽 guide 的變化
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 

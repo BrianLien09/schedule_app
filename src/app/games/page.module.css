@@ -48,7 +48,7 @@
   font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 250ms ease;
+  transition: transform 200ms ease, background-color 200ms ease, box-shadow 200ms ease;
 }
 
 .btnEditToggle:hover {
@@ -89,7 +89,7 @@
   font-weight: 600;
   color: var(--text-primary);
   cursor: pointer;
-  transition: all 250ms ease;
+  transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
 }
 
 .gameTab:hover {
@@ -132,7 +132,7 @@
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 200ms ease;
+  transition: transform 150ms ease, background-color 150ms ease;
 }
 
 .versionChip:hover {
@@ -226,7 +226,7 @@
   font-size: 1.05rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 250ms ease;
+  transition: transform 200ms ease, background-color 200ms ease, border-style 200ms ease, box-shadow 200ms ease;
 }
 
 .btnAddGuide:hover {
