@@ -15,7 +15,7 @@ interface CategoryBadgeProps {
   category: GuideCategory;
 }
 
-export const CategoryBadge = memo(function CategoryBadge({ category }: CategoryBadgeProps) {
+const CategoryBadgeComponent = ({ category }: CategoryBadgeProps) => {
   const colors = CATEGORY_COLORS[category];
 
   return (
@@ -29,7 +29,10 @@ export const CategoryBadge = memo(function CategoryBadge({ category }: CategoryB
       {category}
     </span>
   );
-});
+};
+
+export const CategoryBadge = memo(CategoryBadgeComponent);
+CategoryBadge.displayName = 'CategoryBadge';
 
 // ============================================================
 // 星級評分元件
@@ -41,7 +44,7 @@ interface StarRatingProps {
   onChange?: (rating: number) => void;
 }
 
-export const StarRating = memo(function StarRating({ rating, interactive = false, onChange }: StarRatingProps) {
+const StarRatingComponent = ({ rating, interactive = false, onChange }: StarRatingProps) => {
   const handleClick = (star: number) => {
     if (interactive && onChange) {
       onChange(star);
@@ -63,7 +66,10 @@ export const StarRating = memo(function StarRating({ rating, interactive = false
       ))}
     </div>
   );
-});
+};
+
+export const StarRating = memo(StarRatingComponent);
+StarRating.displayName = 'StarRating';
 
 // ============================================================
 // 進度條元件
@@ -93,7 +99,7 @@ interface TagListProps {
   tags: string[];
 }
 
-export const TagList = memo(function TagList({ tags }: TagListProps) {
+const TagListComponent = ({ tags }: TagListProps) => {
   if (tags.length === 0) return null;
 
   return (
@@ -116,7 +122,10 @@ export const TagList = memo(function TagList({ tags }: TagListProps) {
       })}
     </div>
   );
-});
+};
+
+export const TagList = memo(TagListComponent);
+TagList.displayName = 'TagList';
 
 // ============================================================
 // 完成標記元件
@@ -126,7 +135,7 @@ interface CompletedOverlayProps {
   completed: boolean;
 }
 
-export const CompletedOverlay = memo(function CompletedOverlay({ completed }: CompletedOverlayProps) {
+const CompletedOverlayComponent = ({ completed }: CompletedOverlayProps) => {
   if (!completed) return null;
 
   return (
@@ -134,7 +143,10 @@ export const CompletedOverlay = memo(function CompletedOverlay({ completed }: Co
       <div className={styles.completedBadge}>✓ 已完成</div>
     </div>
   );
-});
+};
+
+export const CompletedOverlay = memo(CompletedOverlayComponent);
+CompletedOverlay.displayName = 'CompletedOverlay';
 
 // ============================================================
 // 攻略卡片完整元件
@@ -147,12 +159,12 @@ interface GuideCardProps {
   onDelete?: () => void;
 }
 
-export const GuideCard = memo(function GuideCard({
+const GuideCardComponent = ({
   guide,
   editMode = false,
   onEdit,
   onDelete,
-}: GuideCardProps) {
+}: GuideCardProps) => {
   const handleCopyResonanceCode = () => {
     if (guide.resonanceCode) {
       navigator.clipboard.writeText(guide.resonanceCode);
@@ -215,4 +227,7 @@ export const GuideCard = memo(function GuideCard({
       </div>
     </div>
   );
-});
+};
+
+export const GuideCard = memo(GuideCardComponent);
+GuideCard.displayName = 'GuideCard';

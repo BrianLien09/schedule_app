@@ -17,7 +17,7 @@ interface GuideEditFormProps {
   onCancel: () => void;
 }
 
-export const GuideEditForm = memo(function GuideEditForm({ guide, gameId, version, onSave, onCancel }: GuideEditFormProps) {
+const GuideEditFormComponent = ({ guide, gameId, version, onSave, onCancel }: GuideEditFormProps) => {
   const [formData, setFormData] = useState<Omit<GameGuide, 'id'>>(
     guide || createDefaultGuide(gameId, version)
   );
@@ -249,4 +249,7 @@ export const GuideEditForm = memo(function GuideEditForm({ guide, gameId, versio
       </div>
     </form>
   );
-});
+};
+
+export const GuideEditForm = memo(GuideEditFormComponent);
+GuideEditForm.displayName = 'GuideEditForm';
