@@ -26,13 +26,13 @@ export interface GameGuide {
   updatedAt: string;                // 更新時間（ISO 8601）
 }
 
-// 攻略分類選項（用於下拉選單）
+// 攻略分類選項（用於下拉選單和顯示順序）
 export const GUIDE_CATEGORIES: GuideCategory[] = [
+  '角色養成',
   '角色攻略',
   '活動攻略',
-  '通用資源',
-  '角色養成',
-  '版本總覽'
+  '版本總覽',
+  '通用資源'
 ];
 
 // 常用標籤建議（用於快速選擇）

@@ -11,7 +11,7 @@
  * - 視覺化：標籤、星級、進度條、完成標記
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useGameGuides } from '@/hooks/useGameGuides';
 import { useAuth } from '@/context/AuthContext';
 import { GuideCard, CategoryBadge } from '@/components/GuideComponents';
@@ -57,44 +57,45 @@ export default function GamesPage() {
     return getGuidesByGame(selectedGame);
   }, [selectedGame, selectedVersion, getGuidesByGame, getGuidesByVersion]);
 
-  // 按照分類分組攻略
+  // 按照分類分組攻略（保持順序）
   const groupedGuides = useMemo(() => {
     const groups: Record<GuideCategory, GameGuide[]> = {
+      '角色養成': [],
       '角色攻略': [],
       '活動攻略': [],
-      '通用資源': [],
-      '角色養成': [],
       '版本總覽': [],
+      '通用資源': [],
     };
 
     filteredGuides.forEach((guide) => {
       groups[guide.category].push(guide);
     });
 
-    // 只返回有資料的分類
-    return Object.entries(groups).filter(([_, guides]) => guides.length > 0);
+    // 按照 GUIDE_CATEGORIES 順序返回有資料的分類
+    return GUIDE_CATEGORIES.map((category) => [category, groups[category]] as const)
+      .filter(([_, guides]) => guides.length > 0);
   }, [filteredGuides]);
 
-  // 處理新增攻略
-  const handleAddGuide = async (guide: Omit<GameGuide, 'id'>) => {
+  // 處理新增攻略（使用 useCallback 避免重新建立）
+  const handleAddGuide = useCallback(async (guide: Omit<GameGuide, 'id'>) => {
     await addGuide(guide);
     setShowAddForm(false);
-  };
+  }, [addGuide]);
 
   // 處理更新攻略
-  const handleUpdateGuide = async (guide: Omit<GameGuide, 'id'>) => {
+  const handleUpdateGuide = useCallback(async (guide: Omit<GameGuide, 'id'>) => {
     if (editingGuide) {
       await updateGuide(editingGuide.id, guide);
       setEditingGuide(null);
     }
-  };
+  }, [editingGuide, updateGuide]);
 
   // 處理刪除攻略
-  const handleDeleteGuide = (guideId: string, title: string) => {
+  const handleDeleteGuide = useCallback((guideId: string, title: string) => {
     if (confirm(`確定要刪除「${title}」嗎？\n\n此操作無法復原。`)) {
       removeGuide(guideId);
     }
-  };
+  }, [removeGuide]);
 
   // 登入提示
   if (!user) {
@@ -240,30 +241,6 @@ export default function GamesPage() {
               </div>
             </div>
           ))}
-        </div>
-      )}
-
-      {/* ============================================================
-          資料統計（開發用）
-          ============================================================ */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className={styles.debugInfo}>
-          <details>
-            <summary>📊 資料統計</summary>
-            <pre>
-              {JSON.stringify(
-                {
-                  totalGuides: guides.length,
-                  filteredGuides: filteredGuides.length,
-                  selectedGame,
-                  selectedVersion,
-                  availableVersions,
-                },
-                null,
-                2
-              )}
-            </pre>
-          </details>
         </div>
       )}
     </div>

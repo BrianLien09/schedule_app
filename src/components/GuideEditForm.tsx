@@ -2,7 +2,7 @@
  * 攻略編輯表單元件
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import type { GameGuide } from '@/data/gameGuides';
 import { GUIDE_CATEGORIES, COMMON_TAGS, createDefaultGuide, validateGuide } from '@/data/gameGuides';
 import { StarRating } from './GuideComponents';
@@ -17,7 +17,7 @@ interface GuideEditFormProps {
   onCancel: () => void;
 }
 
-export function GuideEditForm({ guide, gameId, version, onSave, onCancel }: GuideEditFormProps) {
+export const GuideEditForm = memo(function GuideEditForm({ guide, gameId, version, onSave, onCancel }: GuideEditFormProps) {
   const [formData, setFormData] = useState<Omit<GameGuide, 'id'>>(
     guide || createDefaultGuide(gameId, version)
   );
@@ -171,24 +171,27 @@ export function GuideEditForm({ guide, gameId, version, onSave, onCancel }: Guid
         </select>
       </div>
 
-      {/* 版本選擇 */}
-      {availableVersions.length > 0 && (
-        <div className={styles.formGroup}>
-          <label>適用版本</label>
-          <select
-            value={formData.version || ''}
-            onChange={(e) => setFormData({ ...formData, version: e.target.value || undefined })}
-          >
-            <option value="">不指定版本</option>
+      {/* 版本輸入（支援自訂） */}
+      <div className={styles.formGroup}>
+        <label>適用版本</label>
+        <input
+          type="text"
+          value={formData.version || ''}
+          onChange={(e) => setFormData({ ...formData, version: e.target.value || undefined })}
+          placeholder="例如：3.1、3.2（選填）"
+          list="version-suggestions"
+        />
+        {availableVersions.length > 0 && (
+          <datalist id="version-suggestions">
             {availableVersions.map((ver) => (
-              <option key={ver} value={ver}>
-                v{ver}
-              </option>
+              <option key={ver} value={ver} />
             ))}
-          </select>
-          <small className={styles.hint}>選填，指定攻略適用的遊戲版本</small>
-        </div>
-      )}
+          </datalist>
+        )}
+        <small className={styles.hint}>
+          選填，可輸入版本號或從建議中選擇（無需輸入 "v" 前綴）
+        </small>
+      </div>
 
       {/* 重要性星級 */}
       <div className={styles.formGroup}>
@@ -246,4 +249,4 @@ export function GuideEditForm({ guide, gameId, version, onSave, onCancel }: Guid
       </div>
     </form>
   );
-}
+});

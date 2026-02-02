@@ -2,6 +2,7 @@
  * 攻略卡片視覺化元件
  */
 
+import { memo } from 'react';
 import type { GameGuide, GuideCategory } from '@/data/gameGuides';
 import { CATEGORY_COLORS, getTagColor } from '@/data/gameGuides';
 import styles from './GuideComponents.module.css';
@@ -14,7 +15,7 @@ interface CategoryBadgeProps {
   category: GuideCategory;
 }
 
-export function CategoryBadge({ category }: CategoryBadgeProps) {
+export const CategoryBadge = memo(function CategoryBadge({ category }: CategoryBadgeProps) {
   const colors = CATEGORY_COLORS[category];
 
   return (
@@ -28,7 +29,7 @@ export function CategoryBadge({ category }: CategoryBadgeProps) {
       {category}
     </span>
   );
-}
+});
 
 // ============================================================
 // 星級評分元件
@@ -40,7 +41,7 @@ interface StarRatingProps {
   onChange?: (rating: number) => void;
 }
 
-export function StarRating({ rating, interactive = false, onChange }: StarRatingProps) {
+export const StarRating = memo(function StarRating({ rating, interactive = false, onChange }: StarRatingProps) {
   const handleClick = (star: number) => {
     if (interactive && onChange) {
       onChange(star);
@@ -62,7 +63,7 @@ export function StarRating({ rating, interactive = false, onChange }: StarRating
       ))}
     </div>
   );
-}
+});
 
 // ============================================================
 // 進度條元件
@@ -92,7 +93,7 @@ interface TagListProps {
   tags: string[];
 }
 
-export function TagList({ tags }: TagListProps) {
+export const TagList = memo(function TagList({ tags }: TagListProps) {
   if (tags.length === 0) return null;
 
   return (
@@ -115,7 +116,7 @@ export function TagList({ tags }: TagListProps) {
       })}
     </div>
   );
-}
+});
 
 // ============================================================
 // 完成標記元件
@@ -125,7 +126,7 @@ interface CompletedOverlayProps {
   completed: boolean;
 }
 
-export function CompletedOverlay({ completed }: CompletedOverlayProps) {
+export const CompletedOverlay = memo(function CompletedOverlay({ completed }: CompletedOverlayProps) {
   if (!completed) return null;
 
   return (
@@ -133,7 +134,7 @@ export function CompletedOverlay({ completed }: CompletedOverlayProps) {
       <div className={styles.completedBadge}>✓ 已完成</div>
     </div>
   );
-}
+});
 
 // ============================================================
 // 攻略卡片完整元件
@@ -146,7 +147,7 @@ interface GuideCardProps {
   onDelete?: () => void;
 }
 
-export function GuideCard({
+export const GuideCard = memo(function GuideCard({
   guide,
   editMode = false,
   onEdit,
@@ -214,4 +215,4 @@ export function GuideCard({
       </div>
     </div>
   );
-}
+});
