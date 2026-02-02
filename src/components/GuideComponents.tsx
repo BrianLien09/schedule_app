@@ -113,7 +113,7 @@ const TagListComponent = ({ tags }: TagListProps) => {
             style={{
               background: colors.bg,
               color: colors.text,
-              borderColor: colors.text.replace(')', ', 0.3)').replace('rgb', 'rgba'),
+              borderColor: colors.border,
             }}
           >
             {tag}

@@ -48,46 +48,55 @@ export const COMMON_TAGS = [
 ];
 
 // 標籤顏色配置（用於視覺化）
-export const TAG_COLORS: Record<string, { bg: string; text: string }> = {
+export const TAG_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   '新手必看': {
-    bg: 'rgba(34, 197, 94, 0.15)',    // Green
-    text: '#22C55E'
+    bg: 'rgba(34, 197, 94, 0.15)',
+    text: '#22C55E',
+    border: 'rgba(34, 197, 94, 0.3)'
   },
   '速刷指南': {
-    bg: 'rgba(245, 158, 11, 0.15)',   // Amber
-    text: '#F59E0B'
+    bg: 'rgba(245, 158, 11, 0.15)',
+    text: '#F59E0B',
+    border: 'rgba(245, 158, 11, 0.3)'
   },
   '配隊推薦': {
-    bg: 'rgba(59, 130, 246, 0.15)',   // Blue
-    text: '#3B82F6'
+    bg: 'rgba(59, 130, 246, 0.15)',
+    text: '#3B82F6',
+    border: 'rgba(59, 130, 246, 0.3)'
   },
   '機制解析': {
-    bg: 'rgba(139, 92, 246, 0.15)',   // Violet
-    text: '#8B5CF6'
+    bg: 'rgba(139, 92, 246, 0.15)',
+    text: '#8B5CF6',
+    border: 'rgba(139, 92, 246, 0.3)'
   },
   '資源規劃': {
-    bg: 'rgba(236, 72, 153, 0.15)',   // Pink
-    text: '#EC4899'
+    bg: 'rgba(236, 72, 153, 0.15)',
+    text: '#EC4899',
+    border: 'rgba(236, 72, 153, 0.3)'
   },
   '限時活動': {
-    bg: 'rgba(239, 68, 68, 0.15)',    // Red
-    text: '#EF4444'
+    bg: 'rgba(239, 68, 68, 0.15)',
+    text: '#EF4444',
+    border: 'rgba(239, 68, 68, 0.3)'
   },
   '高難度': {
-    bg: 'rgba(251, 146, 60, 0.15)',   // Orange
-    text: '#FB923C'
+    bg: 'rgba(251, 146, 60, 0.15)',
+    text: '#FB923C',
+    border: 'rgba(251, 146, 60, 0.3)'
   },
   '養成路線': {
-    bg: 'rgba(6, 182, 212, 0.15)',    // Cyan
-    text: '#06B6D4'
+    bg: 'rgba(6, 182, 212, 0.15)',
+    text: '#06B6D4',
+    border: 'rgba(6, 182, 212, 0.3)'
   }
 };
 
 // 取得標籤顏色（如果不在預設清單中，使用預設灰色）
-export const getTagColor = (tag: string): { bg: string; text: string } => {
+export const getTagColor = (tag: string): { bg: string; text: string; border: string } => {
   return TAG_COLORS[tag] || {
     bg: 'rgba(148, 163, 184, 0.15)',
-    text: '#94A3B8'
+    text: '#94A3B8',
+    border: 'rgba(148, 163, 184, 0.3)'
   };
 };
 

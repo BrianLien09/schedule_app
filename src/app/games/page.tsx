@@ -29,9 +29,6 @@ export default function GamesPage() {
     addGuide,
     updateGuide,
     removeGuide,
-    getGuidesByGame,
-    getGuidesByVersion,
-    getVersionsByGame,
   } = useGameGuides();
 
   // UI 狀態
@@ -44,18 +41,29 @@ export default function GamesPage() {
   // 取得當前遊戲資訊
   const currentGame = games.find((g) => g.id === selectedGame);
 
-  // 取得當前遊戲的版本列表
+  // 取得當前遊戲的版本列表（直接在這裡計算，避免額外的函式依賴）
   const availableVersions = useMemo(() => {
-    return getVersionsByGame(selectedGame);
-  }, [selectedGame, getVersionsByGame]);
+    const versions = guides
+      .filter((g) => g.gameId === selectedGame && g.version)
+      .map((g) => g.version as string);
 
-  // 篩選顯示的攻略
+    return Array.from(new Set(versions)).sort((a, b) => {
+      const aNum = parseFloat(a);
+      const bNum = parseFloat(b);
+      if (!isNaN(aNum) && !isNaN(bNum)) {
+        return bNum - aNum;
+      }
+      return b.localeCompare(a);
+    });
+  }, [guides, selectedGame]);
+
+  // 篩選顯示的攻略（直接計算，不使用額外函式）
   const filteredGuides = useMemo(() => {
     if (selectedVersion) {
-      return getGuidesByVersion(selectedGame, selectedVersion);
+      return guides.filter((g) => g.gameId === selectedGame && g.version === selectedVersion);
     }
-    return getGuidesByGame(selectedGame);
-  }, [selectedGame, selectedVersion, getGuidesByGame, getGuidesByVersion]);
+    return guides.filter((g) => g.gameId === selectedGame);
+  }, [guides, selectedGame, selectedVersion]);
 
   // 按照分類分組攻略（保持順序）
   const groupedGuides = useMemo(() => {

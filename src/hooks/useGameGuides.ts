@@ -86,62 +86,6 @@ export function useGameGuides() {
     [updateGuide]
   );
 
-  // 依遊戲 ID 篩選
-  const getGuidesByGame = useCallback(
-    (gameId: string) => {
-      return guides.filter((g) => g.gameId === gameId);
-    },
-    [guides]
-  );
-
-  // 依遊戲 + 版本篩選
-  const getGuidesByVersion = useCallback(
-    (gameId: string, version: string) => {
-      return guides.filter((g) => g.gameId === gameId && g.version === version);
-    },
-    [guides]
-  );
-
-  // 計算完成度（特定遊戲/版本）
-  const calculateProgress = useCallback(
-    (gameId: string, version?: string) => {
-      const filtered = version
-        ? getGuidesByVersion(gameId, version)
-        : getGuidesByGame(gameId);
-
-      if (filtered.length === 0) return 0;
-
-      const completed = filtered.filter((g) => g.completed).length;
-      return Math.round((completed / filtered.length) * 100);
-    },
-    [getGuidesByGame, getGuidesByVersion]
-  );
-
-  // 取得所有遊戲 ID（去重）
-  const gameIds = useMemo(() => {
-    return Array.from(new Set(guides.map((g) => g.gameId)));
-  }, [guides]);
-
-  // 取得特定遊戲的所有版本（去重 + 排序）
-  const getVersionsByGame = useCallback(
-    (gameId: string) => {
-      const versions = guides
-        .filter((g) => g.gameId === gameId && g.version)
-        .map((g) => g.version as string);
-
-      return Array.from(new Set(versions)).sort((a, b) => {
-        // 嘗試轉換成數字比較（如 "3.1" vs "3.2"）
-        const aNum = parseFloat(a);
-        const bNum = parseFloat(b);
-        if (!isNaN(aNum) && !isNaN(bNum)) {
-          return bNum - aNum; // 降序排列（最新版本在前）
-        }
-        return b.localeCompare(a); // 字串比較
-      });
-    },
-    [guides]
-  );
-
   return {
     guides,
     loading,
@@ -150,10 +94,5 @@ export function useGameGuides() {
     updateGuide,
     removeGuide,
     toggleCompleted,
-    getGuidesByGame,
-    getGuidesByVersion,
-    calculateProgress,
-    gameIds,
-    getVersionsByGame,
   };
 }
