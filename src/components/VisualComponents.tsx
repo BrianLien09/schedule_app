@@ -33,11 +33,11 @@ export const StatCard = ({ icon, label, value, subtext, color }: StatCardProps) 
     <div style={{ fontSize: '1rem', color: 'var(--muted)', marginBottom: 'var(--spacing-xs)', fontWeight: 'bold' }}>
       {label}
     </div>
-    <div style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: 'var(--spacing-xs)' }}>
+    <div style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: 'var(--spacing-xs)', color: 'var(--foreground)' }}>
       {value}
     </div>
     {subtext && (
-      <div style={{ fontSize: '0.9rem', color: 'var(--muted-dark)' }}>
+      <div style={{ fontSize: '0.9rem', color: 'var(--foreground)', opacity: 0.8 }}>
         {subtext}
       </div>
     )}

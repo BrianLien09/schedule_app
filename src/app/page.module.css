@@ -156,7 +156,8 @@
 
 .eventTime {
   font-size: 0.9rem;
-  color: var(--muted);
+  color: var(--foreground);
+  opacity: 0.75;
 }
 
 .eventTimeNext {
@@ -294,7 +295,7 @@
 
 .workShiftDate {
   font-weight: bold;
-  color: #b45309;
+  color: var(--color-highlight);
   font-size: 1.2rem;
   min-width: 50px;
   text-align: center;
@@ -307,7 +308,8 @@
 
 .workShiftTime {
   font-size: 0.9rem;
-  color: var(--muted);
+  color: var(--foreground);
+  opacity: 0.75;
 }
 
 /* ===== Games Section ===== */
