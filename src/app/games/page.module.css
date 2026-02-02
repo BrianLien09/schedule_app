@@ -1,0 +1,381 @@
+/* 遊戲攻略頁面樣式 */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding-bottom: 3rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ============================================================
+   工具列
+   ============================================================ */
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.pageTitle {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.icon {
+  font-size: 2.5rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.btnEditToggle {
+  padding: 10px 24px;
+  background: rgba(8, 145, 178, 0.15);
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
+  border-radius: 24px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 250ms ease;
+}
+
+.btnEditToggle:hover {
+  background: rgba(8, 145, 178, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
+}
+
+.btnEditToggle.active {
+  background: var(--color-primary);
+  color: white;
+}
+
+.btnEditToggle.active:hover {
+  background: var(--color-accent);
+}
+
+/* ============================================================
+   遊戲切換器
+   ============================================================ */
+
+.gameSelector {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.gameTab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--glass-bg);
+  border: 2px solid var(--glass-border);
+  border-radius: 16px;
+  backdrop-filter: var(--glass-blur);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 250ms ease;
+}
+
+.gameTab:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.gameTab.active {
+  background: linear-gradient(135deg, rgba(8, 145, 178, 0.2), rgba(5, 150, 105, 0.2));
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.gameIcon {
+  font-size: 1.5rem;
+}
+
+/* ============================================================
+   版本篩選器
+   ============================================================ */
+
+.versionSelector {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 1rem;
+  background: var(--glass-bg);
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+}
+
+.versionChip {
+  padding: 6px 16px;
+  background: rgba(148, 163, 184, 0.1);
+  color: var(--text-secondary);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.versionChip:hover {
+  background: rgba(148, 163, 184, 0.2);
+  transform: translateY(-2px);
+}
+
+.versionChip.active {
+  background: var(--color-accent);
+  color: white;
+  border-color: var(--color-accent);
+}
+
+/* ============================================================
+   進度總覽
+   ============================================================ */
+
+.progressOverview {
+  padding: 1.5rem;
+  background: var(--glass-bg);
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.progressInfo h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.2rem;
+  color: var(--text-primary);
+}
+
+.progressInfo p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* ============================================================
+   攻略卡片網格
+   ============================================================ */
+
+/* 分組容器 */
+.groupedGuidesContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+/* 分類群組 */
+.categoryGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* 分類標題列 */
+.categoryHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.categoryCount {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* 網格佈局 */
+.guidesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+/* ============================================================
+   新增攻略按鈕
+   ============================================================ */
+
+.btnAddGuide {
+  width: 100%;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, rgba(8, 145, 178, 0.15), rgba(5, 150, 105, 0.15));
+  border: 2px dashed var(--color-primary);
+  border-radius: 12px;
+  color: var(--color-primary);
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 250ms ease;
+}
+
+.btnAddGuide:hover {
+  background: linear-gradient(135deg, rgba(8, 145, 178, 0.25), rgba(5, 150, 105, 0.25));
+  border-style: solid;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.2);
+}
+
+/* ============================================================
+   空狀態
+   ============================================================ */
+
+.emptyState {
+  padding: 3rem;
+  text-align: center;
+  background: var(--glass-bg);
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+}
+
+.emptyState p {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+/* ============================================================
+   登入提示 / 載入中
+   ============================================================ */
+
+.loginPrompt,
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  min-height: 400px;
+}
+
+.loginPrompt h2 {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.loginPrompt p {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(8, 145, 178, 0.2);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================================
+   除錯資訊
+   ============================================================ */
+
+.debugInfo {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  font-size: 0.8rem;
+}
+
+.debugInfo summary {
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.debugInfo pre {
+  overflow-x: auto;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+/* ============================================================
+   響應式設計
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .container {
+    gap: 1.5rem;
+  }
+
+  .pageTitle {
+    font-size: 1.5rem;
+  }
+
+  .icon {
+    font-size: 2rem;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btnEditToggle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .gameSelector {
+    flex-direction: column;
+  }
+
+  .gameTab {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .guidesGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .progressOverview {
+    padding: 1.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .versionSelector {
+    padding: 0.75rem;
+  }
+
+  .versionChip {
+    flex: 1 1 auto;
+    min-width: calc(33.333% - 6px);
+    text-align: center;
+  }
+}

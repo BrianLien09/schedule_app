@@ -1,0 +1,256 @@
+/* 資料遷移工具樣式 */
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.header {
+  text-align: center;
+}
+
+.header h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.header p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+/* ============================================================
+   警告區塊
+   ============================================================ */
+
+.warning {
+  padding: 1.5rem;
+  background: rgba(245, 158, 11, 0.1);
+  border: 2px solid rgba(245, 158, 11, 0.3);
+  border-radius: 12px;
+  color: var(--color-highlight);
+}
+
+.warning strong {
+  display: block;
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+}
+
+.warning ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  line-height: 1.8;
+}
+
+/* ============================================================
+   統計卡片
+   ============================================================ */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.statCard {
+  padding: 1.5rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  backdrop-filter: var(--glass-blur);
+  text-align: center;
+}
+
+.statValue {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  margin-bottom: 0.5rem;
+}
+
+.statLabel {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* ============================================================
+   按鈕
+   ============================================================ */
+
+.btnMigrate {
+  width: 100%;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 250ms ease;
+}
+
+.btnMigrate:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(8, 145, 178, 0.3);
+}
+
+.btnMigrate:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: linear-gradient(135deg, rgba(8, 145, 178, 0.5), rgba(5, 150, 105, 0.5));
+}
+
+/* ============================================================
+   執行記錄
+   ============================================================ */
+
+.logContainer {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  backdrop-filter: var(--glass-blur);
+  padding: 1.5rem;
+}
+
+.logContainer h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+.logContent {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  border-radius: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #e5e5e5;
+}
+
+.logContent::-webkit-scrollbar {
+  width: 8px;
+}
+
+.logContent::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.logContent::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* ============================================================
+   訊息區塊
+   ============================================================ */
+
+.successMessage,
+.errorMessage {
+  padding: 2rem;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.successMessage {
+  background: rgba(5, 150, 105, 0.1);
+  border: 2px solid rgba(5, 150, 105, 0.3);
+  color: var(--color-accent);
+}
+
+.errorMessage {
+  background: rgba(239, 68, 68, 0.1);
+  border: 2px solid rgba(239, 68, 68, 0.3);
+  color: #EF4444;
+}
+
+.successMessage h3,
+.errorMessage h3 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.5rem;
+}
+
+.successMessage p,
+.errorMessage p {
+  margin: 0 0 1.5rem 0;
+  font-size: 1rem;
+}
+
+.btnViewGuides {
+  display: inline-block;
+  padding: 12px 32px;
+  background: var(--color-accent);
+  color: white;
+  text-decoration: none;
+  border-radius: 24px;
+  font-weight: 700;
+  transition: all 200ms ease;
+}
+
+.btnViewGuides:hover {
+  background: var(--color-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
+/* ============================================================
+   登入提示
+   ============================================================ */
+
+.loginPrompt {
+  padding: 4rem 2rem;
+  text-align: center;
+  background: var(--glass-bg);
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+}
+
+.loginPrompt h2 {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.loginPrompt p {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+/* ============================================================
+   響應式設計
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1.5rem;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
+  }
+
+  .btnMigrate {
+    padding: 1.25rem;
+    font-size: 1.05rem;
+  }
+
+  .logContent {
+    max-height: 300px;
+    font-size: 0.8rem;
+  }
+}

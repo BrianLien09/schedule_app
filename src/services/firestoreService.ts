@@ -6,11 +6,12 @@
  * - 即時監聽資料變更
  * - 批次操作
  * 
- * 資料結構（新）：
+ * 資料結構：
  * /shared/data/courses/{courseId}
  * /shared/data/workShifts/{shiftId}
  * /shared/data/salaryRecords/{recordId}
  * /shared/data/events/{eventId}
+ * /shared/data/gameGuides/{guideId}  🆕
  */
 
 import {
@@ -31,6 +32,20 @@ import {
   Unsubscribe,
 } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from '@/lib/firebase';
+
+/**
+ * 清理資料中的 undefined 值
+ * Firestore 不允許 undefined，必須轉換為 null 或移除該欄位
+ */
+function cleanUndefined<T extends DocumentData>(data: T): DocumentData {
+  const cleaned: DocumentData = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) {
+      cleaned[key] = value;
+    }
+  }
+  return cleaned;
+}
 
 /**
  * 取得共用資料的 Collection 參考
@@ -61,11 +76,12 @@ export async function addDocument(
   data: DocumentData
 ): Promise<string> {
   const colRef = getUserCollection(userId, collectionName);
-  const docRef = await addDoc(colRef, {
+  const cleanedData = cleanUndefined({
     ...data,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
+  const docRef = await addDoc(colRef, cleanedData);
   return docRef.id;
 }
 
@@ -91,10 +107,11 @@ export async function setDocument(
   }
   // 新路徑：/shared/data/{collectionName}/{docId}
   const docRef = doc(db, 'shared', 'data', collectionName, docId);
-  await setDoc(docRef, {
+  const cleanedData = cleanUndefined({
     ...data,
     updatedAt: new Date().toISOString(),
   });
+  await setDoc(docRef, cleanedData);
 }
 
 /**
@@ -167,10 +184,11 @@ export async function updateDocument(
   }
   // 新路徑：/shared/data/{collectionName}/{docId}
   const docRef = doc(db, 'shared', 'data', collectionName, docId);
-  await updateDoc(docRef, {
+  const cleanedData = cleanUndefined({
     ...data,
     updatedAt: new Date().toISOString(),
   });
+  await updateDoc(docRef, cleanedData);
 }
 
 /**
@@ -277,3 +295,65 @@ export async function clearCollection(
   const promises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
   await Promise.all(promises);
 }
+
+// ============================================================
+// 🎮 遊戲攻略專用方法
+// ============================================================
+
+import type { GameGuide } from '@/data/gameGuides';
+
+/**
+ * 取得所有遊戲攻略
+ */
+export async function getAllGameGuides(): Promise<GameGuide[]> {
+  return getDocuments<GameGuide>('shared', 'gameGuides', orderBy('order', 'asc'));
+}
+
+/**
+ * 訂閱遊戲攻略（即時同步）
+ */
+export function subscribeToGameGuides(
+  callback: (guides: GameGuide[]) => void
+): Unsubscribe {
+  return subscribeToCollection<GameGuide>(
+    'shared',
+    'gameGuides',
+    callback,
+    orderBy('order', 'asc')
+  );
+}
+
+/**
+ * 新增遊戲攻略
+ */
+export async function addGameGuide(guide: Omit<GameGuide, 'id'>): Promise<string> {
+  return addDocument('shared', 'gameGuides', guide);
+}
+
+/**
+ * 更新遊戲攻略
+ */
+export async function updateGameGuide(
+  guideId: string,
+  updates: Partial<GameGuide>
+): Promise<void> {
+  return updateDocument('shared', 'gameGuides', guideId, updates);
+}
+
+/**
+ * 刪除遊戲攻略
+ */
+export async function deleteGameGuide(guideId: string): Promise<void> {
+  return deleteDocument('shared', 'gameGuides', guideId);
+}
+
+/**
+ * 批次匯入遊戲攻略（用於資料遷移）
+ */
+export async function batchImportGameGuides(
+  guides: Array<Omit<GameGuide, 'id'>>
+): Promise<void> {
+  const promises = guides.map(guide => addGameGuide(guide));
+  await Promise.all(promises);
+}
+
