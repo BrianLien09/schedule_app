@@ -56,6 +56,15 @@ export default function SalaryCalculator() {
   const [selectedRecordIds, setSelectedRecordIds] = useState<Set<string>>(new Set()); // 批次選擇
   const [showBatchEditModal, setShowBatchEditModal] = useState(false);
   const [batchNewHourlyRate, setBatchNewHourlyRate] = useState<number>(200);
+  
+  // 批量編輯多欄位的狀態
+  const [batchEditData, setBatchEditData] = useState({
+    role: '' as '' | RoleType,
+    startTime: '',
+    endTime: '',
+    breakMinutes: '' as string | number,
+    shiftCategory: '',
+  });
   const [isPrintMode, setIsPrintMode] = useState(false); // 列印模式
   const pdfContentRef = useRef<HTMLDivElement>(null);
 
@@ -201,31 +210,95 @@ export default function SalaryCalculator() {
       alert('請先選擇要編輯的記錄！');
       return;
     }
+    // 重置批量編輯狀態
+    setBatchNewHourlyRate(200);
+    setBatchEditData({
+      role: '',
+      startTime: '',
+      endTime: '',
+      breakMinutes: '',
+      shiftCategory: '',
+    });
     setShowBatchEditModal(true);
   };
 
-  /** 執行批次編輯時薪 */
+  /** 執行批次編輯 */
   const handleBatchEditHourlyRate = () => {
-    if (batchNewHourlyRate <= 0) {
-      alert('請輸入有效的時薪！');
+    // 收集要更新的欄位
+    const updateData: Partial<SalaryRecord> = {};
+    
+    // 時薪
+    if (batchNewHourlyRate > 0) {
+      updateData.hourlyRate = batchNewHourlyRate;
+    }
+    
+    // 身份
+    if (batchEditData.role) {
+      updateData.role = batchEditData.role;
+      // 根據身份自動更新時薪（如果使用者沒有手動修改時薪）
+      if (batchNewHourlyRate === 200) {
+        updateData.hourlyRate = batchEditData.role === 'assistant' ? 200 : 350;
+      }
+    }
+    
+    // 開始時間
+    if (batchEditData.startTime) {
+      updateData.startTime = batchEditData.startTime;
+    }
+    
+    // 結束時間
+    if (batchEditData.endTime) {
+      updateData.endTime = batchEditData.endTime;
+    }
+    
+    // 休息時間
+    if (batchEditData.breakMinutes !== '') {
+      updateData.breakMinutes = Number(batchEditData.breakMinutes);
+    }
+    
+    // 班別
+    if (batchEditData.shiftCategory) {
+      updateData.shiftCategory = batchEditData.shiftCategory;
+    }
+    
+    // 檢查是否至少有一個欄位要更新
+    if (Object.keys(updateData).length === 0) {
+      alert('請至少填寫一個要修改的欄位！');
       return;
     }
 
     const updates = Array.from(selectedRecordIds).map(id => ({
       id,
-      data: { hourlyRate: batchNewHourlyRate }
+      data: updateData
     }));
 
     batchUpdateRecords(updates);
     setShowBatchEditModal(false);
     setSelectedRecordIds(new Set());
-    alert(`已成功更新 ${selectedRecordIds.size} 筆記錄的時薪！`);
+    
+    // 產生更新訊息
+    const updatedFields = [];
+    if (updateData.hourlyRate) updatedFields.push('時薪');
+    if (updateData.role) updatedFields.push('身份');
+    if (updateData.startTime) updatedFields.push('開始時間');
+    if (updateData.endTime) updatedFields.push('結束時間');
+    if (updateData.breakMinutes !== undefined) updatedFields.push('休息時間');
+    if (updateData.shiftCategory) updatedFields.push('班別');
+    
+    alert(`已成功更新 ${selectedRecordIds.size} 筆記錄的 ${updatedFields.join('、')}！`);
   };
 
   /** 取消批次編輯 */
   const handleCancelBatchEdit = () => {
     setShowBatchEditModal(false);
     setBatchNewHourlyRate(200);
+    setBatchEditData({
+      role: '',
+      startTime: '',
+      endTime: '',
+      breakMinutes: '',
+      shiftCategory: '',
+    });
   };
 
   /** 批量刪除 */
@@ -1992,7 +2065,7 @@ export default function SalaryCalculator() {
                 WebkitTextFillColor: 'transparent',
                 margin: 0
               }}>
-                批次編輯時薪
+                批次編輯工作紀錄
               </h3>
               <button
                 onClick={handleCancelBatchEdit}
@@ -2038,14 +2111,177 @@ export default function SalaryCalculator() {
                 </div>
               </div>
 
+              {/* 身份選擇 */}
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '0.5rem', 
+                  fontSize: '0.95rem',
+                  fontWeight: '600',
+                  color: 'rgba(255, 255, 255, 0.9)'
+                }}>
+                  身份 <span style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.5)' }}>(選填)</span>
+                </label>
+                <select
+                  value={batchEditData.role}
+                  onChange={(e) => {
+                    const newRole = e.target.value as '' | RoleType;
+                    setBatchEditData({ ...batchEditData, role: newRole });
+                    // 自動更新時薪預設值
+                    if (newRole === 'assistant') {
+                      setBatchNewHourlyRate(200);
+                    } else if (newRole === 'instructor') {
+                      setBatchNewHourlyRate(350);
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '0.875rem',
+                    borderRadius: '8px',
+                    border: '2px solid rgba(139, 92, 246, 0.3)',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    color: '#ffffff',
+                    fontSize: '1rem',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <option value="" style={{ background: '#1e1e2d', color: '#fff' }}>-- 不修改 --</option>
+                  <option value="assistant" style={{ background: '#1e1e2d', color: '#fff' }}>助教</option>
+                  <option value="instructor" style={{ background: '#1e1e2d', color: '#fff' }}>講師</option>
+                </select>
+              </div>
+
+              {/* 班別輸入 */}
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '0.5rem', 
+                  fontSize: '0.95rem',
+                  fontWeight: '600',
+                  color: 'rgba(255, 255, 255, 0.9)'
+                }}>
+                  班別 <span style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.5)' }}>(選填)</span>
+                </label>
+                <input
+                  type="text"
+                  value={batchEditData.shiftCategory}
+                  onChange={(e) => setBatchEditData({ ...batchEditData, shiftCategory: e.target.value })}
+                  placeholder="例如：秋季班、冬令營"
+                  style={{
+                    width: '100%',
+                    padding: '0.875rem',
+                    borderRadius: '8px',
+                    border: '2px solid rgba(139, 92, 246, 0.3)',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    color: '#ffffff',
+                    fontSize: '1rem',
+                    fontWeight: '500',
+                  }}
+                />
+              </div>
+
+              {/* 時段區塊 */}
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr', 
+                gap: '1rem',
+                marginBottom: '1.25rem'
+              }}>
+                <div>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '0.5rem', 
+                    fontSize: '0.95rem',
+                    fontWeight: '600',
+                    color: 'rgba(255, 255, 255, 0.9)'
+                  }}>
+                    開始時間 <span style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.5)' }}>(選填)</span>
+                  </label>
+                  <input
+                    type="time"
+                    value={batchEditData.startTime}
+                    onChange={(e) => setBatchEditData({ ...batchEditData, startTime: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.875rem',
+                      borderRadius: '8px',
+                      border: '2px solid rgba(139, 92, 246, 0.3)',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      color: '#ffffff',
+                      fontSize: '1rem',
+                      fontWeight: '500',
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '0.5rem', 
+                    fontSize: '0.95rem',
+                    fontWeight: '600',
+                    color: 'rgba(255, 255, 255, 0.9)'
+                  }}>
+                    結束時間 <span style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.5)' }}>(選填)</span>
+                  </label>
+                  <input
+                    type="time"
+                    value={batchEditData.endTime}
+                    onChange={(e) => setBatchEditData({ ...batchEditData, endTime: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.875rem',
+                      borderRadius: '8px',
+                      border: '2px solid rgba(139, 92, 246, 0.3)',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      color: '#ffffff',
+                      fontSize: '1rem',
+                      fontWeight: '500',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* 休息時間 */}
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '0.5rem', 
+                  fontSize: '0.95rem',
+                  fontWeight: '600',
+                  color: 'rgba(255, 255, 255, 0.9)'
+                }}>
+                  休息時間 (分鐘) <span style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.5)' }}>(選填)</span>
+                </label>
+                <input
+                  type="number"
+                  value={batchEditData.breakMinutes}
+                  onChange={(e) => setBatchEditData({ ...batchEditData, breakMinutes: e.target.value })}
+                  min="0"
+                  step="15"
+                  placeholder="例如：60"
+                  style={{
+                    width: '100%',
+                    padding: '0.875rem',
+                    borderRadius: '8px',
+                    border: '2px solid rgba(139, 92, 246, 0.3)',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    color: '#ffffff',
+                    fontSize: '1rem',
+                    fontWeight: '500',
+                  }}
+                />
+              </div>
+
+              {/* 時薪 */}
               <label style={{ 
                 display: 'block', 
-                marginBottom: '0.75rem', 
-                fontSize: '1rem',
+                marginBottom: '0.5rem', 
+                fontSize: '0.95rem',
                 fontWeight: '600',
                 color: 'rgba(255, 255, 255, 0.9)'
               }}>
-                新的時薪 (元)
+                時薪 (元) <span style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.5)' }}>(選填，預設根據身份)</span>
               </label>
               <input 
                 type="number"
@@ -2084,7 +2320,9 @@ export default function SalaryCalculator() {
               fontSize: '0.85rem',
               color: 'rgba(255, 255, 255, 0.8)',
             }}>
-              ⚠️ 注意：此操作將會覆蓋所選記錄的原有時薪設定
+              ⚠️ 注意：<br />
+              • 只有填寫的欄位會被更新，未填寫的欄位保持原值<br />
+              • 此操作將會覆蓋所選記錄的對應欄位設定
             </div>
 
             <div style={{ 
