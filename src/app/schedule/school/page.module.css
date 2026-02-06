@@ -11,8 +11,48 @@
   font-size: 0.9rem;
 }
 
+/* 展開/收合按鈕 */
+.toggleButton {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  color: var(--foreground);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.toggleButton:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.toggleButton:active {
+  transform: translateY(0);
+}
+
 .courseCell {
   position: relative;
+}
+
+/* 筆記數量標記 */
+.noteBadge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 5;
 }
 
 .courseActions {
@@ -36,6 +76,7 @@
   }
 }
 
+.noteButton,
 .editButton,
 .deleteButton {
   width: 28px;
@@ -49,6 +90,17 @@
   transition: all 0.2s ease;
   background: rgba(255, 255, 255, 0.9);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  font-size: 1rem;
+}
+
+.noteButton {
+  color: var(--color-highlight);
+}
+
+.noteButton:hover {
+  background: var(--color-highlight);
+  color: white;
+  transform: scale(1.1);
 }
 
 .editButton {
@@ -76,15 +128,22 @@
     gap: 2px;
   }
 
+  .noteButton,
   .editButton,
   .deleteButton {
     width: 24px;
     height: 24px;
+    font-size: 0.85rem;
   }
 
   .editButton svg,
   .deleteButton svg {
     width: 12px;
     height: 12px;
+  }
+
+  .noteBadge {
+    font-size: 0.7rem;
+    padding: 1px 6px;
   }
 }

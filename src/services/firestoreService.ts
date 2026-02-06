@@ -357,3 +357,129 @@ export async function batchImportGameGuides(
   await Promise.all(promises);
 }
 
+// ============================================================
+// 📝 課程筆記專用方法
+// ============================================================
+
+import type { CourseNote } from '@/data/courseNotes';
+
+/**
+ * 取得所有課程筆記
+ */
+export async function getAllCourseNotes(): Promise<CourseNote[]> {
+  return getDocuments<CourseNote>('shared', 'courseNotes');
+}
+
+/**
+ * 取得特定課程的所有筆記
+ * 
+ * @param courseId - 課程 ID
+ */
+export async function getCourseNotesByCourse(courseId: string): Promise<CourseNote[]> {
+  return getDocuments<CourseNote>(
+    'shared',
+    'courseNotes',
+    where('courseId', '==', courseId),
+    orderBy('createdAt', 'desc')
+  );
+}
+
+/**
+ * 訂閱課程筆記（即時同步）
+ * 
+ * @param callback - 資料變更時的回調函數
+ */
+export function subscribeToCourseNotes(
+  callback: (notes: CourseNote[]) => void
+): Unsubscribe {
+  return subscribeToCollection<CourseNote>(
+    'shared',
+    'courseNotes',
+    callback,
+    orderBy('createdAt', 'desc')
+  );
+}
+
+/**
+ * 訂閱特定課程的筆記
+ * 
+ * @param courseId - 課程 ID
+ * @param callback - 資料變更時的回調函數
+ */
+export function subscribeToCourseNotesByCourse(
+  courseId: string,
+  callback: (notes: CourseNote[]) => void
+): Unsubscribe {
+  return subscribeToCollection<CourseNote>(
+    'shared',
+    'courseNotes',
+    callback,
+    where('courseId', '==', courseId),
+    orderBy('createdAt', 'desc')
+  );
+}
+
+/**
+ * 新增課程筆記
+ * 
+ * @param note - 筆記資料（不含 id）
+ */
+export async function addCourseNote(note: Omit<CourseNote, 'id'>): Promise<string> {
+  return addDocument('shared', 'courseNotes', note);
+}
+
+/**
+ * 更新課程筆記
+ * 
+ * @param noteId - 筆記 ID
+ * @param updates - 要更新的欄位
+ */
+export async function updateCourseNote(
+  noteId: string,
+  updates: Partial<CourseNote>
+): Promise<void> {
+  return updateDocument('shared', 'courseNotes', noteId, updates);
+}
+
+/**
+ * 刪除課程筆記
+ * 
+ * @param noteId - 筆記 ID
+ */
+export async function deleteCourseNote(noteId: string): Promise<void> {
+  return deleteDocument('shared', 'courseNotes', noteId);
+}
+
+/**
+ * 切換筆記完成狀態
+ * 
+ * @param noteId - 筆記 ID
+ * @param completed - 完成狀態
+ */
+export async function toggleCourseNoteCompletion(
+  noteId: string,
+  completed: boolean
+): Promise<void> {
+  return updateCourseNote(noteId, { completed });
+}
+
+/**
+ * 取得未完成的作業/考試（用於提醒功能）
+ */
+export async function getIncompleteTasks(): Promise<CourseNote[]> {
+  const notes = await getDocuments<CourseNote>(
+    'shared',
+    'courseNotes',
+    where('completed', '==', false),
+    where('type', 'in', ['homework', 'exam'])
+  );
+  
+  // 前端過濾並排序（按到期日）
+  return notes
+    .filter(note => note.dueDate)
+    .sort((a, b) => {
+      if (!a.dueDate || !b.dueDate) return 0;
+      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+    });
+}
+
