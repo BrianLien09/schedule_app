@@ -56,6 +56,17 @@
 - 批次編輯時薪與批量刪除
 - 支援 Excel/PDF 匯出與列印
 
+### 📝 課程筆記系統
+- **三大筆記類型**：課堂筆記、作業、考試
+- **Markdown 支援**：支援 Markdown 格式撰寫筆記
+- **多課程管理**：依課程分類整理筆記
+- **待辦事項追蹤**：作業/考試截止日期提醒
+- **優先級標記**：高/中/低優先級分類
+- **標籤系統**：自訂標籤方便搜尋
+- **完成狀態追蹤**：勾選完成項目，即時更新進度
+- **雲端同步**：Firestore 即時同步，多裝置存取
+- **超低儲存負擔**：純文字筆記，大學四年用量 < 1.5 MB（免費額度 1 GB）
+
 ---
 
 ## 🎯 進階功能
@@ -250,7 +261,9 @@ schedule/
 │   │   ├── WorkShiftManager.tsx     # 班表管理元件
 │   │   ├── SalaryCalculator.tsx     # 薪資計算器元件
 │   │   ├── GuideComponents.tsx      # 遊戲攻略視覺化元件（卡片、標籤、評分）
-│   │   └── GuideEditForm.tsx        # 攻略編輯表單
+│   │   ├── GuideEditForm.tsx        # 攻略編輯表單
+│   │   ├── CourseNoteEditor.tsx     # 課程筆記編輯器（Markdown 支援）
+│   │   └── CourseNoteList.tsx       # 課程筆記列表元件
 │   ├── context/               # React Context
 │   │   └── AuthContext.tsx    # 身份驗證全域狀態（useAuth Hook）
 │   ├── hooks/                 # Custom React Hooks
@@ -258,6 +271,7 @@ schedule/
 │   │   ├── useScheduleData.ts       # 資料管理（整合 Firestore + localStorage）
 │   │   ├── useSalaryData.ts         # 薪資資料管理（整合 Firestore）
 │   │   ├── useGameGuides.ts         # 遊戲攻略資料管理（整合 Firestore）
+│   │   ├── useCourseNotes.ts        # 課程筆記資料管理（整合 Firestore）
 │   │   ├── useHomeDashboard.ts      # 儀表板邏輯
 │   │   ├── useWorkCalendar.ts       # 月曆邏輯
 │   │   ├── useTheme.ts             # 主題管理
@@ -269,7 +283,8 @@ schedule/
 │   └── data/                  # 資料定義與預設資料
 │       ├── schedule.ts        # 課程、班表、事件資料與型別
 │       ├── games.ts           # 遊戲基本資訊
-│       └── gameGuides.ts      # 遊戲攻略資料型別與預設分類
+│       ├── gameGuides.ts      # 遊戲攻略資料型別與預設分類
+│       └── courseNotes.ts     # 課程筆記資料型別與預設值
 ├── .env.local.example         # 環境變數範例檔案
 ├── FIREBASE_SETUP.md          # Firebase 設定完整指南
 ├── next.config.ts             # Next.js 配置
@@ -422,6 +437,7 @@ schedule/
 - ✅ 學校課表（網格顯示、雙層置頂）
 - ✅ 打工月曆（月份切換、日期點擊）
 - ✅ **遊戲攻略中心**（動態管理、版本篩選、視覺化標籤、進度追蹤）
+- ✅ **課程筆記系統**（Markdown 筆記、作業/考試追蹤、標籤管理）
 - ✅ 薪資計算器（工時計算、統計圖表、批次操作、匯出）
 - ✅ **Firebase 身份驗證**（Google 登入/登出）
 - ✅ **Firestore 雲端同步**（即時多裝置同步）
@@ -442,8 +458,8 @@ schedule/
 - 🔗 從學校系統匯入課表
 - 🎨 更多主題選項
 - 📊 更多統計維度（週統計、年度統計）
-- 🎮 遊戲攻略圖片上傳與預覽
-- 🔍 攻略全文搜尋功能
+- 🔍 筆記與攻略全文搜尋功能
+- 📎 筆記附件上傳（圖片、PDF）
 
 ---
 
@@ -483,6 +499,26 @@ schedule/
 # Performance Tab → 錄製 → 滾動 + Hover
 # 檢查 FPS 是否穩定在 55-60
 ```
+
+### 儲存空間優化
+
+**Firebase Firestore 免費額度評估：**
+- **免費額度**：1 GB 儲存空間、每日 50,000 次讀取、20,000 次寫入
+- **單筆資料大小**：
+  - 課程：0.24 KB
+  - 打工班表：0.20 KB
+  - 遊戲攻略：0.38 KB
+  - 短篇筆記：0.62 KB（500 字以內）
+  - 長篇筆記：2.27 KB（3000 字報告）
+
+**實際使用量估算（一學期）：**
+- 10 門課程 + 48 次打工 + 150 個攻略 + 100 篇筆記
+- **總儲存量：163.75 KB（0.16 MB）**
+- **使用率：0.016%** << 1 GB 限制
+- **大學四年總用量：< 1.5 MB**
+- **用滿 1 GB 需要：3,200 年** 🎉
+
+**結論**：純文字筆記與攻略，完全不用擔心儲存空間！
 
 ---
 
