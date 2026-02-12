@@ -1,6 +1,6 @@
 1:"$Sreact.fragment"
 3:I[97367,["/schedule_app/_next/static/chunks/ff1a16fafef87110.js","/schedule_app/_next/static/chunks/7340adf74ff47ec0.js"],"OutletBoundary"]
 4:"$Sreact.suspense"
-0:{"buildId":"V3zQd3NyDq0NuttX-sjBy","rsc":["$","$1","c",{"children":["$L2",null,["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"loading":null,"isPartial":false}
+0:{"buildId":"KuLOYvQAXysH1fM2ommpe","rsc":["$","$1","c",{"children":["$L2",null,["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"loading":null,"isPartial":false}
 5:null
 2:E{"digest":"NEXT_REDIRECT;replace;/schedule/school;307;"}
