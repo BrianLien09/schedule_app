@@ -790,10 +790,9 @@ export default function SalaryCalculator() {
                     const barHeight = Math.max(heightPercent, 5); // 最小高度 5%
                     const [year, month] = stat.month.split('-');
                     
-                    // 當數值為 0 時，標籤顯示在長條圖上方而不是被擋住
-                    const labelTop = stat.totalPay === 0 
-                      ? 'calc(100% - 50px)' // 固定位置在長條圖上方
-                      : `${100 - barHeight - 12}%`; // 正常位置
+                    // 動態計算標籤位置：在長條上方 8-12px，但最高不超過容器頂部 30px
+                    const idealTop = 100 - barHeight - 12; // 理想位置（長條上方 12%）
+                    const labelTop = `${Math.max(idealTop, 10)}%`; // 最高不超過 10%（約 28px）
                     
                     return (
                       <div 
