@@ -462,7 +462,9 @@ export default function SalaryCalculator() {
     
     for (let i = 5; i >= 0; i--) {
       const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
-      const monthStr = date.toISOString().slice(0, 7);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const monthStr = `${year}-${month}`;
       monthsList.push(monthStr);
     }
 
