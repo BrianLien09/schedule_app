@@ -1,4 +1,4 @@
 :HL["/schedule_app/_next/static/chunks/3e0a43cc06849104.css","style"]
 :HL["/schedule_app/_next/static/chunks/c617dc77c3f2f57b.css","style"]
 :HL["/schedule_app/_next/static/chunks/4b3243f5d54b2bc8.css","style"]
-0:{"buildId":"sLc0Je22t8hxf3xzSwOj_","tree":{"name":"","paramType":null,"paramKey":"","hasRuntimePrefetch":false,"slots":{"children":{"name":"__PAGE__","paramType":null,"paramKey":"__PAGE__","hasRuntimePrefetch":false,"slots":null,"isRootLayout":false}},"isRootLayout":true},"staleTime":300}
+0:{"buildId":"X4Z-jD8CNw5iakArCJUmm","tree":{"name":"","paramType":null,"paramKey":"","hasRuntimePrefetch":false,"slots":{"children":{"name":"__PAGE__","paramType":null,"paramKey":"__PAGE__","hasRuntimePrefetch":false,"slots":null,"isRootLayout":false}},"isRootLayout":true},"staleTime":300}
