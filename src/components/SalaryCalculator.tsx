@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -29,6 +30,12 @@ export default function SalaryCalculator() {
     batchUpdateRecords,
     batchDeleteRecords 
   } = useSalaryData();
+  
+  // URL 狀態管理
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  
   const [currentRecord, setCurrentRecord] = useState<Omit<SalaryRecord, 'id'>>({
     date: new Date().toISOString().split('T')[0],
     startTime: '09:00',
@@ -49,7 +56,20 @@ export default function SalaryCalculator() {
     '暑假班',
   ]);
   
-  const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7)); // YYYY-MM
+  // 月份篩選狀態（用於顯示記錄）
+  const [filterMonth, setFilterMonth] = useState<string>(() => {
+    const urlMonth = searchParams.get('month');
+    // 驗證 URL 參數格式（YYYY-MM）
+    if (urlMonth && /^\d{4}-\d{2}$/.test(urlMonth)) {
+      return urlMonth;
+    }
+    // 預設使用當前月份
+    return new Date().toISOString().slice(0, 7);
+  });
+  
+  // 匯入月份選擇（獨立於篩選）
+  const [importMonth, setImportMonth] = useState<string>(new Date().toISOString().slice(0, 7));
+  
   const [editingRecord, setEditingRecord] = useState<SalaryRecord | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showStats, setShowStats] = useState(true); // 控制統計圖表顯示
@@ -67,6 +87,62 @@ export default function SalaryCalculator() {
   });
   const [isPrintMode, setIsPrintMode] = useState(false); // 列印模式
   const pdfContentRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * 同步 filterMonth 與 URL Search Params
+   * 
+   * 當 filterMonth 改變時，自動更新 URL，實現狀態持久化
+   */
+  useEffect(() => {
+    const currentMonth = searchParams.get('month');
+    
+    // 只在 filterMonth 與 URL 不同步時才更新
+    if (filterMonth && filterMonth !== currentMonth) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('month', filterMonth);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    } else if (!filterMonth && currentMonth) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('month');
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }
+  }, [filterMonth, pathname, router, searchParams]);
+
+  /**
+   * 更新月份篩選
+   * 
+   * @param month - YYYY-MM 格式的月份字串，空字串表示「全部」
+   */
+  const updateFilterMonth = (month: string) => {
+    setFilterMonth(month);
+  };
+
+  /**
+   * 篩選後的記錄（基於 filterMonth）
+   * 
+   * 使用 useMemo 優化效能，避免不必要的重複計算
+   */
+  const filteredRecords = useMemo(() => {
+    if (!filterMonth) return records; // 「全部」選項
+    return records.filter(record => record.date.startsWith(filterMonth));
+  }, [records, filterMonth]);
+
+  /**
+   * 快速篩選選項
+   */
+  const quickFilters = useMemo(() => {
+    const today = new Date();
+    const currentMonth = today.toISOString().slice(0, 7);
+    
+    const lastMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const lastMonth = lastMonthDate.toISOString().slice(0, 7);
+    
+    return [
+      { label: '全部', value: '', description: '顯示所有記錄' },
+      { label: '本月', value: currentMonth, description: '僅顯示本月記錄' },
+      { label: '上月', value: lastMonth, description: '僅顯示上個月記錄' },
+    ];
+  }, []);
 
   /** 計算工作時數 (小時) */
   const calculateHours = (record: Omit<SalaryRecord, 'id'>): number => {
@@ -123,7 +199,7 @@ export default function SalaryCalculator() {
     const existingWorkShiftIds = new Set(records.map(r => r.workShiftId).filter(Boolean));
     
     // 篩選指定月份的班表
-    const [year, month] = selectedMonth.split('-').map(Number);
+    const [year, month] = importMonth.split('-').map(Number);
     const monthShifts = shifts.filter(shift => {
       const shiftDate = new Date(shift.date);
       return shiftDate.getFullYear() === year && 
@@ -195,12 +271,12 @@ export default function SalaryCalculator() {
     setSelectedRecordIds(newSelection);
   };
 
-  /** 全選/取消全選 */
+  /** 全選/取消全選（只針對篩選後的記錄） */
   const toggleSelectAll = () => {
-    if (selectedRecordIds.size === records.length) {
+    if (selectedRecordIds.size === filteredRecords.length && filteredRecords.length > 0) {
       setSelectedRecordIds(new Set());
     } else {
-      setSelectedRecordIds(new Set(records.map(r => r.id)));
+      setSelectedRecordIds(new Set(filteredRecords.map(r => r.id)));
     }
   };
 
@@ -324,10 +400,23 @@ export default function SalaryCalculator() {
     }, 100);
   };
 
-  /** 計算總薪資 */
-  const totalPay = records.reduce((sum, record) => {
-    return sum + calculatePay(record);
-  }, 0);
+  /** 計算總薪資（基於篩選後的記錄） */
+  const totalPay = useMemo(() => {
+    return filteredRecords.reduce((sum, record) => {
+      return sum + calculatePay(record);
+    }, 0);
+  }, [filteredRecords]);
+
+  /** 計算總工時（基於篩選後的記錄） */
+  const totalHours = useMemo(() => {
+    return filteredRecords.reduce((sum, r) => sum + calculateHours(r), 0);
+  }, [filteredRecords]);
+
+  /** 計算平均時薪（基於篩選後的記錄） */
+  const avgHourlyRate = useMemo(() => {
+    if (totalHours === 0) return 0;
+    return Math.round(totalPay / totalHours);
+  }, [totalPay, totalHours]);
 
   /** 計算月度統計資料 */
   interface MonthStats {
@@ -337,7 +426,14 @@ export default function SalaryCalculator() {
     recordCount: number;
   }
 
+  /**
+   * 計算月度統計資料
+   * 
+   * 以本月為起點，往前推 5 個月（共 6 個月）的趨勢
+   * 即使某些月份沒有記錄也會顯示（數值為 0）
+   */
   const getMonthlyStats = (): MonthStats[] => {
+    // 先收集所有記錄的統計資料
     const statsMap = new Map<string, MonthStats>();
 
     records.forEach(record => {
@@ -360,18 +456,33 @@ export default function SalaryCalculator() {
       stats.recordCount += 1;
     });
 
-    // 轉為陣列並按月份排序（最近6個月）
-    return Array.from(statsMap.values())
-      .sort((a, b) => a.month.localeCompare(b.month))
-      .slice(-6); // 只顯示最近6個月
+    // 生成從本月往前推 5 個月的月份列表（共 6 個月）
+    const today = new Date();
+    const monthsList: string[] = [];
+    
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const monthStr = date.toISOString().slice(0, 7);
+      monthsList.push(monthStr);
+    }
+
+    // 組合 6 個月的統計資料（沒有記錄的月份顯示 0）
+    return monthsList.map(month => {
+      return statsMap.get(month) || {
+        month,
+        totalPay: 0,
+        totalHours: 0,
+        recordCount: 0,
+      };
+    });
   };
 
   const monthlyStats = getMonthlyStats();
   const maxMonthlyPay = Math.max(...monthlyStats.map(s => s.totalPay), 1); // 避免除以0
 
-  /** 匯出 Excel */
+  /** 匯出 Excel（基於篩選後的記錄） */
   const handleExportExcel = () => {
-    const exportData = records.map((record, index) => ({
+    const exportData = filteredRecords.map((record, index) => ({
       '序號': index + 1,
       '日期': record.date,
       '開始時間': record.startTime,
@@ -402,9 +513,9 @@ export default function SalaryCalculator() {
     XLSX.writeFile(wb, fileName);
   };
 
-  /** 匯出 PDF - 使用 html2canvas */
+  /** 匯出 PDF - 使用 html2canvas（基於篩選後的記錄） */
   const handleExportPDF = async () => {
-    if (!pdfContentRef.current || records.length === 0) {
+    if (!pdfContentRef.current || filteredRecords.length === 0) {
       alert('沒有可匯出的記錄！');
       return;
     }
@@ -546,8 +657,8 @@ export default function SalaryCalculator() {
             color: 'black',
           }}>
             <div><strong>生成日期：</strong>{new Date().toLocaleDateString('zh-TW')}</div>
-            <div><strong>記錄總數：</strong>{records.length} 筆</div>
-            <div><strong>總工時：</strong>{records.reduce((sum, r) => sum + calculateHours(r), 0).toFixed(1)} 小時</div>
+            <div><strong>記錄總數：</strong>{filteredRecords.length} 筆</div>
+            <div><strong>總工時：</strong>{totalHours.toFixed(1)} 小時</div>
             <div><strong>總計薪資：</strong>${totalPay.toLocaleString()}</div>
           </div>
         </div>
@@ -617,7 +728,7 @@ export default function SalaryCalculator() {
                     總工時
                   </div>
                   <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--color-secondary)' }}>
-                    {records.reduce((sum, r) => sum + calculateHours(r), 0).toFixed(1)}h
+                    {totalHours.toFixed(1)}h
                   </div>
                 </div>
 
@@ -631,7 +742,7 @@ export default function SalaryCalculator() {
                     平均時薪
                   </div>
                   <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#34d399' }}>
-                    ${Math.round(totalPay / records.reduce((sum, r) => sum + calculateHours(r), 0))}
+                    ${avgHourlyRate}
                   </div>
                 </div>
 
@@ -645,7 +756,7 @@ export default function SalaryCalculator() {
                     工作天數
                   </div>
                   <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#fbbf24' }}>
-                    {records.length} 天
+                    {filteredRecords.length} 天
                   </div>
                 </div>
               </div>
@@ -776,8 +887,8 @@ export default function SalaryCalculator() {
             </label>
             <input 
               type="month"
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
+              value={importMonth}
+              onChange={(e) => setImportMonth(e.target.value)}
               style={{
                 padding: '0.4rem 0.6rem',
                 borderRadius: '6px',
@@ -997,7 +1108,7 @@ export default function SalaryCalculator() {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)' }}>
             <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>
-              工作記錄 ({records.length} 筆)
+              工作記錄
             </h3>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               {selectedRecordIds.size > 0 && (
@@ -1148,6 +1259,97 @@ export default function SalaryCalculator() {
             </div>
           </div>
 
+          {/* 月份篩選器 */}
+          <div className="no-print" style={{ 
+            display: 'flex', 
+            gap: 'var(--spacing-md)', 
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            marginBottom: 'var(--spacing-md)',
+            padding: 'var(--spacing-md)',
+            background: 'rgba(255,255,255,0.02)',
+            borderRadius: '12px',
+            border: '1px solid rgba(255,255,255,0.05)',
+          }}>
+            {/* 快速選項按鈕 */}
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {quickFilters.map(filter => (
+                <button
+                  key={filter.value}
+                  onClick={() => updateFilterMonth(filter.value)}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    borderRadius: '8px',
+                    border: filterMonth === filter.value 
+                      ? '2px solid var(--color-primary)' 
+                      : '1px solid rgba(255,255,255,0.2)',
+                    background: filterMonth === filter.value 
+                      ? 'rgba(139, 92, 246, 0.3)' 
+                      : 'rgba(255,255,255,0.05)',
+                    color: filterMonth === filter.value 
+                      ? 'var(--color-primary)' 
+                      : 'var(--text-secondary)',
+                    fontWeight: filterMonth === filter.value ? '600' : '400',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    fontSize: '0.9rem',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (filterMonth !== filter.value) {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (filterMonth !== filter.value) {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                    }
+                  }}
+                  title={filter.description}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+
+            {/* 月份選擇器 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                自訂月份：
+              </label>
+              <input 
+                type="month"
+                value={filterMonth || ''}
+                onChange={(e) => updateFilterMonth(e.target.value)}
+                style={{
+                  padding: '0.5rem',
+                  borderRadius: '6px',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  background: 'rgba(255,255,255,0.05)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.9rem',
+                }}
+              />
+            </div>
+
+            {/* 計數顯示 */}
+            <div style={{ 
+              marginLeft: 'auto',
+              fontSize: '0.9rem',
+              color: 'var(--text-secondary)',
+              fontWeight: '600',
+            }}>
+              顯示：
+              <span style={{ color: 'var(--color-primary)', marginLeft: '0.25rem', fontSize: '1.1rem' }}>
+                {filteredRecords.length}
+              </span>
+              {filterMonth && (
+                <span style={{ opacity: 0.6 }}>
+                  {' '} / {records.length} 筆
+                </span>
+              )}
+            </div>
+          </div>
+
           <div style={{ overflowX: 'auto' }}>
             <table style={{ 
               width: '100%', 
@@ -1169,7 +1371,7 @@ export default function SalaryCalculator() {
                     }}>
                       <input
                         type="checkbox"
-                        checked={selectedRecordIds.size === records.length && records.length > 0}
+                        checked={selectedRecordIds.size === filteredRecords.length && filteredRecords.length > 0}
                         onChange={toggleSelectAll}
                         style={{
                           width: '18px',
@@ -1240,7 +1442,7 @@ export default function SalaryCalculator() {
                 </tr>
               </thead>
               <tbody>
-                {[...records]
+                {[...filteredRecords]
                   .sort((a, b) => {
                     // 先按日期排序（舊到新）
                     const dateCompare = a.date.localeCompare(b.date);
@@ -1462,6 +1664,34 @@ export default function SalaryCalculator() {
         </div>
       )}
 
+      {/* 篩選結果為空的提示 */}
+      {records.length > 0 && filteredRecords.length === 0 && (
+        <div className="glass" style={{ 
+          padding: '3rem', 
+          textAlign: 'center',
+          color: 'var(--text-secondary)'
+        }}>
+          <p style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>該月份尚無工作記錄</p>
+          <button 
+            onClick={() => updateFilterMonth('')}
+            style={{
+              padding: '0.75rem 1.5rem',
+              borderRadius: '8px',
+              border: 'none',
+              background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))',
+              color: 'white',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'transform 0.2s',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            顯示全部記錄
+          </button>
+        </div>
+      )}
+
       {/* 隱藏的 PDF 內容區域 */}
       <div 
         ref={pdfContentRef} 
@@ -1487,7 +1717,7 @@ export default function SalaryCalculator() {
         </h1>
         <div style={{ fontSize: '14px', marginBottom: '30px', color: '#aaa' }}>
           <div>生成日期：{new Date().toLocaleDateString('zh-TW')}</div>
-          <div>記錄總數：{records.length} 筆</div>
+          <div>記錄總數：{filteredRecords.length} 筆</div>
           <div>總計薪資：${totalPay}</div>
         </div>
         
@@ -1511,7 +1741,7 @@ export default function SalaryCalculator() {
             </tr>
           </thead>
           <tbody>
-            {records.map((record, index) => (
+            {filteredRecords.map((record, index) => (
               <tr 
                 key={record.id} 
                 style={{ 
