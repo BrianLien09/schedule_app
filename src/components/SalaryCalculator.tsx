@@ -63,12 +63,20 @@ export default function SalaryCalculator() {
     if (urlMonth && /^\d{4}-\d{2}$/.test(urlMonth)) {
       return urlMonth;
     }
-    // 預設使用當前月份
-    return new Date().toISOString().slice(0, 7);
+    // 預設使用當前月份（本地時間）
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
   });
   
   // 匯入月份選擇（獨立於篩選）
-  const [importMonth, setImportMonth] = useState<string>(new Date().toISOString().slice(0, 7));
+  const [importMonth, setImportMonth] = useState<string>(() => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+  });
   
   const [editingRecord, setEditingRecord] = useState<SalaryRecord | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
