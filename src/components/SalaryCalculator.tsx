@@ -132,10 +132,14 @@ export default function SalaryCalculator() {
    */
   const quickFilters = useMemo(() => {
     const today = new Date();
-    const currentMonth = today.toISOString().slice(0, 7);
+    const currentYear = today.getFullYear();
+    const currentMonthNum = today.getMonth() + 1;
+    const currentMonth = `${currentYear}-${String(currentMonthNum).padStart(2, '0')}`;
     
     const lastMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    const lastMonth = lastMonthDate.toISOString().slice(0, 7);
+    const lastYear = lastMonthDate.getFullYear();
+    const lastMonthNum = lastMonthDate.getMonth() + 1;
+    const lastMonth = `${lastYear}-${String(lastMonthNum).padStart(2, '0')}`;
     
     return [
       { label: '全部', value: '', description: '顯示所有記錄' },
