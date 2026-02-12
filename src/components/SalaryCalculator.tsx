@@ -790,6 +790,11 @@ export default function SalaryCalculator() {
                     const barHeight = Math.max(heightPercent, 5); // 最小高度 5%
                     const [year, month] = stat.month.split('-');
                     
+                    // 當數值為 0 時，標籤顯示在長條圖上方而不是被擋住
+                    const labelTop = stat.totalPay === 0 
+                      ? 'calc(100% - 50px)' // 固定位置在長條圖上方
+                      : `${100 - barHeight - 12}%`; // 正常位置
+                    
                     return (
                       <div 
                         key={stat.month}
@@ -803,10 +808,10 @@ export default function SalaryCalculator() {
                           position: 'relative',
                         }}
                       >
-                        {/* 數值標籤 - 統一固定在長條上方 50px */}
+                        {/* 數值標籤 - 絕對定位在長條上方 */}
                         <div style={{
                           position: 'absolute',
-                          top: 'calc(100% - 50px)',
+                          top: labelTop,
                           fontSize: '0.85rem',
                           fontWeight: '600',
                           color: stat.totalPay === 0 ? 'var(--text-secondary)' : 'var(--color-primary)',
