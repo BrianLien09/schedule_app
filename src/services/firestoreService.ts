@@ -10,8 +10,9 @@
  * /shared/data/courses/{courseId}
  * /shared/data/workShifts/{shiftId}
  * /shared/data/salaryRecords/{recordId}
+ * /shared/data/allowanceRecords/{recordId}  🆕
  * /shared/data/events/{eventId}
- * /shared/data/gameGuides/{guideId}  🆕
+ * /shared/data/gameGuides/{guideId}
  */
 
 import {

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
-import { SchoolIcon, BriefcaseIcon, GamepadIcon, MusicIcon, ToolboxIcon, CalculatorIcon } from './Icons';
+import { SchoolIcon, BriefcaseIcon, GamepadIcon, MusicIcon, ToolboxIcon, CalculatorIcon, WalletIcon } from './Icons';
 import ThemeToggle from './ThemeToggle';
 import { useAuth } from '@/context/AuthContext';
 
@@ -118,6 +118,10 @@ export default function Navbar() {
               <Link href="/tools/salary" className="dropdown-item">
                 <CalculatorIcon size={18} />
                 <span>薪資計算</span>
+              </Link>
+              <Link href="/tools/allowance" className="dropdown-item">
+                <WalletIcon size={18} />
+                <span>生活費記錄</span>
               </Link>
             </div>
           </li>

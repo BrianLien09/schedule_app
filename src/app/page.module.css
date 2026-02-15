@@ -364,3 +364,113 @@
   align-items: center;
   gap: var(--spacing-sm);
 }
+
+/* ===== Allowance Card ===== */
+.allowanceCard {
+  padding: var(--spacing-md);
+  border-top: 3px solid var(--color-highlight);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.allowanceHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: var(--color-highlight);
+}
+
+.allowanceContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.allowanceRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-xs) 0;
+}
+
+.allowanceLabel {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.allowanceValue {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.allowanceAmount {
+  color: var(--color-highlight);
+  font-size: 1.1rem;
+}
+
+.allowanceSplit {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xs);
+  padding: var(--spacing-sm);
+  background: rgba(251, 191, 36, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(251, 191, 36, 0.2);
+}
+
+.allowanceSplitItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.allowanceSplitLabel {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.allowanceSplitValue {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.allowanceSplitDivider {
+  width: 1px;
+  background: rgba(251, 191, 36, 0.3);
+}
+
+.allowanceLink {
+  margin-top: var(--spacing-xs);
+  font-size: 0.85rem;
+  color: var(--color-highlight);
+  text-align: center;
+  text-decoration: none;
+  padding: var(--spacing-xs);
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.allowanceLink:hover {
+  background: rgba(251, 191, 36, 0.1);
+}
+
+.allowanceEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) 0;
+  color: var(--muted);
+}
+
+.allowanceEmpty p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+

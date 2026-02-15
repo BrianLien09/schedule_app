@@ -1,11 +1,13 @@
 'use client';
 import Link from 'next/link';
-import { CalendarIcon, GamepadIcon, SchoolIcon, BriefcaseIcon } from '../components/Icons';
+import { CalendarIcon, GamepadIcon, SchoolIcon, BriefcaseIcon, WalletIcon } from '../components/Icons';
 import { StatCard, TimelineItem } from '../components/VisualComponents';
 import { useHomeDashboard } from '../hooks/useHomeDashboard';
 import { useScheduleData } from '../hooks/useScheduleData';
+import { useAllowanceData } from '../hooks/useAllowanceData';
 import { useAuth } from '../context/AuthContext';
 import LoginPrompt from '../components/LoginPrompt';
+import { formatDateForCopy, calculateKongBalance } from '../data/allowance';
 import styles from './page.module.css';
 
 export default function Home() {
@@ -13,6 +15,7 @@ export default function Home() {
   
   // 使用新的資料管理 hook
   const { courses, shifts, events } = useScheduleData();
+  const { records: allowanceRecords } = useAllowanceData();
   
   const {
     currentTimeStr,
@@ -26,6 +29,9 @@ export default function Home() {
     monthlyWorkShifts,
     upcomingImportantEvents,
   } = useHomeDashboard(courses, shifts, events);
+
+  // 取得最新的生活費記錄
+  const latestAllowance = allowanceRecords.length > 0 ? allowanceRecords[0] : null;
 
   // 檢查登入狀態
   if (authLoading) {
@@ -129,6 +135,76 @@ export default function Home() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* 生活費記錄卡片 */}
+        <div className={`glass card ${styles.allowanceCard}`}>
+          <div className={styles.allowanceHeader}>
+            <WalletIcon size={20} />
+            <span>生活費記錄</span>
+          </div>
+          {latestAllowance ? (
+            <div className={styles.allowanceContent}>
+              <div className={styles.allowanceRow}>
+                <span className={styles.allowanceLabel}>最近匯入</span>
+                <span className={styles.allowanceValue}>
+                  {formatDateForCopy(latestAllowance.date)}
+                </span>
+              </div>
+              <div className={styles.allowanceRow}>
+                <span className={styles.allowanceLabel}>匯入金額</span>
+                <span className={`${styles.allowanceValue} ${styles.allowanceAmount}`}>
+                  NT$ {latestAllowance.amount.toLocaleString()}
+                </span>
+              </div>
+              <div className={styles.allowanceRow}>
+                <span className={styles.allowanceLabel}>來源</span>
+                <span className={styles.allowanceValue}>
+                  {latestAllowance.sourceType}
+                </span>
+              </div>
+              <div className={styles.allowanceRow}>
+                <span className={styles.allowanceLabel}>帳簿餘額</span>
+                <span className={styles.allowanceValue}>
+                  NT$ {latestAllowance.totalBalance.toLocaleString()}
+                </span>
+              </div>
+              {latestAllowance.sourceType === '生活費匯款' ? (
+                <div className={styles.allowanceSplit}>
+                  <div className={styles.allowanceSplitItem}>
+                    <span className={styles.allowanceSplitLabel}>小呆餘額</span>
+                    <span className={styles.allowanceSplitValue}>
+                      NT$ {latestAllowance.xiaoBalance.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className={styles.allowanceSplitDivider}></div>
+                  <div className={styles.allowanceSplitItem}>
+                    <span className={styles.allowanceSplitLabel}>孔呆餘額</span>
+                    <span className={styles.allowanceSplitValue}>
+                      NT$ {calculateKongBalance(latestAllowance.totalBalance, latestAllowance.xiaoBalance).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className={styles.allowanceRow}>
+                  <span className={styles.allowanceLabel}>小呆餘額</span>
+                  <span className={styles.allowanceValue}>
+                    NT$ {latestAllowance.xiaoBalance.toLocaleString()}
+                  </span>
+                </div>
+              )}
+              <Link href="/tools/allowance" className={styles.allowanceLink}>
+                查看詳細記錄 →
+              </Link>
+            </div>
+          ) : (
+            <div className={styles.allowanceEmpty}>
+              <p>尚無生活費記錄</p>
+              <Link href="/tools/allowance" className={styles.allowanceLink}>
+                建立第一筆記錄 →
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
