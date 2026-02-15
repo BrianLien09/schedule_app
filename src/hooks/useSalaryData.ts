@@ -27,8 +27,8 @@ export interface SalaryRecord {
   date: string;
   startTime: string;
   endTime: string;
+  workHours: number; // 實際工作時數（用於薪資計算）
   hourlyRate: number;
-  breakMinutes: number;
   role: RoleType;
   shiftCategory?: string;
   workShiftId?: string;

@@ -8,6 +8,7 @@ import html2canvas from 'html2canvas';
 import { useScheduleData } from '@/hooks/useScheduleData';
 import { useSalaryData, type SalaryRecord } from '@/hooks/useSalaryData';
 import { type WorkShift } from '@/data/schedule';
+import { parseExcelFile, convertToExportFormat, type ImportValidation } from '@/utils/excelParser';
 
 /** 身份類型 */
 type RoleType = 'assistant' | 'instructor';
@@ -39,12 +40,15 @@ export default function SalaryCalculator() {
   const [currentRecord, setCurrentRecord] = useState<Omit<SalaryRecord, 'id'>>({
     date: new Date().toISOString().split('T')[0],
     startTime: '09:00',
-    endTime: '18:00',
+    endTime: '17:00',
+    workHours: 8,
     role: 'assistant' as RoleType,
     hourlyRate: 200,
-    breakMinutes: 60,
     shiftCategory: '',
   });
+  
+  // 新增記錄時的工作時數輔助欄位（小時）
+  const [workHours, setWorkHours] = useState<string>('8');
   
   // 班別類別選項（可自由新增）
   const [shiftCategories, setShiftCategories] = useState<string[]>([
@@ -79,6 +83,7 @@ export default function SalaryCalculator() {
   });
   
   const [editingRecord, setEditingRecord] = useState<SalaryRecord | null>(null);
+  const [editingWorkHours, setEditingWorkHours] = useState<string>(''); // 編輯時的工作時數
   const [showEditModal, setShowEditModal] = useState(false);
   const [showStats, setShowStats] = useState(true); // 控制統計圖表顯示
   const [selectedRecordIds, setSelectedRecordIds] = useState<Set<string>>(new Set()); // 批次選擇
@@ -90,11 +95,18 @@ export default function SalaryCalculator() {
     role: '' as '' | RoleType,
     startTime: '',
     endTime: '',
-    breakMinutes: '' as string | number,
+    workHours: '',
     shiftCategory: '',
   });
   const [isPrintMode, setIsPrintMode] = useState(false); // 列印模式
   const pdfContentRef = useRef<HTMLDivElement>(null);
+  
+  // Excel 匯入相關狀態
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importValidation, setImportValidation] = useState<ImportValidation | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [showAllImportRecords, setShowAllImportRecords] = useState(false); // 控制是否顯示全部匯入記錄
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   /**
    * 同步 filterMonth 與 URL Search Params
@@ -156,28 +168,55 @@ export default function SalaryCalculator() {
     ];
   }, []);
 
-  /** 計算工作時數 (小時) */
-  const calculateHours = (record: Omit<SalaryRecord, 'id'>): number => {
-    const [startHour, startMin] = record.startTime.split(':').map(Number);
-    const [endHour, endMin] = record.endTime.split(':').map(Number);
+  /**
+   * 根據開始時間和工作時數，自動計算結束時間
+   * 
+   * 邏輯：結束時間 = 開始時間 + 工作時數
+   * 例如：09:00 + 8小時 = 17:00
+   */
+  const calculateEndTimeFromHours = (startTime: string, workHoursValue: number): string => {
+    const [startHour, startMin] = startTime.split(':').map(Number);
+    const startMinutes = startHour * 60 + startMin;
+    const totalMinutes = startMinutes + (workHoursValue * 60);
+    
+    const endHour = Math.floor(totalMinutes / 60);
+    const endMin = totalMinutes % 60;
+    
+    return `${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
+  };
+
+  /**
+   * 根據開始時間和結束時間，計算實際工作時數
+   */
+  const calculateWorkHoursFromTimes = (startTime: string, endTime: string): number => {
+    const [startHour, startMin] = startTime.split(':').map(Number);
+    const [endHour, endMin] = endTime.split(':').map(Number);
     
     const startMinutes = startHour * 60 + startMin;
     const endMinutes = endHour * 60 + endMin;
-    const totalMinutes = endMinutes - startMinutes - record.breakMinutes;
+    const totalMinutes = endMinutes - startMinutes;
     
-    return totalMinutes / 60;
+    return Math.max(0, totalMinutes / 60);
   };
 
-  /** 計算薪資 */
+  /** 計算工作時數 (小時) - 直接使用記錄中的 workHours */
+  const calculateHours = (record: Omit<SalaryRecord, 'id'>): number => {
+    return record.workHours || 0;
+  };
+
+  /** 計算薪資 - 使用 workHours × hourlyRate */
   const calculatePay = (record: Omit<SalaryRecord, 'id'>): number => {
-    const hours = calculateHours(record);
-    return Math.round(hours * record.hourlyRate);
+    return Math.round((record.workHours || 0) * record.hourlyRate);
   };
 
   /** 新增記錄 */
   const handleAddRecord = () => {
+    // 從 workHours 字串轉換為數字
+    const hours = parseFloat(workHours) || 0;
+    
     const newRecord: SalaryRecord = {
       ...currentRecord,
+      workHours: hours,
       id: Date.now().toString(),
     };
     addRecord(newRecord);
@@ -194,15 +233,45 @@ export default function SalaryCalculator() {
       date: record.date,
       startTime: record.startTime,
       endTime: record.endTime,
+      workHours: record.workHours,
       role: record.role,
       hourlyRate: record.hourlyRate,
-      breakMinutes: record.breakMinutes,
       shiftCategory: record.shiftCategory || '',
       workShiftId: record.workShiftId,
     });
     
+    // 同步工作時數到輸入框
+    setWorkHours(record.workHours.toString());
+    
     // 滾動到表單頂部
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  /**
+   * 處理工作時數變更（獨立欄位，不影響時間段）
+   */
+  const handleWorkHoursChange = (newWorkHours: string) => {
+    setWorkHours(newWorkHours);
+  };
+
+  /**
+   * 處理開始時間變更（獨立欄位，不影響工作時數）
+   */
+  const handleStartTimeChange = (newStartTime: string) => {
+    setCurrentRecord({
+      ...currentRecord,
+      startTime: newStartTime,
+    });
+  };
+
+  /**
+   * 處理結束時間變更（獨立欄位，不影響工作時數）
+   */
+  const handleEndTimeChange = (newEndTime: string) => {
+    setCurrentRecord({
+      ...currentRecord,
+      endTime: newEndTime,
+    });
   };
 
   /** 從打工班表匯入記錄（根據選擇的月份） */
@@ -225,17 +294,22 @@ export default function SalaryCalculator() {
     }
 
     // 將打工班表轉換為薪資記錄
-    const newRecords: SalaryRecord[] = monthShifts.map(shift => ({
-      id: `shift-${shift.id}-${Date.now()}`,
-      date: shift.date,
-      startTime: shift.startTime,
-      endTime: shift.endTime,
-      role: 'assistant' as RoleType, // 預設助教
-      hourlyRate: 200, // 預設助教時薪
-      breakMinutes: 60, // 預設休息時間
-      shiftCategory: shift.note || '', // 使用班表的 note 作為班別
-      workShiftId: shift.id,
-    }));
+    const newRecords: SalaryRecord[] = monthShifts.map(shift => {
+      // 根據時間段計算工作時數
+      const hours = calculateWorkHoursFromTimes(shift.startTime, shift.endTime);
+      
+      return {
+        id: `shift-${shift.id}-${Date.now()}`,
+        date: shift.date,
+        startTime: shift.startTime,
+        endTime: shift.endTime,
+        workHours: hours,
+        role: 'assistant' as RoleType, // 預設助教
+        hourlyRate: 200, // 預設助教時薪
+        shiftCategory: shift.note || '', // 使用班表的 note 作為班別
+        workShiftId: shift.id,
+      };
+    });
 
     batchAddRecords(newRecords);
     alert(`成功匯入 ${newRecords.length} 筆 ${year} 年 ${month} 月的打工記錄！`);
@@ -255,13 +329,53 @@ export default function SalaryCalculator() {
   /** 開啟編輯模式 */
   const handleEditRecord = (record: SalaryRecord) => {
     setEditingRecord({ ...record });
+    // 同步工作時數到輸入框
+    setEditingWorkHours(record.workHours.toString());
     setShowEditModal(true);
+  };
+
+  /**
+   * 處理編輯時的工作時數變更（獨立欄位）
+   */
+  const handleEditWorkHoursChange = (newWorkHours: string) => {
+    setEditingWorkHours(newWorkHours);
+  };
+
+  /**
+   * 處理編輯時的開始時間變更（獨立欄位）
+   */
+  const handleEditStartTimeChange = (newStartTime: string) => {
+    if (!editingRecord) return;
+    
+    setEditingRecord({
+      ...editingRecord,
+      startTime: newStartTime,
+    });
+  };
+
+  /**
+   * 處理編輯時的結束時間變更（獨立欄位）
+   */
+  const handleEditEndTimeChange = (newEndTime: string) => {
+    if (!editingRecord) return;
+    
+    setEditingRecord({
+      ...editingRecord,
+      endTime: newEndTime,
+    });
   };
 
   /** 儲存編輯 */
   const handleSaveEdit = () => {
     if (!editingRecord) return;
-    updateRecord(editingRecord.id, editingRecord);
+    
+    // 從字串轉換工作時數
+    const hours = parseFloat(editingWorkHours) || 0;
+    
+    updateRecord(editingRecord.id, {
+      ...editingRecord,
+      workHours: hours,
+    });
     setShowEditModal(false);
     setEditingRecord(null);
   };
@@ -304,7 +418,7 @@ export default function SalaryCalculator() {
       role: '',
       startTime: '',
       endTime: '',
-      breakMinutes: '',
+      workHours: '',
       shiftCategory: '',
     });
     setShowBatchEditModal(true);
@@ -339,10 +453,15 @@ export default function SalaryCalculator() {
       updateData.endTime = batchEditData.endTime;
     }
     
-    // 休息時間
-    if (batchEditData.breakMinutes !== '') {
-      updateData.breakMinutes = Number(batchEditData.breakMinutes);
+    // 工作時數：直接批次更新（完全獨立）
+    if (batchEditData.workHours) {
+      const hours = parseFloat(batchEditData.workHours);
+      if (!isNaN(hours) && hours > 0) {
+        updateData.workHours = hours;
+      }
     }
+    
+    // 休息時間已改為智慧推算，不再允許批次編輯
     
     // 班別
     if (batchEditData.shiftCategory) {
@@ -359,8 +478,9 @@ export default function SalaryCalculator() {
       id,
       data: updateData
     }));
-
+    
     batchUpdateRecords(updates);
+
     setShowBatchEditModal(false);
     setSelectedRecordIds(new Set());
     
@@ -370,7 +490,7 @@ export default function SalaryCalculator() {
     if (updateData.role) updatedFields.push('身份');
     if (updateData.startTime) updatedFields.push('開始時間');
     if (updateData.endTime) updatedFields.push('結束時間');
-    if (updateData.breakMinutes !== undefined) updatedFields.push('休息時間');
+    if (updateData.workHours) updatedFields.push('工作時數');
     if (updateData.shiftCategory) updatedFields.push('班別');
     
     alert(`已成功更新 ${selectedRecordIds.size} 筆記錄的 ${updatedFields.join('、')}！`);
@@ -384,7 +504,7 @@ export default function SalaryCalculator() {
       role: '',
       startTime: '',
       endTime: '',
-      breakMinutes: '',
+      workHours: '',
       shiftCategory: '',
     });
   };
@@ -494,37 +614,114 @@ export default function SalaryCalculator() {
   const monthlyStats = getMonthlyStats();
   const maxMonthlyPay = Math.max(...monthlyStats.map(s => s.totalPay), 1); // 避免除以0
 
-  /** 匯出 Excel（基於篩選後的記錄） */
+  /** 匯出 Excel（基於篩選後的記錄，使用統一格式） */
   const handleExportExcel = () => {
-    const exportData = filteredRecords.map((record, index) => ({
-      '序號': index + 1,
-      '日期': record.date,
-      '開始時間': record.startTime,
-      '結束時間': record.endTime,
-      '休息時間(分)': record.breakMinutes,
-      '工作時數': calculateHours(record).toFixed(2),
-      '時薪': record.hourlyRate,
-      '薪資': calculatePay(record),
-    }));
+    if (filteredRecords.length === 0) {
+      alert('沒有可匯出的記錄！');
+      return;
+    }
+
+    // 使用統一格式：打工日期 | 工作內容 | 工作時長 (時) | 時薪($) | 應得薪資($)
+    const exportData = filteredRecords.map(record => convertToExportFormat(record));
 
     // 加入總計行
+    const totalWorkHours = exportData.reduce((sum, row) => sum + row['工作時長 (時)'], 0);
+    const totalPaySum = exportData.reduce((sum, row) => sum + row['應得薪資($)'], 0);
+    
     exportData.push({
-      '序號': '',
-      '日期': '',
-      '開始時間': '',
-      '結束時間': '',
-      '休息時間(分)': '',
-      '工作時數': '',
-      '時薪': '總計',
-      '薪資': totalPay,
+      '打工日期': '',
+      '工作內容': '',
+      '工作時長 (時)': totalWorkHours,
+      '時薪($)': 0,
+      '應得薪資($)': totalPaySum,
     } as any);
 
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, '薪資明細');
     
-    const fileName = `薪資計算_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const monthStr = filterMonth || '全部';
+    const fileName = `薪資表_${monthStr}_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(wb, fileName);
+  };
+
+  /** 處理檔案選擇 */
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // 檢查檔案類型
+    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+      alert('請選擇 Excel 檔案（.xlsx 或 .xls）');
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const validation = await parseExcelFile(file);
+      setImportValidation(validation);
+      setShowImportModal(true);
+    } catch (error) {
+      console.error('檔案解析錯誤:', error);
+      alert('檔案解析失敗，請確認檔案格式是否正確');
+    } finally {
+      setIsImporting(false);
+      // 清空 input，允許重複選擇同一檔案
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  /** 確認匯入 */
+  const handleConfirmImport = async () => {
+    if (!importValidation || !importValidation.success) {
+      alert('無有效資料可匯入');
+      return;
+    }
+
+    try {
+      // 檢查重複日期
+      const existingDates = new Set(records.map(r => r.date));
+      const recordsToImport = importValidation.records.filter(record => {
+        return !existingDates.has(record.date);
+      });
+
+      const duplicateCount = importValidation.records.length - recordsToImport.length;
+
+      if (recordsToImport.length === 0) {
+        alert('所有記錄的日期都已存在於資料庫中，沒有新記錄可匯入！');
+        return;
+      }
+
+      // 匯入不重複的記錄
+      await batchAddRecords(recordsToImport);
+      
+      let message = `成功匯入 ${recordsToImport.length} 筆記錄！`;
+      if (duplicateCount > 0) {
+        message += `\n已跳過 ${duplicateCount} 筆重複日期的記錄。`;
+      }
+      
+      alert(message);
+      setShowImportModal(false);
+      setImportValidation(null);
+      setShowAllImportRecords(false); // 重置顯示狀態
+    } catch (error) {
+      console.error('匯入失敗:', error);
+      alert('匯入失敗，請稍後再試');
+    }
+  };
+
+  /** 取消匯入 */
+  const handleCancelImport = () => {
+    setShowImportModal(false);
+    setImportValidation(null);
+    setShowAllImportRecords(false); // 重置顯示狀態
+  };
+
+  /** 觸發檔案選擇 */
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
   };
 
   /** 匯出 PDF - 使用 html2canvas（基於篩選後的記錄） */
@@ -1006,7 +1203,7 @@ export default function SalaryCalculator() {
             <input 
               type="time"
               value={currentRecord.startTime}
-              onChange={(e) => setCurrentRecord({ ...currentRecord, startTime: e.target.value })}
+              onChange={(e) => handleStartTimeChange(e.target.value)}
               style={{
                 width: '100%',
                 padding: '0.5rem',
@@ -1025,7 +1222,7 @@ export default function SalaryCalculator() {
             <input 
               type="time"
               value={currentRecord.endTime}
-              onChange={(e) => setCurrentRecord({ ...currentRecord, endTime: e.target.value })}
+              onChange={(e) => handleEndTimeChange(e.target.value)}
               style={{
                 width: '100%',
                 padding: '0.5rem',
@@ -1039,12 +1236,14 @@ export default function SalaryCalculator() {
 
           <div>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
-              休息時間 (分)
+              工作時數 (小時)
             </label>
             <input 
               type="number"
-              value={currentRecord.breakMinutes}
-              onChange={(e) => setCurrentRecord({ ...currentRecord, breakMinutes: Number(e.target.value) })}
+              step="0.5"
+              min="0"
+              value={workHours}
+              onChange={(e) => handleWorkHoursChange(e.target.value)}
               style={{
                 width: '100%',
                 padding: '0.5rem',
@@ -1053,6 +1252,7 @@ export default function SalaryCalculator() {
                 background: 'rgba(255,255,255,0.05)',
                 color: 'var(--text-primary)',
               }}
+              placeholder="例：8"
             />
           </div>
 
@@ -1276,6 +1476,46 @@ export default function SalaryCalculator() {
               >
                 匯出 Excel
               </button>
+              
+              {/* 匯入 Excel 按鈕 */}
+              <button
+                onClick={handleImportClick}
+                className="no-print"
+                disabled={isImporting}
+                style={{
+                  padding: '0.5rem 1rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: isImporting ? 'rgba(156, 163, 175, 0.2)' : 'rgba(96, 165, 250, 0.2)',
+                  color: isImporting ? '#9ca3af' : '#60a5fa',
+                  fontWeight: '600',
+                  cursor: isImporting ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isImporting) {
+                    e.currentTarget.style.background = 'rgba(96, 165, 250, 0.3)';
+                    e.currentTarget.style.transform = 'scale(1.05)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isImporting) {
+                    e.currentTarget.style.background = 'rgba(96, 165, 250, 0.2)';
+                    e.currentTarget.style.transform = 'scale(1)';
+                  }
+                }}
+              >
+                {isImporting ? '解析中...' : '匯入 Excel'}
+              </button>
+              
+              {/* 隱藏的檔案輸入 */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleFileSelect}
+                style={{ display: 'none' }}
+              />
             </div>
           </div>
 
@@ -1432,12 +1672,6 @@ export default function SalaryCalculator() {
                     textAlign: 'center',
                     border: isPrintMode ? '1px solid #333' : 'none',
                     color: isPrintMode ? 'black' : 'inherit',
-                  }}>休息</th>
-                  <th style={{ 
-                    padding: '0.75rem', 
-                    textAlign: 'center',
-                    border: isPrintMode ? '1px solid #333' : 'none',
-                    color: isPrintMode ? 'black' : 'inherit',
                   }}>工時</th>
                   <th style={{ 
                     padding: '0.75rem', 
@@ -1548,12 +1782,6 @@ export default function SalaryCalculator() {
                         border: isPrintMode ? '1px solid #ddd' : 'none',
                         color: isPrintMode ? 'black' : 'inherit',
                       }}>{record.startTime} - {record.endTime}</td>
-                      <td style={{ 
-                        padding: '0.75rem', 
-                        textAlign: 'center',
-                        border: isPrintMode ? '1px solid #ddd' : 'none',
-                        color: isPrintMode ? 'black' : 'inherit',
-                      }}>{record.breakMinutes}分</td>
                       <td style={{ 
                         padding: '0.75rem', 
                         textAlign: 'center',
@@ -1754,7 +1982,6 @@ export default function SalaryCalculator() {
               <th style={{ padding: '12px', textAlign: 'left', fontSize: '14px' }}>日期</th>
               <th style={{ padding: '12px', textAlign: 'left', fontSize: '14px' }}>班別</th>
               <th style={{ padding: '12px', textAlign: 'center', fontSize: '14px' }}>時間</th>
-              <th style={{ padding: '12px', textAlign: 'center', fontSize: '14px' }}>休息</th>
               <th style={{ padding: '12px', textAlign: 'right', fontSize: '14px' }}>工時</th>
               <th style={{ padding: '12px', textAlign: 'right', fontSize: '14px' }}>時薪</th>
               <th style={{ padding: '12px', textAlign: 'right', fontSize: '14px' }}>薪資</th>
@@ -1774,9 +2001,6 @@ export default function SalaryCalculator() {
                 <td style={{ padding: '10px', textAlign: 'center', fontSize: '13px' }}>
                   {record.startTime} - {record.endTime}
                 </td>
-                <td style={{ padding: '10px', textAlign: 'center', fontSize: '13px' }}>
-                  {record.breakMinutes}分
-                </td>
                 <td style={{ padding: '10px', textAlign: 'right', fontSize: '13px' }}>
                   {calculateHours(record).toFixed(2)}h
                 </td>
@@ -1795,7 +2019,7 @@ export default function SalaryCalculator() {
               background: 'rgba(139, 92, 246, 0.2)',
               fontWeight: 'bold'
             }}>
-              <td colSpan={6} style={{ padding: '14px', textAlign: 'right', fontSize: '16px' }}>
+              <td colSpan={5} style={{ padding: '14px', textAlign: 'right', fontSize: '16px' }}>
                 總計薪資
               </td>
               <td style={{ 
@@ -1993,7 +2217,7 @@ export default function SalaryCalculator() {
                 <input 
                   type="time"
                   value={editingRecord.startTime}
-                  onChange={(e) => setEditingRecord({ ...editingRecord, startTime: e.target.value })}
+                  onChange={(e) => handleEditStartTimeChange(e.target.value)}
                   style={{
                     width: '100%',
                     padding: '0.75rem',
@@ -2028,7 +2252,7 @@ export default function SalaryCalculator() {
                 <input 
                   type="time"
                   value={editingRecord.endTime}
-                  onChange={(e) => setEditingRecord({ ...editingRecord, endTime: e.target.value })}
+                  onChange={(e) => handleEditEndTimeChange(e.target.value)}
                   style={{
                     width: '100%',
                     padding: '0.75rem',
@@ -2058,12 +2282,15 @@ export default function SalaryCalculator() {
                   fontWeight: '600',
                   color: 'rgba(255, 255, 255, 0.9)'
                 }}>
-                  休息時間 (分)
+                  工作時數 (小時)
                 </label>
                 <input 
                   type="number"
-                  value={editingRecord.breakMinutes}
-                  onChange={(e) => setEditingRecord({ ...editingRecord, breakMinutes: Number(e.target.value) })}
+                  value={editingWorkHours}
+                  onChange={(e) => handleEditWorkHoursChange(e.target.value)}
+                  step="0.5"
+                  min="0"
+                  placeholder="例如：8 或 8.5"
                   style={{
                     width: '100%',
                     padding: '0.75rem',
@@ -2084,6 +2311,8 @@ export default function SalaryCalculator() {
                   }}
                 />
               </div>
+
+              {/* 休息時間已改為智慧推算，編輯時保留原值 */}
 
               <div>
                 <label style={{ 
@@ -2292,6 +2521,8 @@ export default function SalaryCalculator() {
               padding: '2rem',
               maxWidth: '500px',
               width: '100%',
+              maxHeight: '85vh',
+              overflowY: 'auto',
               background: 'rgba(30, 30, 45, 0.95)',
               backdropFilter: 'blur(20px)',
               border: '1px solid rgba(139, 92, 246, 0.3)',
@@ -2492,7 +2723,7 @@ export default function SalaryCalculator() {
                 </div>
               </div>
 
-              {/* 休息時間 */}
+              {/* 工作時數 */}
               <div style={{ marginBottom: '1.25rem' }}>
                 <label style={{ 
                   display: 'block', 
@@ -2501,15 +2732,15 @@ export default function SalaryCalculator() {
                   fontWeight: '600',
                   color: 'rgba(255, 255, 255, 0.9)'
                 }}>
-                  休息時間 (分鐘) <span style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.5)' }}>(選填)</span>
+                  工作時數 (小時) <span style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.5)' }}>(選填)</span>
                 </label>
                 <input
                   type="number"
-                  value={batchEditData.breakMinutes}
-                  onChange={(e) => setBatchEditData({ ...batchEditData, breakMinutes: e.target.value })}
+                  value={batchEditData.workHours}
+                  onChange={(e) => setBatchEditData({ ...batchEditData, workHours: e.target.value })}
+                  placeholder="例如：8 或 8.5"
+                  step="0.5"
                   min="0"
-                  step="15"
-                  placeholder="例如：60"
                   style={{
                     width: '100%',
                     padding: '0.875rem',
@@ -2522,6 +2753,8 @@ export default function SalaryCalculator() {
                   }}
                 />
               </div>
+
+              {/* 休息時間已改為智慧推算，批次編輯時不提供修改 */}
 
               {/* 時薪 */}
               <label style={{ 
@@ -2630,6 +2863,356 @@ export default function SalaryCalculator() {
                 }}
               >
                 確認更新
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Excel 匯入預覽彈窗 */}
+      {showImportModal && importValidation && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.85)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1rem',
+          }}
+          onClick={handleCancelImport}
+        >
+          <div 
+            className="glass" 
+            style={{
+              padding: '2rem',
+              maxWidth: '800px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              background: 'rgba(30, 30, 45, 0.95)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(96, 165, 250, 0.3)',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(96, 165, 250, 0.2)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              marginBottom: '1.5rem',
+              paddingBottom: '1rem',
+              borderBottom: '2px solid rgba(96, 165, 250, 0.3)'
+            }}>
+              <h3 style={{ 
+                fontSize: '1.5rem', 
+                fontWeight: '700',
+                background: 'linear-gradient(to right, #60a5fa, #34d399)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                margin: 0
+              }}>
+                匯入預覽
+              </h3>
+              <button
+                onClick={handleCancelImport}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  border: 'none',
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  color: '#ef4444',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.2rem',
+                  fontWeight: 'bold',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)';
+                  e.currentTarget.style.transform = 'rotate(90deg)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)';
+                  e.currentTarget.style.transform = 'rotate(0deg)';
+                }}
+                title="關閉"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* 狀態摘要 */}
+            <div style={{
+              padding: '1rem',
+              borderRadius: '8px',
+              background: importValidation.success 
+                ? 'rgba(52, 211, 153, 0.1)' 
+                : 'rgba(239, 68, 68, 0.1)',
+              border: importValidation.success 
+                ? '1px solid rgba(52, 211, 153, 0.3)' 
+                : '1px solid rgba(239, 68, 68, 0.3)',
+              marginBottom: '1.5rem',
+            }}>
+              <div style={{ 
+                fontSize: '1rem', 
+                fontWeight: '600',
+                color: importValidation.success ? '#34d399' : '#ef4444',
+                marginBottom: '0.5rem'
+              }}>
+                {importValidation.success ? '✓ 解析成功' : '✗ 解析失敗'}
+              </div>
+              <div style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.7)' }}>
+                成功解析 <span style={{ color: '#60a5fa', fontWeight: '700' }}>{importValidation.records.length}</span> 筆有效記錄
+              </div>
+              {(() => {
+                // 計算重複日期
+                const existingDates = new Set(records.map(r => r.date));
+                const duplicates = importValidation.records.filter(r => existingDates.has(r.date));
+                const duplicateCount = duplicates.length;
+                const newRecordCount = importValidation.records.length - duplicateCount;
+                
+                return (
+                  <>
+                    {duplicateCount > 0 && (
+                      <div style={{ fontSize: '0.9rem', color: '#fbbf24', marginTop: '0.5rem' }}>
+                        其中 {duplicateCount} 筆為重複日期，將會跳過
+                      </div>
+                    )}
+                    {newRecordCount > 0 && (
+                      <div style={{ fontSize: '0.9rem', color: '#34d399', marginTop: '0.5rem', fontWeight: '600' }}>
+                        → 實際可匯入 {newRecordCount} 筆新記錄
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+              {importValidation.errors.length > 0 && (
+                <div style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.5)', marginTop: '0.5rem' }}>
+                  已跳過 {importValidation.errors.length} 行（合計行/標題行）
+                </div>
+              )}
+              {importValidation.warnings.length > 0 && (
+                <div style={{ fontSize: '0.9rem', color: '#fbbf24', marginTop: '0.5rem' }}>
+                  {importValidation.warnings.length} 個警告
+                </div>
+              )}
+            </div>
+
+            {/* 警告訊息 */}
+            {importValidation.warnings.length > 0 && (
+              <div style={{ marginBottom: '1.5rem' }}>
+                <div style={{ 
+                  fontSize: '0.95rem', 
+                  fontWeight: '600',
+                  color: '#fbbf24',
+                  marginBottom: '0.5rem'
+                }}>
+                  警告訊息：
+                </div>
+                <div style={{
+                  padding: '1rem',
+                  borderRadius: '8px',
+                  background: 'rgba(251, 191, 36, 0.1)',
+                  border: '1px solid rgba(251, 191, 36, 0.3)',
+                  maxHeight: '150px',
+                  overflow: 'auto',
+                }}>
+                  {importValidation.warnings.map((warning, index) => (
+                    <div key={index} style={{ 
+                      fontSize: '0.85rem', 
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      marginBottom: '0.25rem'
+                    }}>
+                      • {warning}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 預覽前幾筆資料 */}
+            {importValidation.records.length > 0 && (
+              <div style={{ marginBottom: '1.5rem' }}>
+                <div style={{ 
+                  fontSize: '0.95rem', 
+                  fontWeight: '600',
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  marginBottom: '0.5rem'
+                }}>
+                  預覽前 5 筆資料：
+                </div>
+                <div style={{
+                  borderRadius: '8px',
+                  overflow: 'hidden',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                }}>
+                  <table style={{ 
+                    width: '100%', 
+                    fontSize: '0.85rem',
+                    borderCollapse: 'collapse'
+                  }}>
+                    <thead>
+                      <tr style={{ background: 'rgba(96, 165, 250, 0.1)' }}>
+                        <th style={{ padding: '0.5rem', textAlign: 'left', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>日期</th>
+                        <th style={{ padding: '0.5rem', textAlign: 'left', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>工作內容</th>
+                        <th style={{ padding: '0.5rem', textAlign: 'left', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>時薪</th>
+                        <th style={{ padding: '0.5rem', textAlign: 'left', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>時段</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(showAllImportRecords 
+                        ? importValidation.records 
+                        : importValidation.records.slice(0, 5)
+                      ).map((record, index) => {
+                        // 檢查是否為重複日期
+                        const existingDates = new Set(records.map(r => r.date));
+                        const isDuplicate = existingDates.has(record.date);
+                        
+                        return (
+                          <tr key={index} style={{ 
+                            background: index % 2 === 0 ? 'rgba(255, 255, 255, 0.02)' : 'transparent',
+                            opacity: isDuplicate ? 0.5 : 1,
+                          }}>
+                            <td style={{ 
+                              padding: '0.5rem', 
+                              borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                              position: 'relative'
+                            }}>
+                              {record.date}
+                              {isDuplicate && (
+                                <span style={{ 
+                                  fontSize: '0.7rem', 
+                                  color: '#fbbf24',
+                                  marginLeft: '0.5rem',
+                                  fontWeight: '600'
+                                }}>
+                                  (重複)
+                                </span>
+                              )}
+                            </td>
+                            <td style={{ padding: '0.5rem', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                              {record.shiftCategory}
+                            </td>
+                            <td style={{ padding: '0.5rem', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                              ${record.hourlyRate}
+                            </td>
+                            <td style={{ padding: '0.5rem', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                              {record.startTime}-{record.endTime}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                {importValidation.records.length > 5 && (
+                  <button
+                    onClick={() => setShowAllImportRecords(!showAllImportRecords)}
+                    style={{ 
+                      fontSize: '0.85rem', 
+                      color: '#60a5fa',
+                      background: 'rgba(96, 165, 250, 0.1)',
+                      border: '1px solid rgba(96, 165, 250, 0.3)',
+                      borderRadius: '6px',
+                      padding: '0.5rem 1rem',
+                      marginTop: '0.75rem',
+                      width: '100%',
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(96, 165, 250, 0.2)';
+                      e.currentTarget.style.borderColor = 'rgba(96, 165, 250, 0.5)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(96, 165, 250, 0.1)';
+                      e.currentTarget.style.borderColor = 'rgba(96, 165, 250, 0.3)';
+                    }}
+                  >
+                    {showAllImportRecords 
+                      ? '收起' 
+                      : `顯示全部 ${importValidation.records.length} 筆資料 (還有 ${importValidation.records.length - 5} 筆未顯示)`
+                    }
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* 按鈕組 */}
+            <div style={{ 
+              display: 'flex', 
+              gap: '1rem', 
+              justifyContent: 'flex-end',
+              paddingTop: '1rem',
+              borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <button
+                onClick={handleCancelImport}
+                style={{
+                  padding: '0.875rem 2rem',
+                  borderRadius: '10px',
+                  border: '2px solid rgba(255, 255, 255, 0.2)',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  fontSize: '0.95rem',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                取消
+              </button>
+              <button
+                onClick={handleConfirmImport}
+                disabled={!importValidation.success}
+                style={{
+                  padding: '0.875rem 2rem',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: importValidation.success 
+                    ? 'linear-gradient(135deg, #60a5fa, #34d399)' 
+                    : 'rgba(156, 163, 175, 0.2)',
+                  color: importValidation.success ? 'white' : 'rgba(156, 163, 175, 0.5)',
+                  fontWeight: '600',
+                  cursor: importValidation.success ? 'pointer' : 'not-allowed',
+                  transition: 'all 0.2s',
+                  fontSize: '0.95rem',
+                  boxShadow: importValidation.success ? '0 4px 12px rgba(96, 165, 250, 0.4)' : 'none',
+                }}
+                onMouseEnter={(e) => {
+                  if (importValidation.success) {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(96, 165, 250, 0.5)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (importValidation.success) {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(96, 165, 250, 0.4)';
+                  }
+                }}
+              >
+                確認匯入 {importValidation.records.length} 筆
               </button>
             </div>
           </div>
