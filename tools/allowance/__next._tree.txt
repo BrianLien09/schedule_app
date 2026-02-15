@@ -1,0 +1,3 @@
+:HL["/schedule_app/_next/static/chunks/c9999d8f13c3868e.css","style"]
+:HL["/schedule_app/_next/static/chunks/924de708770b8d6f.css","style"]
+0:{"buildId":"Kf8RvalA_XV4szvFihLN2","tree":{"name":"","paramType":null,"paramKey":"","hasRuntimePrefetch":false,"slots":{"children":{"name":"tools","paramType":null,"paramKey":"tools","hasRuntimePrefetch":false,"slots":{"children":{"name":"allowance","paramType":null,"paramKey":"allowance","hasRuntimePrefetch":false,"slots":{"children":{"name":"__PAGE__","paramType":null,"paramKey":"__PAGE__","hasRuntimePrefetch":false,"slots":null,"isRootLayout":false}},"isRootLayout":false}},"isRootLayout":false}},"isRootLayout":true},"staleTime":300}
