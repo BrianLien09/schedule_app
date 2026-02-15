@@ -505,11 +505,198 @@
   color: var(--muted);
 }
 
+/* ========== 統計卡片網格 ========== */
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* ========== 來源類型標籤 ========== */
+
+.sourceBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border: 1.5px solid;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(4px);
+  transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .sourceBadge {
+  background: rgba(30, 41, 59, 0.5);
+}
+
+/* ========== 匯入金額區塊 ========== */
+
+.amountSection {
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-sm);
+  background: linear-gradient(135deg, rgba(8, 145, 178, 0.1), rgba(14, 116, 144, 0.05));
+  border-radius: 8px;
+  border-left: 3px solid var(--color-primary);
+}
+
+.amountLabel {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.25rem;
+}
+
+.amountValue {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--color-primary);
+}
+
+/* ========== 視覺化餘額進度條 ========== */
+
+.balanceSection {
+  margin-bottom: var(--spacing-md);
+}
+
+.balanceBar {
+  margin-bottom: var(--spacing-sm);
+}
+
+.balanceBarHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.375rem;
+  font-size: 0.75rem;
+}
+
+.balanceBarLabel {
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.balanceBarValue {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.balanceBarTrack {
+  height: 10px;
+  background: var(--glass-bg-hover);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--glass-border);
+}
+
+.balanceBarFill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* 光澤效果 */
+.balanceBarFill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), transparent);
+  border-radius: 6px 6px 0 0;
+}
+
+/* ========== 查看更多按鈕 ========== */
+
+.expandButton {
+  width: 100%;
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--foreground);
+  transition: all 0.3s ease;
+}
+
+.expandButton:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+}
+
+/* ========== 卡片動畫 ========== */
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.recordCard {
+  animation: slideInUp 0.4s ease-out;
+  animation-fill-mode: both;
+  transition: all 0.3s ease;
+}
+
+.recordCard:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--glass-shadow-hover);
+  border-color: var(--color-primary);
+}
+
+/* 無障礙：尊重用戶的動畫偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .recordCard {
+    animation: none;
+  }
+  
+  .recordCard:hover {
+    transform: none;
+  }
+  
+  .balanceBarFill {
+    transition: none;
+  }
+  
+  .sourceBadge {
+    transition: none;
+  }
+  
+  .expandButton {
+    transition: none;
+  }
+}
+
 /* ========== 響應式設計 ========== */
 
 @media (max-width: 768px) {
   .container {
     padding: var(--spacing-sm);
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
   }
 
   .formGrid {
@@ -522,6 +709,14 @@
 
   .filterButtons {
     justify-content: center;
+  }
+
+  .amountValue {
+    font-size: 1.25rem;
+  }
+
+  .balanceBarHeader {
+    font-size: 0.7rem;
   }
 
   .toast {

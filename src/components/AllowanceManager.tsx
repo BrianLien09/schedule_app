@@ -9,7 +9,65 @@ import {
   generateCopyText,
   formatDateForCopy,
 } from '@/data/allowance';
+import { StatCard } from '@/components/VisualComponents';
 import styles from './AllowanceManager.module.css';
+
+// ========== 子元件：進度條 ==========
+interface BalanceBarProps {
+  label: string;
+  value: number;
+  max: number;
+  color: string;
+}
+
+const BalanceBar = ({ label, value, max, color }: BalanceBarProps) => {
+  const percentage = max > 0 ? Math.min((value / max) * 100, 100) : 0;
+  
+  return (
+    <div className={styles.balanceBar}>
+      <div className={styles.balanceBarHeader}>
+        <span className={styles.balanceBarLabel}>{label}</span>
+        <span className={styles.balanceBarValue}>{value.toLocaleString()} 元</span>
+      </div>
+      <div className={styles.balanceBarTrack}>
+        <div 
+          className={styles.balanceBarFill}
+          style={{ 
+            width: `${percentage}%`,
+            background: color
+          }}
+        />
+      </div>
+    </div>
+  );
+};
+
+// ========== 子元件：來源類型標籤 ==========
+const sourceTypeConfig: Record<string, { icon: string; color: string }> = {
+  '生活費匯款': { icon: '🎓', color: 'var(--color-primary)' },
+  '打工收入': { icon: '💼', color: 'var(--color-accent)' },
+  '獎學金': { icon: '🏆', color: 'var(--color-highlight)' },
+  '退費': { icon: '💸', color: 'var(--muted)' },
+  '其他': { icon: '📦', color: 'var(--muted-dark)' }
+};
+
+interface SourceTypeBadgeProps {
+  type: string;
+}
+
+const SourceTypeBadge = ({ type }: SourceTypeBadgeProps) => {
+  const config = sourceTypeConfig[type] || sourceTypeConfig['其他'];
+  
+  return (
+    <div 
+      className={styles.sourceBadge}
+      style={{ borderColor: config.color, color: config.color }}
+    >
+      <span>{config.icon}</span>
+      <span>{type}</span>
+    </div>
+  );
+};
 
 export default function AllowanceManager() {
   // ========== 資料層 ==========
@@ -94,6 +152,74 @@ export default function AllowanceManager() {
     if (!filterMonth) return records;
     return records.filter(record => record.date.startsWith(filterMonth));
   }, [records, filterMonth]);
+
+  // ========== 精簡模式狀態 ==========
+  const [isExpanded, setIsExpanded] = useState(false);
+  const displayLimit = 3;
+  const displayedRecords = isExpanded ? filteredRecords : filteredRecords.slice(0, displayLimit);
+  const hasMore = filteredRecords.length > displayLimit;
+
+  // ========== 統計數據（根據篩選月份） ==========
+  const stats = useMemo(() => {
+    const monthRecords = filteredRecords;
+    
+    return {
+      totalDeposit: monthRecords.reduce((sum, r) => sum + r.amount, 0),
+      recordCount: monthRecords.length,
+      currentBookBalance: records[0]?.totalBalance || 0,
+      currentXiaoBalance: records[0]?.xiaoBalance || 0,
+    };
+  }, [filteredRecords, records]);
+
+  // ========== 計算上個月數據（用於比較） ==========
+  const lastMonthStats = useMemo(() => {
+    if (!filterMonth) return null; // 「全部」模式不比較
+    
+    // 解析當前月份
+    const [year, month] = filterMonth.split('-').map(Number);
+    
+    // 計算上個月
+    const lastMonth = month === 1 ? 12 : month - 1;
+    const lastYear = month === 1 ? year - 1 : year;
+    const lastMonthStr = `${lastYear}-${String(lastMonth).padStart(2, '0')}`;
+    
+    // 篩選上個月的記錄
+    const lastMonthRecords = records.filter(r => r.date.startsWith(lastMonthStr));
+    
+    return {
+      totalDeposit: lastMonthRecords.reduce((sum, r) => sum + r.amount, 0),
+      recordCount: lastMonthRecords.length
+    };
+  }, [records, filterMonth]);
+
+  // ========== 計算與上月比較的變化 ==========
+  const monthChange = useMemo(() => {
+    if (!lastMonthStats || lastMonthStats.totalDeposit === 0) return null;
+    
+    const currentTotal = stats.totalDeposit;
+    const lastTotal = lastMonthStats.totalDeposit;
+    const changePercent = ((currentTotal - lastTotal) / lastTotal) * 100;
+    
+    return {
+      percent: changePercent,
+      isIncrease: changePercent > 0,
+      arrow: changePercent > 0 ? '↗️' : changePercent < 0 ? '↘️' : '→'
+    };
+  }, [stats.totalDeposit, lastMonthStats]);
+
+  // ========== 進度條最大值（取當前月份的最大值） ==========
+  const maxValues = useMemo(() => {
+    if (filteredRecords.length === 0) return { amount: 0, total: 0, xiao: 0, kong: 0 };
+    
+    return {
+      amount: Math.max(...filteredRecords.map(r => r.amount)),
+      total: Math.max(...filteredRecords.map(r => r.totalBalance)),
+      xiao: Math.max(...filteredRecords.map(r => r.xiaoBalance)),
+      kong: Math.max(...filteredRecords
+        .filter(r => r.sourceType === '生活費匯款')
+        .map(r => calculateKongBalance(r.totalBalance, r.xiaoBalance)))
+    };
+  }, [filteredRecords]);
 
   // ========== 取得最新的小呆餘額 ==========
   const latestXiaoBalance = useMemo(() => {
@@ -349,6 +475,37 @@ export default function AllowanceManager() {
         </div>
       </div>
 
+      {/* 統計卡片區 */}
+      {filteredRecords.length > 0 && (
+        <div className={styles.statsGrid}>
+          <StatCard
+            icon={<span style={{ fontSize: '2rem' }}>💰</span>}
+            label="本月累計"
+            value={`${stats.totalDeposit.toLocaleString()}`}
+            subtext={
+              monthChange 
+                ? `${monthChange.arrow} ${Math.abs(monthChange.percent).toFixed(1)}% vs 上月` 
+                : `共 ${stats.recordCount} 筆`
+            }
+            color="var(--color-primary)"
+          />
+          <StatCard
+            icon={<span style={{ fontSize: '2rem' }}>💳</span>}
+            label="帳簿餘額"
+            value={`${stats.currentBookBalance.toLocaleString()}`}
+            subtext="當前總額"
+            color="var(--color-accent)"
+          />
+          <StatCard
+            icon={<span style={{ fontSize: '2rem' }}>🏦</span>}
+            label="小呆餘額"
+            value={`${stats.currentXiaoBalance.toLocaleString()}`}
+            subtext="可用金額"
+            color="var(--color-highlight)"
+          />
+        </div>
+      )}
+
       {/* 記錄列表 */}
       <div className={styles.recordsList}>
         {filteredRecords.length === 0 ? (
@@ -362,51 +519,60 @@ export default function AllowanceManager() {
             </div>
           </div>
         ) : (
-          filteredRecords.map((record) => {
-            const recordKongBalance = calculateKongBalance(record.totalBalance, record.xiaoBalance);
-            const recordIsAllowance = isAllowanceType(record.sourceType);
-            return (
-              <div key={record.id} className={`glass ${styles.recordCard}`}>
-                <div className={styles.recordHeader}>
-                  <div className={styles.recordDate}>{formatDateForCopy(record.date)}</div>
-                  <button
-                    className={styles.copyButton}
-                    onClick={() => handleCopy(record)}
-                    title="複製此記錄"
-                  >
-                    📋 複製
+          <>
+            {displayedRecords.map((record, index) => {
+              const recordKongBalance = calculateKongBalance(record.totalBalance, record.xiaoBalance);
+              const recordIsAllowance = isAllowanceType(record.sourceType);
+              return (
+                <div 
+                  key={record.id} 
+                  className={`glass ${styles.recordCard}`}
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  {/* 來源類型標籤 */}
+                  <SourceTypeBadge type={record.sourceType} />
+                  
+                  <div className={styles.recordHeader}>
+                    <div className={styles.recordDate}>{formatDateForCopy(record.date)}</div>
+                    <button
+                      className={styles.copyButton}
+                      onClick={() => handleCopy(record)}
+                      title="複製此記錄"
+                    >
+                      📋 複製
                   </button>
                 </div>
 
-                <div className={styles.recordGrid}>
-                  <div className={styles.recordItem}>
-                    <div className={styles.recordLabel}>匯入金額</div>
-                    <div className={`${styles.recordValue} ${styles.highlight}`}>
-                      {record.amount.toLocaleString()} 元
-                    </div>
+                {/* 匯入金額（突出顯示） */}
+                <div className={styles.amountSection}>
+                  <div className={styles.amountLabel}>匯入金額</div>
+                  <div className={styles.amountValue}>
+                    +{record.amount.toLocaleString()} 元
                   </div>
+                </div>
 
-                  <div className={styles.recordItem}>
-                    <div className={styles.recordLabel}>帳簿餘額</div>
-                    <div className={styles.recordValue}>{record.totalBalance.toLocaleString()} 元</div>
-                  </div>
-
-                  <div className={styles.recordItem}>
-                    <div className={styles.recordLabel}>小呆餘額</div>
-                    <div className={styles.recordValue}>{record.xiaoBalance.toLocaleString()} 元</div>
-                  </div>
-
+                {/* 視覺化餘額進度條 */}
+                <div className={styles.balanceSection}>
+                  <BalanceBar 
+                    label="帳簿餘額" 
+                    value={record.totalBalance} 
+                    max={maxValues.total}
+                    color="var(--color-primary)"
+                  />
+                  <BalanceBar 
+                    label="小呆餘額" 
+                    value={record.xiaoBalance} 
+                    max={maxValues.xiao}
+                    color="var(--color-accent)"
+                  />
                   {recordIsAllowance && (
-                    <div className={styles.recordItem}>
-                      <div className={styles.recordLabel}>孔呆餘額</div>
-                      <div className={styles.recordValue}>{recordKongBalance.toLocaleString()} 元</div>
-                    </div>
+                    <BalanceBar 
+                      label="孔呆餘額" 
+                      value={recordKongBalance} 
+                      max={maxValues.kong}
+                      color="var(--color-highlight)"
+                    />
                   )}
-
-                  <div className={styles.recordItem}>
-                    <div className={styles.recordLabel}>來源</div>
-                    <div className={styles.recordValue}>{record.sourceType}</div>
-                  </div>
                 </div>
 
                 {record.note && (
@@ -427,7 +593,27 @@ export default function AllowanceManager() {
                 )}
               </div>
             );
-          })
+          })}
+          
+          {/* 查看更多按鈕 */}
+          {hasMore && !isExpanded && (
+            <button 
+              className={`${styles.btn} ${styles.btnSecondary} ${styles.expandButton}`}
+              onClick={() => setIsExpanded(true)}
+            >
+              查看全部 (共 {filteredRecords.length} 筆)
+            </button>
+          )}
+          
+          {isExpanded && (
+            <button 
+              className={`${styles.btn} ${styles.btnSecondary} ${styles.expandButton}`}
+              onClick={() => setIsExpanded(false)}
+            >
+              收起記錄
+            </button>
+          )}
+          </>
         )}
       </div>
 
