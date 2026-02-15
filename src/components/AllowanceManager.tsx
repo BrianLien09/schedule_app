@@ -12,36 +12,6 @@ import {
 import { StatCard } from '@/components/VisualComponents';
 import styles from './AllowanceManager.module.css';
 
-// ========== 子元件：進度條 ==========
-interface BalanceBarProps {
-  label: string;
-  value: number;
-  max: number;
-  color: string;
-}
-
-const BalanceBar = ({ label, value, max, color }: BalanceBarProps) => {
-  const percentage = max > 0 ? Math.min((value / max) * 100, 100) : 0;
-  
-  return (
-    <div className={styles.balanceBar}>
-      <div className={styles.balanceBarHeader}>
-        <span className={styles.balanceBarLabel}>{label}</span>
-        <span className={styles.balanceBarValue}>{value.toLocaleString()} 元</span>
-      </div>
-      <div className={styles.balanceBarTrack}>
-        <div 
-          className={styles.balanceBarFill}
-          style={{ 
-            width: `${percentage}%`,
-            background: color
-          }}
-        />
-      </div>
-    </div>
-  );
-};
-
 // ========== 子元件：來源類型標籤 ==========
 const sourceTypeConfig: Record<string, { icon: string; color: string }> = {
   '生活費匯款': { icon: '🎓', color: 'var(--color-primary)' },
@@ -206,20 +176,6 @@ export default function AllowanceManager() {
       arrow: changePercent > 0 ? '↗️' : changePercent < 0 ? '↘️' : '→'
     };
   }, [stats.totalDeposit, lastMonthStats]);
-
-  // ========== 進度條最大值（取當前月份的最大值） ==========
-  const maxValues = useMemo(() => {
-    if (filteredRecords.length === 0) return { amount: 0, total: 0, xiao: 0, kong: 0 };
-    
-    return {
-      amount: Math.max(...filteredRecords.map(r => r.amount)),
-      total: Math.max(...filteredRecords.map(r => r.totalBalance)),
-      xiao: Math.max(...filteredRecords.map(r => r.xiaoBalance)),
-      kong: Math.max(...filteredRecords
-        .filter(r => r.sourceType === '生活費匯款')
-        .map(r => calculateKongBalance(r.totalBalance, r.xiaoBalance)))
-    };
-  }, [filteredRecords]);
 
   // ========== 取得最新的小呆餘額 ==========
   const latestXiaoBalance = useMemo(() => {
@@ -551,27 +507,29 @@ export default function AllowanceManager() {
                   </div>
                 </div>
 
-                {/* 視覺化餘額進度條 */}
-                <div className={styles.balanceSection}>
-                  <BalanceBar 
-                    label="帳簿餘額" 
-                    value={record.totalBalance} 
-                    max={maxValues.total}
-                    color="var(--color-primary)"
-                  />
-                  <BalanceBar 
-                    label="小呆餘額" 
-                    value={record.xiaoBalance} 
-                    max={maxValues.xiao}
-                    color="var(--color-accent)"
-                  />
+                {/* 餘額資訊 */}
+                <div className={styles.balanceGrid}>
+                  <div className={styles.balanceItem}>
+                    <div className={styles.balanceLabel}>帳簿餘額</div>
+                    <div className={styles.balanceValue}>
+                      {record.totalBalance.toLocaleString()} 元
+                    </div>
+                  </div>
+                  
+                  <div className={styles.balanceItem}>
+                    <div className={styles.balanceLabel}>小呆餘額</div>
+                    <div className={styles.balanceValue}>
+                      {record.xiaoBalance.toLocaleString()} 元
+                    </div>
+                  </div>
+                  
                   {recordIsAllowance && (
-                    <BalanceBar 
-                      label="孔呆餘額" 
-                      value={recordKongBalance} 
-                      max={maxValues.kong}
-                      color="var(--color-highlight)"
-                    />
+                    <div className={styles.balanceItem}>
+                      <div className={styles.balanceLabel}>孔呆餘額</div>
+                      <div className={styles.balanceValue}>
+                        {recordKongBalance.toLocaleString()} 元
+                      </div>
+                    </div>
                   )}
                 </div>
 
