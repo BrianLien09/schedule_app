@@ -1,3 +1,3 @@
-:HL["/schedule_app/_next/static/chunks/3e0a43cc06849104.css","style"]
+:HL["/schedule_app/_next/static/chunks/c9999d8f13c3868e.css","style"]
 :HL["/schedule_app/_next/static/chunks/c617dc77c3f2f57b.css","style"]
-0:{"buildId":"X4Z-jD8CNw5iakArCJUmm","tree":{"name":"","paramType":null,"paramKey":"","hasRuntimePrefetch":false,"slots":{"children":{"name":"manage","paramType":null,"paramKey":"manage","hasRuntimePrefetch":false,"slots":{"children":{"name":"__PAGE__","paramType":null,"paramKey":"__PAGE__","hasRuntimePrefetch":false,"slots":null,"isRootLayout":false}},"isRootLayout":false}},"isRootLayout":true},"staleTime":300}
+0:{"buildId":"Xo_O903f28qN2JrU9yNp_","tree":{"name":"","paramType":null,"paramKey":"","hasRuntimePrefetch":false,"slots":{"children":{"name":"manage","paramType":null,"paramKey":"manage","hasRuntimePrefetch":false,"slots":{"children":{"name":"__PAGE__","paramType":null,"paramKey":"__PAGE__","hasRuntimePrefetch":false,"slots":null,"isRootLayout":false}},"isRootLayout":false}},"isRootLayout":true},"staleTime":300}
