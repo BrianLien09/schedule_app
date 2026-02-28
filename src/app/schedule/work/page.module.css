@@ -167,6 +167,8 @@
 /* 深色模式下的班次標籤 - 螢光效果 */
 :global([data-theme="dark"]) .shiftBadge {
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent)); /* 螢光漸層 */
+  color: #0f172a; /* slate-900 深色文字 - 提升對比度 */
+  font-weight: 600; /* 加粗提升可讀性 */
   box-shadow: 0 0 8px rgba(45, 212, 191, 0.4); /* 發光效果 */
 }
 

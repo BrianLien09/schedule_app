@@ -48,12 +48,6 @@ export default function Home() {
 
   return (
     <div className={styles.pageContainer}>
-      {/* Header */}
-      <section className={styles.header}>
-        <h2 className={styles.headerTitle}>Welcome Back, Brian!</h2>
-        <p className={styles.headerSubtitle}>今天也是充滿活力的一天 💪</p>
-      </section>
-
       {/* 統計卡片區 */}
       <div className={styles.statsGrid}>
         <StatCard
