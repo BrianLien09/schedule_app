@@ -8,17 +8,19 @@
  */
 
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import styles from './LoginPrompt.module.css';
 
 export default function LoginPrompt() {
   const { signInWithGoogle } = useAuth();
+  const { toast } = useToast();
 
   const handleLogin = async () => {
     try {
       await signInWithGoogle();
     } catch (error) {
       console.error('登入失敗:', error);
-      alert('登入失敗，請稍後再試');
+      toast.error('登入失敗，請稍後再試');
     }
   };
 

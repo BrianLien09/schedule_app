@@ -138,12 +138,19 @@
 - 平滑的過渡動畫
 
 ### 🎨 UI/UX 優化
-- 玻璃擬態設計 (Glassmorphism)
-- 自動隱藏導航列（下滑收合、上滑顯示）
-- 下拉選單快速導航（日程表下拉包含：學校課表、打工月曆、資料管理）
-- 平滑動畫效果
-- 完全響應式設計
-- 操作即時回饋
+- **玻璃擬態設計** (Glassmorphism)
+- **自動隱藏導航列**（下滑收合、上滑顯示）
+- **行動裝置漢堡選單**（觸控友善、動畫切換、點擊展開）
+- **下拉選單快速導航**（日程表下拉包含：學校課表、打工月曆、資料管理）
+- **統一通知系統**（Toast 取代所有瀏覽器彈窗，支援成功/錯誤/警告/資訊）
+- **確認對話框**（優雅的刪除確認、Promise-based API）
+- **返回頂部按鈕**（滾動超過 400px 自動顯示）
+- **頁面轉場動畫**（淡入效果、尊重使用者動畫偏好）
+- **統一載入狀態**（LoadingSpinner 取代所有 inline 載入文字）
+- **統一 Modal 元件**（所有編輯器共用基礎 Modal，Esc 關閉、點擊外部關閉）
+- **平滑動畫效果**（支援 prefers-reduced-motion）
+- **完全響應式設計**（桌面/平板/手機）
+- **操作即時回饋**
 
 ---
 
@@ -238,23 +245,30 @@ schedule/
 │   └── sw.js                   # Service Worker
 ├── src/
 │   ├── app/                    # Next.js App Router 頁面
-│   │   ├── layout.tsx         # 根佈局（含 AuthProvider）
+│   │   ├── layout.tsx         # 根佈局（含 Providers）
 │   │   ├── page.tsx           # 首頁儀表板
 │   │   ├── login/             # 登入頁面
 │   │   ├── globals.css        # 全域樣式與主題系統
 │   │   ├── games/             # 遊戲攻略頁面
 │   │   ├── manage/            # 資料管理頁面
 │   │   ├── tools/             # 工具箱
-│   │   │   └── salary/        # 薪資計算器
+│   │   │   ├── salary/        # 薪資計算器
+│   │   │   └── allowance/     # 生活費記錄
 │   │   └── schedule/          # 日程表頁面
 │   │       ├── school/        # 學校課表
 │   │       └── work/          # 打工月曆
 │   ├── components/            # React 元件
-│   │   ├── Navbar.tsx         # 導航列（自動隱藏、下拉選單、使用者頭像）
+│   │   ├── Navbar.tsx         # 導航列（自動隱藏、漢堡選單、下拉選單）
+│   │   ├── Modal.tsx          # 統一 Modal 基礎元件（Esc 關閉、點擊外部關閉）
+│   │   ├── Toast.tsx          # Toast 通知元件
+│   │   ├── ConfirmDialog.tsx  # 確認對話框元件
+│   │   ├── BackToTop.tsx      # 返回頂部按鈕
+│   │   ├── Loading.tsx        # 統一載入狀態元件（LoadingSpinner、ErrorState、EmptyState）
 │   │   ├── Icons.tsx          # SVG 圖示元件
 │   │   ├── VisualComponents.tsx    # 視覺元件（卡片、時間軸）
 │   │   ├── ThemeToggle.tsx    # 主題切換按鈕
 │   │   ├── PWAHandler.tsx     # PWA 註冊器
+│   │   ├── Providers.tsx      # Client-side Providers 包裝元件
 │   │   ├── CourseEditor.tsx   # 課程編輯對話框
 │   │   ├── CourseManager.tsx  # 課程管理元件
 │   │   ├── WorkShiftEditor.tsx      # 班表編輯對話框
@@ -265,7 +279,9 @@ schedule/
 │   │   ├── CourseNoteEditor.tsx     # 課程筆記編輯器（Markdown 支援）
 │   │   └── CourseNoteList.tsx       # 課程筆記列表元件
 │   ├── context/               # React Context
-│   │   └── AuthContext.tsx    # 身份驗證全域狀態（useAuth Hook）
+│   │   ├── AuthContext.tsx    # 身份驗證全域狀態（useAuth Hook）
+│   │   ├── ToastContext.tsx   # Toast 通知全域狀態（useToast Hook）
+│   │   └── ConfirmContext.tsx # 確認對話框全域狀態（useConfirm Hook）
 │   ├── hooks/                 # Custom React Hooks
 │   │   ├── useLocalStorage.ts       # LocalStorage 管理
 │   │   ├── useScheduleData.ts       # 資料管理（整合 Firestore + localStorage）
@@ -443,6 +459,7 @@ schedule/
 - ✅ **Firestore 雲端同步**（即時多裝置同步）
 - ✅ **自動資料遷移**（localStorage → Firestore）
 - ✅ **高效能渲染優化**（FPS 55-60、GPU 負載 ↓60%）
+- ✅ **UI/UX 全面升級**（Toast 通知、確認對話框、漢堡選單、返回頂部、統一 Modal）
 - ✅ 自動隱藏導航列
 - ✅ LocalStorage 資料持久化（向後相容）
 - ✅ PWA 支援（離線瀏覽、安裝到主畫面）

@@ -5,6 +5,7 @@
 import { memo } from 'react';
 import type { GameGuide, GuideCategory } from '@/data/gameGuides';
 import { CATEGORY_COLORS, getTagColor } from '@/data/gameGuides';
+import { useToast } from '@/context/ToastContext';
 import styles from './GuideComponents.module.css';
 
 // ============================================================
@@ -153,10 +154,12 @@ const GuideCardComponent = ({
   onEdit,
   onDelete,
 }: GuideCardProps) => {
+  const { toast } = useToast();
+
   const handleCopyResonanceCode = () => {
     if (guide.resonanceCode) {
       navigator.clipboard.writeText(guide.resonanceCode);
-      alert(`已複製共鳴譜代碼：\n${guide.resonanceCode}`);
+      toast.info('已複製共鳴譜代碼');
     }
   };
 

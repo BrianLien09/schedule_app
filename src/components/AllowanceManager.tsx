@@ -2,6 +2,8 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useAllowanceData } from '@/hooks/useAllowanceData';
+import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import {
   AllowanceRecord,
   generateAllowanceId,
@@ -10,6 +12,7 @@ import {
   formatDateForCopy,
 } from '@/data/allowance';
 import { StatCard } from '@/components/VisualComponents';
+import { LoadingSpinner } from '@/components/Loading';
 import styles from './AllowanceManager.module.css';
 
 // ========== 子元件：來源類型標籤 ==========
@@ -51,6 +54,9 @@ export default function AllowanceManager() {
     deleteRecord,
   } = useAllowanceData();
 
+  const { toast } = useToast();
+  const { confirm } = useConfirm();
+
   // ========== 新增記錄表單狀態 ==========
   const [currentRecord, setCurrentRecord] = useState<Omit<AllowanceRecord, 'id' | 'timestamp'>>({
     date: new Date().toISOString().split('T')[0],
@@ -79,10 +85,6 @@ export default function AllowanceManager() {
   
   const [filterMonth, setFilterMonth] = useState<string>(getCurrentMonth());
   const [customMonth, setCustomMonth] = useState<string>(''); // 自訂月份選擇器
-
-  // ========== Toast 提示狀態 ==========
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
 
   // ========== 快速篩選選項 ==========
   const quickFilters = useMemo(() => {
@@ -286,7 +288,7 @@ export default function AllowanceManager() {
   const handleAdd = async () => {
     const error = validateForm(currentRecord);
     if (error) {
-      alert(error);
+      toast.warning(error);
       return;
     }
 
@@ -313,7 +315,7 @@ export default function AllowanceManager() {
 
     // 關閉新增 Modal
     setShowAddModal(false);
-    showToastMessage('✅ 記錄已新增');
+    toast.success('記錄已新增');
   };
 
   // ========== 開啟新增模態框 ==========
@@ -346,22 +348,28 @@ export default function AllowanceManager() {
 
     const error = validateForm(editingRecord);
     if (error) {
-      alert(error);
+      toast.warning(error);
       return;
     }
 
     await updateRecord(editingRecord.id, editingRecord);
     setShowEditModal(false);
     setEditingRecord(null);
-    showToastMessage('✅ 記錄已更新');
+    toast.success('記錄已更新');
   };
 
   // ========== 刪除記錄 ==========
   const handleDelete = async (id: string) => {
-    if (!confirm('確定要刪除此記錄嗎？')) return;
+    const confirmed = await confirm({
+      title: '刪除記錄',
+      message: '確定要刪除此記錄嗎？',
+      confirmText: '刪除',
+      danger: true,
+    });
+    if (!confirmed) return;
 
     await deleteRecord(id);
-    showToastMessage('🗑️ 記錄已刪除');
+    toast.success('記錄已刪除');
   };
 
   // ========== 一鍵複製 ==========
@@ -370,25 +378,17 @@ export default function AllowanceManager() {
 
     try {
       await navigator.clipboard.writeText(text);
-      showToastMessage('📋 已複製到剪貼簿');
+      toast.info('已複製到剪貼簿');
     } catch (err) {
-      // 降級方案：顯示 alert
-      alert(`複製內容：\n\n${text}`);
+      toast.error('複製失敗，請手動選取文字');
     }
-  };
-
-  // ========== 顯示 Toast 提示 ==========
-  const showToastMessage = (message: string) => {
-    setToastMessage(message);
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000);
   };
 
   // ========== 載入中 ==========
   if (loading) {
     return (
       <div className={styles.container}>
-        <div className={styles.loading}>載入中...</div>
+        <LoadingSpinner />
       </div>
     );
   }
@@ -793,13 +793,6 @@ export default function AllowanceManager() {
               </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Toast 提示 */}
-      {showToast && (
-        <div className={`${styles.toast} ${styles.success}`}>
-          <div className={styles.toastMessage}>{toastMessage}</div>
         </div>
       )}
     </div>

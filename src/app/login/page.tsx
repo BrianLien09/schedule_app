@@ -9,11 +9,14 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
+import { LoadingSpinner } from '@/components/Loading';
 import styles from './login.module.css';
 
 export default function LoginPage() {
   const { user, loading, signInWithGoogle } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
 
   // 如果已經登入，導向首頁
   useEffect(() => {
@@ -27,7 +30,7 @@ export default function LoginPage() {
       await signInWithGoogle();
       // 登入成功後會自動導向首頁（由上面的 useEffect 處理）
     } catch (error) {
-      alert('登入失敗，請稍後再試');
+      toast.error('登入失敗，請稍後再試');
     }
   };
 
@@ -35,7 +38,7 @@ export default function LoginPage() {
     return (
       <div className={styles.container}>
         <div className={styles.card}>
-          <div className={styles.loading}>載入中...</div>
+          <LoadingSpinner />
         </div>
       </div>
     );

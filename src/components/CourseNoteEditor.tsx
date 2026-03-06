@@ -1,14 +1,16 @@
 /**
  * 課程筆記編輯器元件
  * 
- * 提供新增/編輯筆記的表單介面
+ * 提供新增/編輯筆記的表單介面，使用統一 Modal 基礎元件
  */
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { CourseNote, NoteType } from '@/data/courseNotes';
 import { NOTE_TYPE_LABELS } from '@/data/courseNotes';
+import { useToast } from '@/context/ToastContext';
+import Modal from './Modal';
 import styles from './CourseNoteEditor.module.css';
 
 interface CourseNoteEditorProps {
@@ -35,6 +37,7 @@ export default function CourseNoteEditor({
   onSave,
   onCancel,
 }: CourseNoteEditorProps) {
+  const { toast } = useToast();
   const [type, setType] = useState<NoteType>(note?.type || 'note');
   const [title, setTitle] = useState(note?.title || '');
   const [content, setContent] = useState(note?.content || '');
@@ -49,7 +52,7 @@ export default function CourseNoteEditor({
     e.preventDefault();
 
     if (!title.trim()) {
-      alert('請輸入標題');
+      toast.warning('請輸入標題');
       return;
     }
 
@@ -71,7 +74,7 @@ export default function CourseNoteEditor({
       });
     } catch (error) {
       console.error('儲存筆記失敗:', error);
-      alert('儲存失敗，請稍後再試');
+      toast.error('儲存失敗，請稍後再試');
     } finally {
       setSaving(false);
     }
@@ -105,169 +108,163 @@ export default function CourseNoteEditor({
   };
 
   return (
-    <div className={styles.editorOverlay} onClick={onCancel}>
-      <div
-        className={`glass ${styles.editorModal}`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className={styles.editorHeader}>
-          <h3>{note ? '編輯筆記' : '新增筆記'}</h3>
-          <button className={styles.closeButton} onClick={onCancel}>
-            ✕
-          </button>
+    <Modal
+      isOpen={true}
+      onClose={onCancel}
+      title={note ? '編輯筆記' : '新增筆記'}
+      maxWidth="700px"
+      className={styles.editorModal}
+    >
+      <form onSubmit={handleSubmit} className={styles.editorForm}>
+        {/* 課程名稱顯示 */}
+        <div className={styles.courseInfo}>
+          📚 {courseName}
         </div>
 
-        <form onSubmit={handleSubmit} className={styles.editorForm}>
-          {/* 課程名稱顯示 */}
-          <div className={styles.courseInfo}>
-            📚 {courseName}
+        {/* 筆記類型選擇 */}
+        <div className={styles.formGroup}>
+          <label>類型</label>
+          <div className={styles.typeSelector}>
+            {(['note', 'homework', 'exam'] as NoteType[]).map((t) => (
+              <button
+                key={t}
+                type="button"
+                className={`${styles.typeButton} ${
+                  type === t ? styles.active : ''
+                }`}
+                onClick={() => setType(t)}
+              >
+                {NOTE_TYPE_LABELS[t]}
+              </button>
+            ))}
           </div>
+        </div>
 
-          {/* 筆記類型選擇 */}
-          <div className={styles.formGroup}>
-            <label>類型</label>
-            <div className={styles.typeSelector}>
-              {(['note', 'homework', 'exam'] as NoteType[]).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  className={`${styles.typeButton} ${
-                    type === t ? styles.active : ''
-                  }`}
-                  onClick={() => setType(t)}
-                >
-                  {NOTE_TYPE_LABELS[t]}
-                </button>
-              ))}
-            </div>
-          </div>
+        {/* 標題 */}
+        <div className={styles.formGroup}>
+          <label htmlFor="title">
+            標題 <span className={styles.required}>*</span>
+          </label>
+          <input
+            id="title"
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="例如：期中考重點整理"
+            required
+          />
+        </div>
 
-          {/* 標題 */}
+        {/* 到期日期（作業/考試） */}
+        {(type === 'homework' || type === 'exam') && (
           <div className={styles.formGroup}>
-            <label htmlFor="title">
-              標題 <span className={styles.required}>*</span>
+            <label htmlFor="dueDate">
+              {type === 'homework' ? '繳交日期' : '考試日期'}
             </label>
             <input
-              id="title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="例如：期中考重點整理"
-              required
+              id="dueDate"
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
             />
           </div>
+        )}
 
-          {/* 到期日期（作業/考試） */}
-          {(type === 'homework' || type === 'exam') && (
-            <div className={styles.formGroup}>
-              <label htmlFor="dueDate">
-                {type === 'homework' ? '繳交日期' : '考試日期'}
-              </label>
-              <input
-                id="dueDate"
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-              />
-            </div>
-          )}
-
-          {/* 優先級 */}
-          <div className={styles.formGroup}>
-            <label>優先級</label>
-            <div className={styles.prioritySelector}>
-              {(['low', 'medium', 'high'] as const).map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  className={`${styles.priorityButton} ${
-                    priority === p ? styles.active : ''
-                  } ${styles[p]}`}
-                  onClick={() => setPriority(p)}
-                >
-                  {p === 'low' && '低'}
-                  {p === 'medium' && '中'}
-                  {p === 'high' && '高'}
-                </button>
-              ))}
-            </div>
+        {/* 優先級 */}
+        <div className={styles.formGroup}>
+          <label>優先級</label>
+          <div className={styles.prioritySelector}>
+            {(['low', 'medium', 'high'] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                className={`${styles.priorityButton} ${
+                  priority === p ? styles.active : ''
+                } ${styles[p]}`}
+                onClick={() => setPriority(p)}
+              >
+                {p === 'low' && '低'}
+                {p === 'medium' && '中'}
+                {p === 'high' && '高'}
+              </button>
+            ))}
           </div>
+        </div>
 
-          {/* Markdown 工具列 */}
-          <div className={styles.formGroup}>
-            <label>內容</label>
-            <div className={styles.markdownToolbar}>
-              <button
-                type="button"
-                title="粗體"
-                onClick={() => insertMarkdown('**', '**')}
-              >
-                <strong>B</strong>
-              </button>
-              <button
-                type="button"
-                title="斜體"
-                onClick={() => insertMarkdown('*', '*')}
-              >
-                <em>I</em>
-              </button>
-              <button
-                type="button"
-                title="標題"
-                onClick={() => insertMarkdown('## ', '')}
-              >
-                H
-              </button>
-              <button
-                type="button"
-                title="項目符號"
-                onClick={() => insertMarkdown('- ', '')}
-              >
-                •
-              </button>
-              <button
-                type="button"
-                title="程式碼"
-                onClick={() => insertMarkdown('`', '`')}
-              >
-                {'<>'}
-              </button>
-            </div>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder={`支援 Markdown 格式：
+        {/* Markdown 工具列 */}
+        <div className={styles.formGroup}>
+          <label>內容</label>
+          <div className={styles.markdownToolbar}>
+            <button
+              type="button"
+              title="粗體"
+              onClick={() => insertMarkdown('**', '**')}
+            >
+              <strong>B</strong>
+            </button>
+            <button
+              type="button"
+              title="斜體"
+              onClick={() => insertMarkdown('*', '*')}
+            >
+              <em>I</em>
+            </button>
+            <button
+              type="button"
+              title="標題"
+              onClick={() => insertMarkdown('## ', '')}
+            >
+              H
+            </button>
+            <button
+              type="button"
+              title="項目符號"
+              onClick={() => insertMarkdown('- ', '')}
+            >
+              •
+            </button>
+            <button
+              type="button"
+              title="程式碼"
+              onClick={() => insertMarkdown('`', '`')}
+            >
+              {'<>'}
+            </button>
+          </div>
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder={`支援 Markdown 格式：
 - **粗體** 或 *斜體*
 - ## 標題
 - \`程式碼\`
 - 項目符號（- 開頭）`}
-              rows={10}
-            />
-          </div>
+            rows={10}
+          />
+        </div>
 
-          {/* 標籤 */}
-          <div className={styles.formGroup}>
-            <label htmlFor="tags">標籤（用逗號分隔）</label>
-            <input
-              id="tags"
-              type="text"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              placeholder="例如：重要, 期中考, 第三章"
-            />
-          </div>
+        {/* 標籤 */}
+        <div className={styles.formGroup}>
+          <label htmlFor="tags">標籤（用逗號分隔）</label>
+          <input
+            id="tags"
+            type="text"
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            placeholder="例如：重要, 期中考, 第三章"
+          />
+        </div>
 
-          {/* 操作按鈕 */}
-          <div className={styles.formActions}>
-            <button type="button" onClick={onCancel}>
-              取消
-            </button>
-            <button type="submit" disabled={saving}>
-              {saving ? '儲存中...' : note ? '更新' : '新增'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        {/* 操作按鈕 */}
+        <div className={styles.formActions}>
+          <button type="button" onClick={onCancel}>
+            取消
+          </button>
+          <button type="submit" disabled={saving}>
+            {saving ? '儲存中...' : note ? '更新' : '新增'}
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }

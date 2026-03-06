@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { AuthProvider } from "@/context/AuthContext";
+import Providers from "@/components/Providers";
 import Navbar from "@/components/Navbar";
+import BackToTop from "@/components/BackToTop";
 import PWAHandler from "@/components/PWAHandler";
 import "./globals.css";
 
@@ -33,13 +34,14 @@ export default function RootLayout({
   return (
     <html lang="zh-TW">
       <body>
-        <AuthProvider>
+        <Providers>
           <PWAHandler />
           <Navbar />
-          <main className="container" style={{ paddingTop: '1rem' }}>
+          <main className="container page-transition" style={{ paddingTop: '1rem' }}>
             {children}
           </main>
-        </AuthProvider>
+          <BackToTop />
+        </Providers>
       </body>
     </html>
   );

@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useToast } from '@/context/ToastContext';
 import { WorkShift } from '../data/schedule';
+import Modal from './Modal';
 import styles from './WorkShiftEditor.module.css';
 
 interface WorkShiftEditorProps {
@@ -13,9 +15,10 @@ interface WorkShiftEditorProps {
 
 /**
  * Work Shift Editor Dialog Component
- * 新增或編輯打工班表的對話框
+ * 新增或編輯打工班表的對話框，使用統一 Modal 基礎元件
  */
 export default function WorkShiftEditor({ isOpen, onClose, onSave, shift, mode }: WorkShiftEditorProps) {
+  const { toast } = useToast();
   const [formData, setFormData] = useState<Partial<WorkShift>>({
     date: new Date().toISOString().split('T')[0],
     startTime: '09:00',
@@ -36,32 +39,17 @@ export default function WorkShiftEditor({ isOpen, onClose, onSave, shift, mode }
     }
   }, [shift, mode]);
 
-  // 鍵盤快捷鍵：Esc 關閉對話框
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.date || !formData.startTime || !formData.endTime) {
-      alert('請填寫所有必填欄位');
+      toast.warning('請填寫所有必填欄位');
       return;
     }
 
     // 驗證結束時間必須大於開始時間
     if (formData.startTime && formData.endTime && formData.startTime >= formData.endTime) {
-      alert('結束時間必須晚於開始時間');
+      toast.warning('結束時間必須晚於開始時間');
       return;
     }
 
@@ -81,81 +69,74 @@ export default function WorkShiftEditor({ isOpen, onClose, onSave, shift, mode }
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={`glass ${styles.dialog}`} onClick={(e) => e.stopPropagation()}>
-        <div className={styles.header}>
-          <h2>{mode === 'add' ? '新增打工班表' : '編輯打工班表'}</h2>
-          <button className={styles.closeButton} onClick={onClose}>
-            ✕
-          </button>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={mode === 'add' ? '新增打工班表' : '編輯打工班表'}
+    >
+      <form onSubmit={handleSubmit} className={styles.form}>
+        <div className={styles.formGroup}>
+          <label htmlFor="date">
+            日期 <span className={styles.required}>*</span>
+          </label>
+          <input
+            id="date"
+            type="date"
+            value={formData.date}
+            onChange={(e) => handleChange('date', e.target.value)}
+            required
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className={styles.form}>
+        <div className={styles.formRow}>
           <div className={styles.formGroup}>
-            <label htmlFor="date">
-              日期 <span className={styles.required}>*</span>
+            <label htmlFor="startTime">
+              開始時間 <span className={styles.required}>*</span>
             </label>
             <input
-              id="date"
-              type="date"
-              value={formData.date}
-              onChange={(e) => handleChange('date', e.target.value)}
+              id="startTime"
+              type="time"
+              value={formData.startTime}
+              onChange={(e) => handleChange('startTime', e.target.value)}
               required
             />
           </div>
 
-          <div className={styles.formRow}>
-            <div className={styles.formGroup}>
-              <label htmlFor="startTime">
-                開始時間 <span className={styles.required}>*</span>
-              </label>
-              <input
-                id="startTime"
-                type="time"
-                value={formData.startTime}
-                onChange={(e) => handleChange('startTime', e.target.value)}
-                required
-              />
-            </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="endTime">
-                結束時間 <span className={styles.required}>*</span>
-              </label>
-              <input
-                id="endTime"
-                type="time"
-                value={formData.endTime}
-                onChange={(e) => handleChange('endTime', e.target.value)}
-                required
-              />
-            </div>
-          </div>
-
           <div className={styles.formGroup}>
-            <label htmlFor="note">備註</label>
+            <label htmlFor="endTime">
+              結束時間 <span className={styles.required}>*</span>
+            </label>
             <input
-              id="note"
-              type="text"
-              value={formData.note}
-              onChange={(e) => handleChange('note', e.target.value)}
-              placeholder="例如：冬令營助教"
+              id="endTime"
+              type="time"
+              value={formData.endTime}
+              onChange={(e) => handleChange('endTime', e.target.value)}
+              required
             />
           </div>
+        </div>
 
-          <div className={styles.buttonGroup}>
-            <button type="button" className={`btn ${styles.cancelButton}`} onClick={onClose}>
-              取消
-            </button>
-            <button type="submit" className={`btn ${styles.saveButton}`}>
-              {mode === 'add' ? '新增' : '儲存'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className={styles.formGroup}>
+          <label htmlFor="note">備註</label>
+          <input
+            id="note"
+            type="text"
+            value={formData.note}
+            onChange={(e) => handleChange('note', e.target.value)}
+            placeholder="例如：冬令營助教"
+          />
+        </div>
+
+        <div className={styles.buttonGroup}>
+          <button type="button" className={`btn ${styles.cancelButton}`} onClick={onClose}>
+            取消
+          </button>
+          <button type="submit" className={`btn ${styles.saveButton}`}>
+            {mode === 'add' ? '新增' : '儲存'}
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }

@@ -9,6 +9,7 @@
 import { useState, useMemo } from 'react';
 import type { CourseNote, NoteType } from '@/data/courseNotes';
 import { NOTE_TYPE_LABELS, NOTE_TYPE_COLORS, PRIORITY_COLORS } from '@/data/courseNotes';
+import { useConfirm } from '@/context/ConfirmContext';
 import styles from './CourseNoteList.module.css';
 
 interface CourseNoteListProps {
@@ -24,6 +25,7 @@ export default function CourseNoteList({
   onDelete,
   onToggleComplete,
 }: CourseNoteListProps) {
+  const { confirm } = useConfirm();
   const [filterType, setFilterType] = useState<NoteType | 'all'>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -159,8 +161,14 @@ export default function CourseNoteList({
                   </button>
                   <button
                     className={styles.actionButton}
-                    onClick={() => {
-                      if (confirm('確定要刪除這條筆記嗎？')) {
+                    onClick={async () => {
+                      const confirmed = await confirm({
+                        title: '刪除筆記',
+                        message: '確定要刪除這條筆記嗎？',
+                        confirmText: '刪除',
+                        danger: true,
+                      });
+                      if (confirmed) {
                         onDelete(note.id);
                       }
                     }}

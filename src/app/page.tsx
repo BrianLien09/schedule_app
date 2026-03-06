@@ -8,6 +8,7 @@ import { useAllowanceData } from '../hooks/useAllowanceData';
 import { useAuth } from '../context/AuthContext';
 import LoginPrompt from '../components/LoginPrompt';
 import { formatDateForCopy, calculateKongBalance } from '../data/allowance';
+import { LoadingSpinner } from '../components/Loading';
 import styles from './page.module.css';
 
 export default function Home() {
@@ -37,7 +38,7 @@ export default function Home() {
   if (authLoading) {
     return (
       <div className={styles.pageContainer}>
-        <div className={styles.loadingContainer}>載入中...</div>
+        <LoadingSpinner />
       </div>
     );
   }

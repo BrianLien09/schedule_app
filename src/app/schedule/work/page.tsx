@@ -4,6 +4,8 @@ import { type WorkShift } from '../../../data/schedule';
 import { useWorkCalendar } from '../../../hooks/useWorkCalendar';
 import { useScheduleData } from '../../../hooks/useScheduleData';
 import { useAuth } from '../../../context/AuthContext';
+import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import LoginPrompt from '../../../components/LoginPrompt';
 import WorkShiftEditor from '../../../components/WorkShiftEditor';
 import { LoadingSpinner } from '../../../components/Loading';
@@ -21,6 +23,8 @@ const SHIFT_TEMPLATES = [
 
 export default function WorkSchedulePage() {
   const { user, loading: authLoading } = useAuth();
+  const { toast } = useToast();
+  const { confirm } = useConfirm();
   
   // 使用新的資料管理 hook
   const { shifts, addWorkShift } = useScheduleData();
@@ -88,7 +92,7 @@ export default function WorkSchedulePage() {
     // 檢查目標日期是否已有班次
     const existingShifts = getShiftsForDate(day);
     if (existingShifts.length > 0) {
-      alert('此日期已有班次，無法複製');
+      toast.warning('此日期已有班次，無法複製');
       return;
     }
 
@@ -141,7 +145,7 @@ export default function WorkSchedulePage() {
   // 批次新增班次
   const handleBatchAdd = () => {
     if (selectedDays.length === 0) {
-      alert('請先選擇日期（按住 Ctrl 點擊多個空白日期）');
+      toast.info('請先選擇日期（按住 Ctrl 點擊多個空白日期）');
       return;
     }
     setEditorMode('batch');
@@ -178,13 +182,18 @@ export default function WorkSchedulePage() {
   };
 
   // 快速套用模板
-  const handleApplyTemplate = (template: typeof SHIFT_TEMPLATES[0]) => {
+  const handleApplyTemplate = async (template: typeof SHIFT_TEMPLATES[0]) => {
     if (selectedDays.length === 0) {
-      alert('請先選擇日期（按住 Ctrl 點擊多個空白日期）');
+      toast.info('請先選擇日期（按住 Ctrl 點擊多個空白日期）');
       return;
     }
 
-    if (!confirm(`確定要將「${template.name}」套用到 ${selectedDays.length} 個日期嗎？`)) {
+    const confirmed = await confirm({
+      title: '套用班次模板',
+      message: `確定要將「${template.name}」套用到 ${selectedDays.length} 個日期嗎？`,
+      confirmText: '套用',
+    });
+    if (!confirmed) {
       return;
     }
 

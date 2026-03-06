@@ -1,6 +1,8 @@
 'use client';
 import { useState } from 'react';
 import { useScheduleData } from '../hooks/useScheduleData';
+import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import { WorkShift } from '../data/schedule';
 import WorkShiftEditor from './WorkShiftEditor';
 import styles from './WorkShiftManager.module.css';
@@ -11,6 +13,8 @@ import styles from './WorkShiftManager.module.css';
  */
 export default function WorkShiftManager() {
   const { shifts, addWorkShift, updateWorkShift, deleteWorkShift } = useScheduleData();
+  const { toast } = useToast();
+  const { confirm } = useConfirm();
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingShift, setEditingShift] = useState<WorkShift | null>(null);
   const [editorMode, setEditorMode] = useState<'add' | 'edit'>('add');
@@ -27,8 +31,14 @@ export default function WorkShiftManager() {
     setIsEditorOpen(true);
   };
 
-  const handleDeleteShift = (shift: WorkShift) => {
-    if (confirm(`確定要刪除 ${shift.date} 的班表嗎？`)) {
+  const handleDeleteShift = async (shift: WorkShift) => {
+    const confirmed = await confirm({
+      title: '刪除班表',
+      message: `確定要刪除 ${shift.date} 的班表嗎？`,
+      confirmText: '刪除',
+      danger: true,
+    });
+    if (confirmed) {
       deleteWorkShift(shift.id);
     }
   };
@@ -42,7 +52,7 @@ export default function WorkShiftManager() {
   };
 
   // 快速複製上週班表
-  const handleCopyLastWeek = () => {
+  const handleCopyLastWeek = async () => {
     const now = new Date();
     const lastWeekStart = new Date(now);
     lastWeekStart.setDate(now.getDate() - 7);
@@ -58,11 +68,15 @@ export default function WorkShiftManager() {
     });
 
     if (lastWeekShifts.length === 0) {
-      alert('上週沒有班表可以複製');
+      toast.info('上週沒有班表可以複製');
       return;
     }
 
-    if (!confirm(`確定要複製上週的 ${lastWeekShifts.length} 個班表到本週嗎？`)) {
+    const confirmed = await confirm({
+      title: '複製班表',
+      message: `確定要複製上週的 ${lastWeekShifts.length} 個班表到本週嗎？`,
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -81,11 +95,11 @@ export default function WorkShiftManager() {
       addWorkShift(newShift);
     });
 
-    alert(`已成功複製 ${lastWeekShifts.length} 個班表到本週！`);
+    toast.success(`已成功複製 ${lastWeekShifts.length} 個班表到本週！`);
   };
 
   // 快速複製上個月班表
-  const handleCopyLastMonth = () => {
+  const handleCopyLastMonth = async () => {
     const now = new Date();
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
@@ -96,11 +110,15 @@ export default function WorkShiftManager() {
     });
 
     if (lastMonthShifts.length === 0) {
-      alert('上個月沒有班表可以複製');
+      toast.info('上個月沒有班表可以複製');
       return;
     }
 
-    if (!confirm(`確定要複製上個月的 ${lastMonthShifts.length} 個班表到本月嗎？\n\n日期會自動調整到本月對應的日期。`)) {
+    const confirmed = await confirm({
+      title: '複製班表',
+      message: `確定要複製上個月的 ${lastMonthShifts.length} 個班表到本月嗎？\n\n日期會自動調整到本月對應的日期。`,
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -127,7 +145,7 @@ export default function WorkShiftManager() {
       addWorkShift(newShift);
     });
 
-    alert('已成功複製班表到本月！');
+    toast.success('已成功複製班表到本月！');
   };
 
   const sortedShifts = [...shifts].sort((a, b) => b.date.localeCompare(a.date));

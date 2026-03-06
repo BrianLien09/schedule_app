@@ -1,0 +1,151 @@
+/* Toast.module.css - 全域 Toast 通知樣式 */
+
+.container {
+  position: fixed;
+  top: var(--spacing-lg);
+  right: var(--spacing-lg);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  pointer-events: none;
+  max-width: 420px;
+  width: calc(100% - var(--spacing-xl));
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: 12px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  pointer-events: auto;
+  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+             fadeOut 0.4s ease-in forwards;
+  animation-delay: 0s, 3s;
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* 各類型色彩 */
+.success {
+  background: rgba(5, 150, 105, 0.15);
+  border-color: rgba(52, 211, 153, 0.4);
+  color: var(--color-accent);
+}
+
+.error {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+.warning {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.4);
+  color: var(--color-highlight);
+}
+
+.info {
+  background: rgba(8, 145, 178, 0.15);
+  border-color: rgba(8, 145, 178, 0.4);
+  color: var(--color-primary);
+}
+
+/* 深色模式微調 */
+[data-theme="dark"] .success {
+  background: rgba(52, 211, 153, 0.12);
+  color: #6ee7b7;
+}
+
+[data-theme="dark"] .error {
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+}
+
+[data-theme="dark"] .warning {
+  background: rgba(251, 191, 36, 0.12);
+  color: #fde68a;
+}
+
+[data-theme="dark"] .info {
+  background: rgba(45, 212, 191, 0.12);
+  color: #5eead4;
+}
+
+.icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.message {
+  flex: 1;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.5;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 0.85rem;
+  line-height: 1;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.closeBtn:hover {
+  opacity: 1;
+}
+
+/* 動畫 */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%) translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(30%);
+  }
+}
+
+/* RWD：手機上全寬居中 */
+@media (max-width: 640px) {
+  .container {
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    left: var(--spacing-md);
+    max-width: none;
+    width: auto;
+  }
+
+  .toast {
+    font-size: 0.9rem;
+  }
+}
+
+/* 尊重使用者的動態偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+    opacity: 1;
+  }
+}

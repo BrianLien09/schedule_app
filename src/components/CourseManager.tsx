@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useScheduleData } from '../hooks/useScheduleData';
+import { useConfirm } from '@/context/ConfirmContext';
 import { Course } from '../data/schedule';
 import CourseEditor from './CourseEditor';
 import styles from './CourseManager.module.css';
@@ -11,6 +12,7 @@ import styles from './CourseManager.module.css';
  */
 export default function CourseManager() {
   const { courses, addCourse, updateCourse, deleteCourse } = useScheduleData();
+  const { confirm } = useConfirm();
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [editorMode, setEditorMode] = useState<'add' | 'edit'>('add');
@@ -29,8 +31,14 @@ export default function CourseManager() {
     setIsEditorOpen(true);
   };
 
-  const handleDeleteCourse = (course: Course) => {
-    if (confirm(`確定要刪除「${course.name}」嗎？`)) {
+  const handleDeleteCourse = async (course: Course) => {
+    const confirmed = await confirm({
+      title: '刪除課程',
+      message: `確定要刪除「${course.name}」嗎？`,
+      confirmText: '刪除',
+      danger: true,
+    });
+    if (confirmed) {
       deleteCourse(course.id);
     }
   };

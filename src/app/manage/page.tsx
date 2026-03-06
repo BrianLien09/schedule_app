@@ -4,6 +4,7 @@ import CourseManager from '../../components/CourseManager';
 import WorkShiftManager from '../../components/WorkShiftManager';
 import { useAuth } from '../../context/AuthContext';
 import LoginPrompt from '../../components/LoginPrompt';
+import { LoadingSpinner } from '../../components/Loading';
 import styles from './page.module.css';
 
 export default function ManagePage() {
@@ -12,7 +13,7 @@ export default function ManagePage() {
 
   // 檢查登入狀態
   if (authLoading) {
-    return <div style={{ padding: '2rem', textAlign: 'center' }}>載入中...</div>;
+    return <LoadingSpinner />;
   }
 
   if (!user) {

@@ -277,23 +277,26 @@ a {
   list-style: none;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
+  /* 行動裝置由漢堡選單接管，隱藏桌面版連結列表 */
   .navbar-content {
-    flex-direction: column;
-    gap: 0.8rem;
+    flex-wrap: wrap;
   }
 
-  .navbar-links {
-    gap: 0.25rem;
-    width: 100%;
-    justify-content: center; /* Centered for a cleaner look */
-    flex-wrap: wrap; /* Allow wrapping if absolutely necessary, but try to fit */
+  .navbar-links:not([class*="mobileMenuOpen"]) {
+    /* 未展開時的 fallback（JS 尚未載入前） */
   }
 
   .nav-link {
     padding: 0.5rem 0.8rem;
     font-size: 0.95rem;
-    white-space: nowrap; /* Prevent text wrapping inside the button */
+    white-space: nowrap;
+  }
+
+  /* 行動裝置上停用 hover 展開 dropdown，改由 JS 點擊控制 */
+  .dropdown:hover .dropdown-content {
+    visibility: hidden;
+    opacity: 0;
   }
 }
 
@@ -426,4 +429,40 @@ a {
 
 [data-theme="dark"] * {
   scrollbar-color: rgba(139, 92, 246, 0.3) rgba(0, 0, 0, 0.3);
+}
+
+/* ===== Page Transition (頁面切換動畫) ===== */
+.page-transition {
+  animation: pageFadeIn 0.35s ease-out;
+}
+
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== prefers-reduced-motion 全域處理 ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  body {
+    animation: none;
+  }
+
+  .page-transition {
+    animation: none;
+  }
 }

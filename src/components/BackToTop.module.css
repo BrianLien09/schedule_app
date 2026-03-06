@@ -1,0 +1,69 @@
+/* BackToTop.module.css */
+
+.backToTop {
+  position: fixed;
+  bottom: var(--spacing-xl);
+  right: var(--spacing-xl);
+  z-index: 1000;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
+  color: var(--foreground);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.backToTop:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  transform: translateY(-3px);
+  box-shadow: var(--glass-shadow-hover);
+}
+
+[data-theme="dark"] .backToTop:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4),
+              0 0 12px rgba(45, 212, 191, 0.2);
+}
+
+.backToTop:active {
+  transform: translateY(0) scale(0.95);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 手機上稍微往內縮 */
+@media (max-width: 640px) {
+  .backToTop {
+    bottom: var(--spacing-lg);
+    right: var(--spacing-lg);
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* 尊重動態偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .backToTop {
+    animation: none;
+    transition: none;
+  }
+}

@@ -2,6 +2,8 @@
 import { Fragment, useState } from 'react';
 import { useScheduleData } from '../../../hooks/useScheduleData';
 import { useAuth } from '../../../context/AuthContext';
+import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import { useCourseNotes } from '../../../hooks/useCourseNotes';
 import { Course } from '../../../data/schedule';
 import type { CourseNote } from '../../../data/courseNotes';
@@ -17,6 +19,8 @@ export default function SchoolSchedulePage() {
   
   // 使用新的資料管理 hook
   const { courses, deleteCourse, updateCourse, canEdit } = useScheduleData();
+  const { toast } = useToast();
+  const { confirm } = useConfirm();
   
   // 筆記管理
   const {
@@ -87,7 +91,7 @@ export default function SchoolSchedulePage() {
   const handleEditCourse = (course: Course, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!canEdit) {
-      alert('您沒有編輯權限');
+      toast.warning('您沒有編輯權限');
       return;
     }
     setEditingCourse(course);
@@ -95,13 +99,19 @@ export default function SchoolSchedulePage() {
   };
 
   // 處理刪除課程
-  const handleDeleteCourse = (course: Course, e: React.MouseEvent) => {
+  const handleDeleteCourse = async (course: Course, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!canEdit) {
-      alert('您沒有編輯權限');
+      toast.warning('您沒有編輯權限');
       return;
     }
-    if (confirm(`確定要刪除「${course.name}」嗎？`)) {
+    const confirmed = await confirm({
+      title: '刪除課程',
+      message: `確定要刪除「${course.name}」嗎？`,
+      confirmText: '刪除',
+      danger: true,
+    });
+    if (confirmed) {
       deleteCourse(course.id);
     }
   };

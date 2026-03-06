@@ -14,11 +14,14 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useGameGuides } from '@/hooks/useGameGuides';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import { GuideCard, CategoryBadge } from '@/components/GuideComponents';
 import { GuideEditForm } from '@/components/GuideEditForm';
 import type { GameGuide, GuideCategory } from '@/data/gameGuides';
 import { GUIDE_CATEGORIES } from '@/data/gameGuides';
 import { games } from '@/data/games';
+import { LoadingSpinner } from '@/components/Loading';
 import styles from './page.module.css';
 
 export default function GamesPage() {
@@ -30,6 +33,8 @@ export default function GamesPage() {
     updateGuide,
     removeGuide,
   } = useGameGuides();
+  const { toast } = useToast();
+  const { confirm: confirmDialog } = useConfirm();
 
   // UI 狀態
   const [editMode, setEditMode] = useState(false);
@@ -135,11 +140,17 @@ export default function GamesPage() {
   }, [editingGuide, updateGuide]);
 
   // 處理刪除攻略
-  const handleDeleteGuide = useCallback((guideId: string, title: string) => {
-    if (confirm(`確定要刪除「${title}」嗎？\n\n此操作無法復原。`)) {
+  const handleDeleteGuide = useCallback(async (guideId: string, title: string) => {
+    const confirmed = await confirmDialog({
+      title: '刪除攻略',
+      message: `確定要刪除「${title}」嗎？\n\n此操作無法復原。`,
+      confirmText: '刪除',
+      danger: true,
+    });
+    if (confirmed) {
       removeGuide(guideId);
     }
-  }, [removeGuide]);
+  }, [removeGuide, confirmDialog]);
 
   // 登入提示
   if (!user) {
@@ -153,12 +164,7 @@ export default function GamesPage() {
 
   // 載入中
   if (loading) {
-    return (
-      <div className={styles.loading}>
-        <div className={styles.spinner}></div>
-        <p>載入攻略資料中...</p>
-      </div>
-    );
+    return <LoadingSpinner text="載入攻略資料中..." />;
   }
 
   return (

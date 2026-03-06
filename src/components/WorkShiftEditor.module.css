@@ -1,87 +1,4 @@
-.overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.dialog {
-  width: 90%;
-  max-width: 500px;
-  padding: 2rem;
-  animation: slideUp 0.3s ease;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--glass-border);
-}
-
-.header h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: bold;
-}
-
-.closeButton {
-  background: none;
-  border: none;
-  color: var(--foreground);
-  font-size: 1.5rem;
-  cursor: pointer;
-  padding: 0;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s;
-}
-
-.closeButton:hover {
-  background: rgba(226, 232, 240, 0.3); /* 淺灰 Hover */
-  transform: rotate(90deg);
-}
-
-/* 深色模式下的 Hover 效果 */
-:global([data-theme="dark"]) .closeButton:hover {
-  background: rgba(71, 85, 105, 0.5); /* 深灰 Hover */
-}
+/* WorkShiftEditor 表單樣式（overlay/dialog/header 由 Modal 元件處理） */
 
 .form {
   display: flex;
@@ -169,18 +86,13 @@
 }
 
 .saveButton:hover {
-  background: var(--color-primary-light); /* 改用 Cyan-500 Hover */
+  background: var(--color-primary-light);
   border-color: var(--color-primary-light);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
 }
 
 @media (max-width: 640px) {
-  .dialog {
-    width: 95%;
-    padding: 1.5rem;
-  }
-
   .formRow {
     grid-template-columns: 1fr;
   }

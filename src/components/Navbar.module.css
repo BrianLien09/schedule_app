@@ -1,0 +1,156 @@
+/* ===== 漢堡按鈕 ===== */
+.hamburger {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  padding: 6px;
+  background: none;
+  border: 1.5px solid var(--glass-border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.hamburger:hover {
+  background: var(--glass-bg-hover);
+}
+
+.hamburgerLine {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: var(--foreground);
+  border-radius: 2px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  transform-origin: center;
+}
+
+/* 漢堡動畫 → X 形狀 */
+.hamburgerActive .hamburgerLine:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.hamburgerActive .hamburgerLine:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.hamburgerActive .hamburgerLine:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ===== 行動裝置選單 ===== */
+.mobileMenu {
+  /* 預設收合狀態 */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-sm) !important;
+  width: 100%;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.3s ease,
+              padding 0.3s ease;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.mobileMenuOpen {
+  max-height: 600px; /* 足夠容納所有項目 */
+  opacity: 1;
+  padding-top: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-top: 1px solid var(--glass-border);
+  margin-top: var(--spacing-md);
+}
+
+/* 行動選單中的連結樣式 */
+.mobileMenu :global(.nav-link) {
+  width: 100%;
+  justify-content: flex-start;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 1rem;
+  border-radius: 10px;
+}
+
+/* ===== 行動裝置 Dropdown（點擊展開） ===== */
+/* 行動裝置上覆蓋 :hover 行為，改由 JS 控制 */
+.mobileMenu :global(.dropdown-content) {
+  position: static !important;
+  transform: none !important;
+  left: auto !important;
+  min-width: auto !important;
+  width: 100%;
+  padding-left: var(--spacing-md);
+  box-shadow: none !important;
+  border: none !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+}
+
+/* 行動裝置上的 dropdown-item 樣式微調 */
+.mobileMenu :global(.dropdown-item) {
+  padding: 10px var(--spacing-md);
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+/* 行動裝置上 dropdown 預設隱藏（覆蓋 :hover） */
+.mobileMenu :global(.dropdown) :global(.dropdown-content) {
+  visibility: hidden;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  padding: 0;
+  transition: max-height 0.3s ease, opacity 0.25s ease, padding 0.3s ease;
+}
+
+/* JS 控制的展開狀態 */
+.dropdownOpen :global(.dropdown-content),
+.mobileMenu .dropdownContentOpen {
+  visibility: visible !important;
+  max-height: 300px !important;
+  opacity: 1 !important;
+  padding: var(--spacing-xs) 0 !important;
+}
+
+/* ===== 背景遮罩 ===== */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+  z-index: 99; /* navbar 是 100，遮罩在其下 */
+  animation: overlayFadeIn 0.3s ease;
+}
+
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ===== Reduced Motion ===== */
+@media (prefers-reduced-motion: reduce) {
+  .hamburgerLine {
+    transition: none;
+  }
+
+  .mobileMenu {
+    transition: none;
+  }
+
+  .overlay {
+    animation: none;
+  }
+}

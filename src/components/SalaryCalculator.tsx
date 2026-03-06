@@ -7,6 +7,8 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useScheduleData } from '@/hooks/useScheduleData';
 import { useSalaryData, type SalaryRecord } from '@/hooks/useSalaryData';
+import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import { type WorkShift } from '@/data/schedule';
 import { parseExcelFile, convertToExportFormat, type ImportValidation } from '@/utils/excelParser';
 
@@ -31,6 +33,8 @@ export default function SalaryCalculator() {
     batchUpdateRecords,
     batchDeleteRecords 
   } = useSalaryData();
+  const { toast } = useToast();
+  const { confirm } = useConfirm();
   
   // URL 狀態管理
   const searchParams = useSearchParams();
@@ -289,7 +293,7 @@ export default function SalaryCalculator() {
     });
 
     if (monthShifts.length === 0) {
-      alert(`${year} 年 ${month} 月沒有新的打工班表可匯入！`);
+      toast.info(`${year} 年 ${month} 月沒有新的打工班表可匯入！`);
       return;
     }
 
@@ -312,7 +316,7 @@ export default function SalaryCalculator() {
     });
 
     batchAddRecords(newRecords);
-    alert(`成功匯入 ${newRecords.length} 筆 ${year} 年 ${month} 月的打工記錄！`);
+    toast.success(`成功匯入 ${newRecords.length} 筆 ${year} 年 ${month} 月的打工記錄！`);
   };
 
   /** 取得顯示的班別名稱 */
@@ -409,7 +413,7 @@ export default function SalaryCalculator() {
   /** 開啟批次編輯模式 */
   const handleOpenBatchEdit = () => {
     if (selectedRecordIds.size === 0) {
-      alert('請先選擇要編輯的記錄！');
+      toast.warning('請先選擇要編輯的記錄！');
       return;
     }
     // 重置批量編輯狀態
@@ -470,7 +474,7 @@ export default function SalaryCalculator() {
     
     // 檢查是否至少有一個欄位要更新
     if (Object.keys(updateData).length === 0) {
-      alert('請至少填寫一個要修改的欄位！');
+      toast.warning('請至少填寫一個要修改的欄位！');
       return;
     }
 
@@ -493,7 +497,7 @@ export default function SalaryCalculator() {
     if (updateData.workHours) updatedFields.push('工作時數');
     if (updateData.shiftCategory) updatedFields.push('班別');
     
-    alert(`已成功更新 ${selectedRecordIds.size} 筆記錄的 ${updatedFields.join('、')}！`);
+    toast.success(`已成功更新 ${selectedRecordIds.size} 筆記錄的 ${updatedFields.join('、')}！`);
   };
 
   /** 取消批次編輯 */
@@ -510,14 +514,19 @@ export default function SalaryCalculator() {
   };
 
   /** 批量刪除 */
-  const handleBatchDelete = () => {
+  const handleBatchDelete = async () => {
     if (selectedRecordIds.size === 0) {
-      alert('請先選擇要刪除的記錄！');
+      toast.warning('請先選擇要刪除的記錄！');
       return;
     }
 
-    const confirmDelete = window.confirm(`確定要刪除 ${selectedRecordIds.size} 筆記錄嗎？此操作無法復原！`);
-    if (!confirmDelete) return;
+    const confirmed = await confirm({
+      title: '刪除記錄',
+      message: `確定要刪除 ${selectedRecordIds.size} 筆記錄嗎？此操作無法復原！`,
+      confirmText: '刪除',
+      danger: true,
+    });
+    if (!confirmed) return;
 
     batchDeleteRecords(Array.from(selectedRecordIds));
     setSelectedRecordIds(new Set());
@@ -617,7 +626,7 @@ export default function SalaryCalculator() {
   /** 匯出 Excel（基於篩選後的記錄，使用統一格式） */
   const handleExportExcel = () => {
     if (filteredRecords.length === 0) {
-      alert('沒有可匯出的記錄！');
+      toast.warning('沒有可匯出的記錄！');
       return;
     }
 
@@ -652,7 +661,7 @@ export default function SalaryCalculator() {
 
     // 檢查檔案類型
     if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
-      alert('請選擇 Excel 檔案（.xlsx 或 .xls）');
+      toast.warning('請選擇 Excel 檔案（.xlsx 或 .xls）');
       return;
     }
 
@@ -663,7 +672,7 @@ export default function SalaryCalculator() {
       setShowImportModal(true);
     } catch (error) {
       console.error('檔案解析錯誤:', error);
-      alert('檔案解析失敗，請確認檔案格式是否正確');
+      toast.error('檔案解析失敗，請確認檔案格式是否正確');
     } finally {
       setIsImporting(false);
       // 清空 input，允許重複選擇同一檔案
@@ -676,7 +685,7 @@ export default function SalaryCalculator() {
   /** 確認匯入 */
   const handleConfirmImport = async () => {
     if (!importValidation || !importValidation.success) {
-      alert('無有效資料可匯入');
+      toast.warning('無有效資料可匯入');
       return;
     }
 
@@ -690,7 +699,7 @@ export default function SalaryCalculator() {
       const duplicateCount = importValidation.records.length - recordsToImport.length;
 
       if (recordsToImport.length === 0) {
-        alert('所有記錄的日期都已存在於資料庫中，沒有新記錄可匯入！');
+        toast.info('所有記錄的日期都已存在於資料庫中，沒有新記錄可匯入！');
         return;
       }
 
@@ -702,13 +711,13 @@ export default function SalaryCalculator() {
         message += `\n已跳過 ${duplicateCount} 筆重複日期的記錄。`;
       }
       
-      alert(message);
+      toast.success(message);
       setShowImportModal(false);
       setImportValidation(null);
       setShowAllImportRecords(false); // 重置顯示狀態
     } catch (error) {
       console.error('匯入失敗:', error);
-      alert('匯入失敗，請稍後再試');
+      toast.error('匯入失敗，請稍後再試');
     }
   };
 
@@ -727,7 +736,7 @@ export default function SalaryCalculator() {
   /** 匯出 PDF - 使用 html2canvas（基於篩選後的記錄） */
   const handleExportPDF = async () => {
     if (!pdfContentRef.current || filteredRecords.length === 0) {
-      alert('沒有可匯出的記錄！');
+      toast.warning('沒有可匯出的記錄！');
       return;
     }
 
@@ -770,7 +779,7 @@ export default function SalaryCalculator() {
       pdf.save(fileName);
     } catch (error) {
       console.error('PDF 生成失敗:', error);
-      alert('PDF 生成失敗，請稍後再試！');
+      toast.error('PDF 生成失敗，請稍後再試！');
     }
   };
 
