@@ -18,7 +18,7 @@ type RoleType = 'assistant' | 'instructor';
 /** 身份時薪對應 */
 const ROLE_HOURLY_RATES: Record<RoleType, number> = {
   assistant: 200,    // 助教
-  instructor: 350,   // 講師
+  instructor: 500,   // 講師
 };
 
 export default function SalaryCalculator() {
@@ -247,8 +247,11 @@ export default function SalaryCalculator() {
     // 同步工作時數到輸入框
     setWorkHours(record.workHours.toString());
     
-    // 滾動到表單頂部
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // 滾動到新增工作記錄卡片
+    const addRecordForm = document.getElementById('add-record-form');
+    if (addRecordForm) {
+      addRecordForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   /**
@@ -1102,7 +1105,7 @@ export default function SalaryCalculator() {
       )}
 
       {/* 新增記錄表單 */}
-      <div className="glass no-print" style={{ padding: 'var(--spacing-lg)', marginBottom: 'var(--spacing-lg)' }}>
+      <div id="add-record-form" className="glass no-print" style={{ padding: 'var(--spacing-lg)', marginBottom: 'var(--spacing-lg)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)', flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
           <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>
             新增工作記錄
@@ -1201,7 +1204,7 @@ export default function SalaryCalculator() {
               }}
             >
               <option value="assistant" style={{ background: '#1a1a2e', color: 'white' }}>助教 ($200/hr)</option>
-              <option value="instructor" style={{ background: '#1a1a2e', color: 'white' }}>講師 ($350/hr)</option>
+              <option value="instructor" style={{ background: '#1a1a2e', color: 'white' }}>講師 ($500/hr)</option>
             </select>
           </div>
 
@@ -2209,7 +2212,7 @@ export default function SalaryCalculator() {
                   }}
                 >
                   <option value="assistant" style={{ background: '#1a1a2e', color: 'white' }}>助教 ($200/hr)</option>
-                  <option value="instructor" style={{ background: '#1a1a2e', color: 'white' }}>講師 ($350/hr)</option>
+                  <option value="instructor" style={{ background: '#1a1a2e', color: 'white' }}>講師 ($500/hr)</option>
                 </select>
               </div>
 
