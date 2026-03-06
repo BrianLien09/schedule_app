@@ -247,24 +247,21 @@ export default function SalaryCalculator() {
     // 同步工作時數到輸入框
     setWorkHours(record.workHours.toString());
     
-    // 先向下捲動一小段距離以觸發導航欄隱藏（如果導航欄顯示中）
-    // Navbar 的隱藏邏輯：當 scrollY > lastScrollY 且 scrollY > 50 時隱藏
-    const currentScrollY = window.scrollY;
-    if (currentScrollY < 100) {
-      // 如果當前在頂部附近，先向下捲動一點
-      window.scrollTo({ top: 100, behavior: 'auto' });
-    } else {
-      // 否則向下捲動一小段距離觸發隱藏
-      window.scrollBy({ top: 100, behavior: 'auto' });
+    // 捲動到新增工作記錄卡片，並加上偏移量避開導航欄
+    const addRecordForm = document.getElementById('add-record-form');
+    if (addRecordForm) {
+      const formRect = addRecordForm.getBoundingClientRect();
+      const formTop = formRect.top + window.scrollY;
+      
+      // 導航欄高度約 80-100px，加上 spacing-md（約 20px），總共預留 120px
+      const navbarHeight = 120;
+      const targetScrollPosition = formTop - navbarHeight;
+      
+      window.scrollTo({
+        top: targetScrollPosition,
+        behavior: 'smooth'
+      });
     }
-    
-    // 等待導航欄隱藏動畫完成（transition: 0.5s），然後捲動到目標位置
-    setTimeout(() => {
-      const addRecordForm = document.getElementById('add-record-form');
-      if (addRecordForm) {
-        addRecordForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 600); // 比動畫時間稍長一點（0.5s + 0.1s 緩衝）
   };
 
   /**
