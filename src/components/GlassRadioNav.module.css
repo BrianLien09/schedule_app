@@ -1,0 +1,151 @@
+/* GlassRadioNav.module.css
+ * Glass Radio Navigation - 桌面版專用（扁平化單層版本）
+ * 靈感來源: Uiverse.io by chase2k25
+ * 配色: 專案 Cyan/Teal 主題
+ */
+
+/* ===== Glass Radio Group 主容器 ===== */
+.glassRadioGroup {
+  --bg: var(--glass-bg);
+  --text: var(--foreground);
+
+  display: flex;
+  position: relative;
+  background: var(--bg);
+  border-radius: 1rem;
+  backdrop-filter: var(--glass-blur);
+  box-shadow:
+    inset 1px 1px 4px var(--glass-highlight),
+    inset -1px -1px 6px rgba(0, 0, 0, 0.1),
+    var(--glass-shadow);
+  overflow: hidden;
+  /* 填滿中間欄 1fr，讓每個按鈕均分空間、字體能放大 */
+  width: 100%;
+}
+
+/* ===== 隱藏原生 Radio Input ===== */
+.glassRadioGroup input {
+  display: none;
+}
+
+/* ===== Label 標籤樣式 ===== */
+.glassRadioGroup label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0; /* 讓 flex 子項可以縮小，避免溢出 */
+  font-size: 16px;
+  padding: 0.85rem 0.8rem;
+  cursor: pointer;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--text);
+  opacity: 0.7;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease-in-out;
+  white-space: nowrap;
+}
+
+/* Label 內的連結和 span 樣式 */
+.glassRadioGroup label a,
+.glassRadioGroup label span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem; /* 圖示與文字間隔 */
+  color: inherit;
+  text-decoration: none;
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+}
+
+/* 圖示尺寸 */
+.glassRadioGroup label svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0; /* 防止圖示被壓縮 */
+}
+
+/* 外部連結圖示保持小尺寸 */
+.glassRadioGroup label a svg:last-child {
+  width: 13px;
+  height: 13px;
+  opacity: 0.75;
+}
+
+/* Hover 效果 */
+.glassRadioGroup label:hover {
+  opacity: 1;
+  color: var(--color-primary-light);
+}
+
+/* 選中狀態 */
+.glassRadioGroup input:checked + label {
+  color: #fff;
+  opacity: 1;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+/* ===== Glider 滑動高亮 ===== */
+.glassGlider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: calc(100% / 7); /* 7 個選項：總覽、學校課表、打工月曆、薪資計算、生活費、遊戲攻略、冥夜音樂 */
+  border-radius: 1rem;
+  z-index: 1;
+  transition:
+    transform 0.5s cubic-bezier(0.37, 1.95, 0.66, 0.56),
+    background 0.4s ease-in-out,
+    box-shadow 0.4s ease-in-out;
+  pointer-events: none; /* 防止遮擋點擊 */
+}
+
+/* Light Mode - Cyan 主題 */
+.glassGlider {
+  background: linear-gradient(
+    135deg,
+    rgba(8, 145, 178, 0.35),
+    var(--color-primary-light)
+  );
+  box-shadow:
+    0 0 18px rgba(8, 145, 178, 0.5),
+    0 0 10px rgba(6, 182, 212, 0.4) inset;
+}
+
+/* Dark Mode - Teal 螢光主題 */
+[data-theme="dark"] .glassGlider {
+  background: linear-gradient(
+    135deg,
+    rgba(45, 212, 191, 0.35),
+    var(--color-primary)
+  );
+  box-shadow:
+    0 0 18px rgba(45, 212, 191, 0.6),
+    0 0 10px rgba(94, 234, 212, 0.4) inset;
+}
+
+/* ===== 響應式：行動版縮小字體和間距 ===== */
+@media (max-width: 1024px) {
+  .glassRadioGroup label {
+    min-width: 0;
+    font-size: 13px;
+    padding: 0.65rem 0.6rem;
+  }
+}
+
+/* ===== 響應式：隱藏在行動版 ===== */
+@media (max-width: 767px) {
+  .glassRadioGroup {
+    display: none;
+  }
+}
+
+/* ===== Reduced Motion ===== */
+@media (prefers-reduced-motion: reduce) {
+  .glassGlider {
+    transition: none;
+  }
+}

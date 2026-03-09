@@ -98,11 +98,11 @@
 }
 
 .dayCellEmpty {
-  background: rgba(248, 250, 252, 0.8); /* 淺灰背景 - slate-50 */
-  border: 2px solid var(--glass-border); /* 一致的邊框色 */
+  background: rgba(30, 41, 59, 0.5); /* 深灰半透明 - slate-800 */
+  border: 1px solid rgba(71, 85, 105, 0.6); /* 深色邊框 - slate-600 */
 }
 
-/* 深色模式下的空白日期 */
+/* 深色模式下的空白日期（保持一致性） */
 :global([data-theme="dark"]) .dayCellEmpty {
   background: rgba(30, 41, 59, 0.5); /* 深灰半透明 - slate-800 */
   border: 1px solid rgba(71, 85, 105, 0.6); /* 深色邊框 - slate-600 */
@@ -219,10 +219,10 @@
 }
 
 .shiftCardNormal {
-  background: rgba(248, 250, 252, 0.9); /* 白色系背景 */
+  background: rgba(30, 41, 59, 0.6); /* slate-800 半透明 */
 }
 
-/* 深色模式下的普通卡片 */
+/* 深色模式下的普通卡片（保持一致性） */
 :global([data-theme="dark"]) .shiftCardNormal {
   background: rgba(30, 41, 59, 0.6); /* slate-800 半透明 */
   border-left-color: var(--color-accent); /* 螢光綠邊框 */
@@ -398,13 +398,13 @@
 .hint {
   font-size: 0.85rem;
   color: var(--muted);
-  background: rgba(248, 250, 252, 0.8); /* 淺灰背景 */
+  background: rgba(30, 41, 59, 0.6); /* slate-800 半透明 */
   padding: 0.5rem 0.75rem;
   border-radius: 8px;
-  border: 1px solid var(--glass-border);
+  border: 1px solid rgba(71, 85, 105, 0.6); /* slate-600 */
 }
 
-/* 深色模式下的提示框 */
+/* 深色模式下的提示框（保持一致性） */
 :global([data-theme="dark"]) .hint {
   background: rgba(30, 41, 59, 0.6); /* slate-800 半透明 */
   border-color: rgba(71, 85, 105, 0.6); /* slate-600 */

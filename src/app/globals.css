@@ -16,40 +16,8 @@
     "Helvetica Neue", Arial, sans-serif;
 }
 
-/* ===== Light Theme (淺色模式 - 預設) ===== */
-[data-theme="light"],
-:root {
-  /* Color Palette (60-30-10 法則) */
-  --foreground: #1e293b; /* slate-800 - 深色文字 */
-  --muted: #64748b; /* slate-500 - 次要文字 */
-  --muted-dark: #475569; /* slate-600 - 更暗的次要文字 */
-
-  /* Primary Colors (青色強調色 - 僅佔 10%) */
-  --color-primary: #0891B2; /* Cyan-600 - 按鈕/導航 */
-  --color-primary-light: #06B6D4; /* Cyan-500 - Hover */
-  --color-secondary: #0E7490; /* Cyan-700 - 深色強調 */
-  --color-accent: #059669; /* Emerald-600 - 成功/完成 */
-  --color-accent-light: #10B981; /* Emerald-500 - 淺色強調 */
-  --color-highlight: #F59E0B; /* Amber-500 - 警告/重要 */
-
-  /* Glass Effect (白色玻璃 - 30% 卡片區) */
-  --glass-bg: rgba(255, 255, 255, 0.75);
-  --glass-bg-hover: rgba(255, 255, 255, 0.9);
-  --glass-border: rgba(226, 232, 240, 0.6); /* slate-200 */
-  --glass-border-hover: rgba(203, 213, 225, 0.8); /* slate-300 */
-  --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-  --glass-shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --glass-highlight: rgba(255, 255, 255, 0.9);
-  --glass-blur: blur(12px);
-
-  /* Background (60% 中性背景) */
-  --bg-base: #F8FAFC; /* slate-50 */
-  --bg-gradient-start: #F8FAFC;
-  --bg-gradient-mid: #F1F5F9; /* slate-100 */
-  --bg-gradient-accent: #E0F2FE; /* sky-100 - 極淺青點綴 */
-}
-
-/* ===== Dark Theme (深色模式 - Gaming Style) ===== */
+/* ===== Dark Theme (深色模式 - 唯一主題) ===== */
+:root,
 [data-theme="dark"] {
   /* Color Palette (深色背景 + 螢光強調) */
   --foreground: #e2e8f0; /* slate-200 - 淺灰白文字 */
@@ -242,11 +210,11 @@ a {
 }
 
 .nav-link:hover {
-  background: rgba(226, 232, 240, 0.5); /* 淺灰 Hover */
+  background: rgba(71, 85, 105, 0.4); /* 深灰 Hover */
   opacity: 1;
 }
 
-/* 深色模式下的 Hover 效果 */
+/* 深色模式下的 Hover 效果（保持一致性） */
 [data-theme="dark"] .nav-link:hover {
   background: rgba(71, 85, 105, 0.4); /* 深灰 Hover */
 }
@@ -268,6 +236,34 @@ a {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+/* 桌面版：三欄佈局（Logo | 導航 | 右側按鈕） */
+@media (min-width: 768px) {
+  .navbar-content {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: var(--spacing-md);
+    align-items: center;
+  }
+  
+  /* 左側區域靠左對齊 */
+  .navbar-content > :nth-child(1) {
+    justify-self: start;
+  }
+
+  /* GlassRadioNav 填滿中間欄，讓導航欄可以拉伸 */
+  .navbar-content > :nth-child(2) {
+    justify-self: stretch;
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  /* 右側區域靠右對齊 */
+  .navbar-content > :nth-child(3) {
+    justify-self: end;
+  }
 }
 
 .navbar-links {

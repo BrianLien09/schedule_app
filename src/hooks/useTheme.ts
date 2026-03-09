@@ -1,22 +1,26 @@
 import { useEffect } from 'react';
-import { useLocalStorage } from './useLocalStorage';
 
-export type Theme = 'light' | 'dark';
+export type Theme = 'dark';
 
 /**
  * Theme Management Hook
- * 管理應用程式的主題設定
+ * 應用程式鎖定為深色模式
  */
 export function useTheme() {
-  const [theme, setTheme] = useLocalStorage<Theme>('schedule_theme', 'dark');
+  const theme: Theme = 'dark';
 
   useEffect(() => {
-    // 更新 HTML 元素的 data-theme 屬性
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
+    // 強制設定為深色模式
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }, []);
 
+  // 保持介面一致性，但功能已停用
   const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+    // 不執行任何操作
+  };
+
+  const setTheme = () => {
+    // 不執行任何操作
   };
 
   return { theme, setTheme, toggleTheme };

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { SchoolIcon, BriefcaseIcon, GamepadIcon, MusicIcon, ToolboxIcon, CalculatorIcon, WalletIcon } from './Icons';
-import ThemeToggle from './ThemeToggle';
+import GlassRadioNav from './GlassRadioNav';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -123,42 +123,110 @@ export default function Navbar() {
         }}
       >
         <div className="container navbar-content">
-          {/* Logo 區域 */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-            <img
-              src="/schedule_app/avatar.jpg"
-              alt="Avatar"
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '50%',
-                objectFit: 'cover',
-                border: '2px solid rgba(255,255,255,0.2)'
-              }}
-            />
-            <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', background: 'linear-gradient(to right, var(--color-primary), var(--color-secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              冥夜小助手
-            </h1>
-          </div>
-
-          {/* 行動裝置：漢堡按鈕 */}
-          {isMobile && (
-            <button
-              className={`${styles.hamburger} ${menuOpen ? styles.hamburgerActive : ''}`}
-              onClick={() => setMenuOpen(prev => !prev)}
-              aria-label={menuOpen ? '關閉選單' : '開啟選單'}
-              aria-expanded={menuOpen}
-            >
-              <span className={styles.hamburgerLine} />
-              <span className={styles.hamburgerLine} />
-              <span className={styles.hamburgerLine} />
-            </button>
+          {/* 桌面版：左側 Logo */}
+          {!isMobile && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginLeft: '-0.75rem' }}>
+              <img
+                src="/schedule_app/avatar.jpg"
+                alt="Avatar"
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '2px solid rgba(255,255,255,0.2)'
+                }}
+              />
+              <h1 style={{ 
+                fontSize: '1.25rem', 
+                fontWeight: 'bold', 
+                background: 'linear-gradient(to right, var(--color-primary), var(--color-secondary))', 
+                WebkitBackgroundClip: 'text', 
+                WebkitTextFillColor: 'transparent',
+                whiteSpace: 'nowrap',
+                letterSpacing: '0.05em'
+              }}>
+                冥夜助手
+              </h1>
+            </div>
           )}
 
-          {/* 導航連結列表 */}
-          <ul
-            className={`navbar-links ${isMobile ? styles.mobileMenu : ''} ${isMobile && menuOpen ? styles.mobileMenuOpen : ''}`}
-          >
+          {/* 桌面版：Glass Radio Navigation（置中偏右） */}
+          {!isMobile && (
+            <GlassRadioNav />
+          )}
+
+          {/* 右側：使用者頭像（桌面版）*/}
+          {!isMobile && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+              {!loading && (
+                <>
+                  {user ? (
+                    <div className={`dropdown`}>
+                      <button
+                        className="nav-link"
+                        style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                      >
+                        <img
+                          src={user.photoURL || '/schedule_app/avatar.jpg'}
+                          alt="User Avatar"
+                          style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                            border: '2px solid var(--color-primary)'
+                          }}
+                        />
+                      </button>
+                      <div
+                        className="dropdown-content"
+                        style={{ right: 0, left: 'auto' }}
+                      >
+                        <div className="dropdown-item" style={{ cursor: 'default', opacity: 0.7 }}>
+                          <span>{user.displayName || user.email}</span>
+                        </div>
+                        <button
+                          onClick={handleSignOut}
+                          className="dropdown-item"
+                          style={{
+                            width: '100%',
+                            textAlign: 'left',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: 'var(--color-accent)'
+                          }}
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                            <polyline points="16 17 21 12 16 7" />
+                            <line x1="21" y1="12" x2="9" y2="12" />
+                          </svg>
+                          <span>登出</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Link href="/login" className="nav-link">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                        <polyline points="10 17 15 12 10 7" />
+                        <line x1="15" y1="12" x2="3" y2="12" />
+                      </svg>
+                      <span>登入</span>
+                    </Link>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* 行動版：導航連結列表 */}
+          {isMobile && (
+            <ul
+              className={`navbar-links ${styles.mobileMenu} ${menuOpen ? styles.mobileMenuOpen : ''}`}
+            >
             <li>
               <Link
                 href="/"
@@ -249,9 +317,6 @@ export default function Navbar() {
                 <span>冥夜音樂</span>
               </a>
             </li>
-            <li>
-              <ThemeToggle />
-            </li>
             {!loading && (
               <li>
                 {user ? (
@@ -318,6 +383,7 @@ export default function Navbar() {
               </li>
             )}
           </ul>
+          )}
         </div>
       </nav>
 

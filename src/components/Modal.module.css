@@ -77,11 +77,11 @@
 }
 
 .closeButton:hover {
-  background: rgba(226, 232, 240, 0.3);
+  background: rgba(71, 85, 105, 0.5);
   transform: rotate(90deg);
 }
 
-/* 深色模式 */
+/* 深色模式（保持一致性） */
 :global([data-theme="dark"]) .closeButton:hover {
   background: rgba(71, 85, 105, 0.5);
 }

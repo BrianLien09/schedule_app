@@ -47,14 +47,14 @@
 
 .eventSectionTop {
   padding: var(--spacing-md);
-  border-bottom: 1px solid var(--glass-border); /* 改用一致的邊框色 */
-  background: rgba(248, 250, 252, 0.5); /* 極淺灰背景 */
+  border-bottom: 1px solid rgba(71, 85, 105, 0.4); /* slate-600 半透明邊框 */
+  background: rgba(15, 23, 42, 0.4); /* slate-900 極淺透明 - 更深更通透 */
   display: flex;
   flex-direction: column;
   gap: 0.75rem; /* 12px - 標題與內容之間的間距 */
 }
 
-/* 深色模式下的頂部區塊 - 更深的背景 */
+/* 深色模式下的頂部區塊（保持一致性） */
 :global([data-theme="dark"]) .eventSectionTop {
   background: rgba(15, 23, 42, 0.4); /* slate-900 極淺透明 - 更深更通透 */
   border-bottom: 1px solid rgba(71, 85, 105, 0.4); /* slate-600 半透明邊框 */
