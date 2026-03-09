@@ -1,4 +1,5 @@
 import styles from './Loading.module.css';
+import CapybaraLoader from './CapybaraLoader';
 
 interface LoadingSpinnerProps {
   text?: string;
@@ -7,12 +8,12 @@ interface LoadingSpinnerProps {
 
 /**
  * Loading Spinner Component
- * 統一的載入動畫組件
+ * 統一的載入動畫組件 - 使用可愛的水豚動畫
  */
 export function LoadingSpinner({ text = '載入中...', subtext }: LoadingSpinnerProps) {
   return (
     <div className={styles.loadingContainer}>
-      <div className={styles.spinner} />
+      <CapybaraLoader />
       <div className={styles.loadingText}>{text}</div>
       {subtext && <div className={styles.loadingSubtext}>{subtext}</div>}
     </div>

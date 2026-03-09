@@ -9,7 +9,8 @@
   min-height: 300px;
 }
 
-.spinner {
+/* 原有的 spinner 樣式已被水豚動畫取代，保留供未來參考 */
+/* .spinner {
   width: 48px;
   height: 48px;
   border: 4px solid var(--glass-border);
@@ -22,7 +23,7 @@
   to {
     transform: rotate(360deg);
   }
-}
+} */
 
 .loadingText {
   margin-top: 1.5rem;
