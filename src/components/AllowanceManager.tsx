@@ -16,12 +16,13 @@ import { LoadingSpinner } from '@/components/Loading';
 import styles from './AllowanceManager.module.css';
 
 // ========== 子元件：來源類型標籤 ==========
-const sourceTypeConfig: Record<string, { icon: string; color: string }> = {
-  '生活費匯款': { icon: '🎓', color: 'var(--color-primary)' },
-  '打工收入': { icon: '💼', color: 'var(--color-accent)' },
-  '獎學金': { icon: '🏆', color: 'var(--color-highlight)' },
-  '退費': { icon: '💸', color: 'var(--muted)' },
-  '其他': { icon: '📦', color: 'var(--muted-dark)' }
+// bgColor 為亮色模式下的半透明填充，讓 badge 在淺色背景上有層次感
+const sourceTypeConfig: Record<string, { icon: string; color: string; bgColor: string }> = {
+  '生活費匯款': { icon: '🎓', color: 'var(--color-primary)',   bgColor: 'rgba(45, 212, 191, 0.15)' },
+  '打工收入':   { icon: '💼', color: 'var(--color-accent)',    bgColor: 'rgba(52, 211, 153, 0.15)' },
+  '獎學金':     { icon: '🏆', color: 'var(--color-highlight)', bgColor: 'rgba(251, 191, 36, 0.15)' },
+  '退費':       { icon: '💸', color: 'var(--muted)',           bgColor: 'rgba(148, 163, 184, 0.12)' },
+  '其他':       { icon: '📦', color: 'var(--muted-dark)',      bgColor: 'rgba(203, 213, 225, 0.12)' },
 };
 
 interface SourceTypeBadgeProps {
@@ -34,7 +35,7 @@ const SourceTypeBadge = ({ type }: SourceTypeBadgeProps) => {
   return (
     <div 
       className={styles.sourceBadge}
-      style={{ borderColor: config.color, color: config.color }}
+      style={{ borderColor: config.color, color: config.color, backgroundColor: config.bgColor }}
     >
       <span>{config.icon}</span>
       <span>{type}</span>
@@ -436,7 +437,7 @@ export default function AllowanceManager() {
         <div className={styles.statsGrid}>
           <StatCard
             icon={<span style={{ fontSize: '2rem' }}>💰</span>}
-            label="本月累計"
+            label={filterMonth ? "本月累計" : "累計收入"}
             value={`${stats.totalDeposit.toLocaleString()}`}
             subtext={
               monthChange 

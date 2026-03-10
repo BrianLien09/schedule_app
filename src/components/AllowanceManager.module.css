@@ -526,13 +526,9 @@
   font-size: 0.75rem;
   font-weight: 600;
   margin-bottom: var(--spacing-sm);
-  background: rgba(255, 255, 255, 0.5);
+  /* 背景色由 JS 動態注入各自的 bgColor，不在此設定固定值 */
   backdrop-filter: blur(4px);
   transition: all 0.3s ease;
-}
-
-[data-theme="dark"] .sourceBadge {
-  background: rgba(30, 41, 59, 0.5);
 }
 
 /* ========== 匯入金額區塊 ========== */
