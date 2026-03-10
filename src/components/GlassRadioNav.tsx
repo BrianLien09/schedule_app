@@ -38,7 +38,13 @@ export default function GlassRadioNav() {
     return 0;
   }, []);
 
-  const gliderPosition = pendingPosition ?? getGliderPosition(pathname);
+  /**
+   * isPending 為 false 代表路由切換已完成，此時 pendingPosition 應讓位給真實 pathname
+   * 避免 setTimeout 固定 600ms 與路由實際完成時間不同步，造成 Glider 左右跳動
+   */
+  const gliderPosition = (isPending && pendingPosition !== null)
+    ? pendingPosition
+    : getGliderPosition(pathname);
 
   /**
    * 處理導航點擊 - 立即更新 Glider，無需等待路由變更
@@ -48,8 +54,6 @@ export default function GlassRadioNav() {
     setPendingPosition(position);
     startTransition(() => {
       router.push(href);
-      // 路由變更完成後清除 pending 狀態
-      setTimeout(() => setPendingPosition(null), 600);
     });
   }, [router]);
 
