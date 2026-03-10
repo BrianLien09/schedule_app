@@ -146,7 +146,7 @@ export default function Navbar() {
                 whiteSpace: 'nowrap',
                 letterSpacing: '0.05em'
               }}>
-                冥夜助手
+                冥夜小助手
               </h1>
             </div>
           )}
