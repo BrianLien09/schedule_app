@@ -83,7 +83,7 @@ export default function AllowanceManager() {
     return `${year}-${String(month).padStart(2, '0')}`;
   };
   
-  const [filterMonth, setFilterMonth] = useState<string>(getCurrentMonth());
+  const [filterMonth, setFilterMonth] = useState<string>(''); // 預設顯示全部月份
   const [customMonth, setCustomMonth] = useState<string>(''); // 自訂月份選擇器
 
   // ========== 快速篩選選項 ==========
