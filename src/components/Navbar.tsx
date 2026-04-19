@@ -123,6 +123,47 @@ export default function Navbar() {
         }}
       >
         <div className="container navbar-content">
+          {/* 行動版：頂部列 (Logo + 漢堡選單) */}
+          {isMobile && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                <img
+                  src="/schedule_app/avatar.jpg"
+                  alt="Avatar"
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    border: '2px solid rgba(255,255,255,0.2)'
+                  }}
+                />
+                <h1 style={{ 
+                  fontSize: '1.1rem', 
+                  fontWeight: 'bold', 
+                  background: 'linear-gradient(to right, var(--color-primary), var(--color-secondary))', 
+                  WebkitBackgroundClip: 'text', 
+                  WebkitTextFillColor: 'transparent',
+                  whiteSpace: 'nowrap',
+                  letterSpacing: '0.05em'
+                }}>
+                  冥夜小助手
+                </h1>
+              </div>
+              
+              <button
+                className={`${styles.hamburger} ${menuOpen ? styles.hamburgerActive : ''}`}
+                onClick={() => setMenuOpen(prev => !prev)}
+                aria-label={menuOpen ? '關閉選單' : '開啟選單'}
+                aria-expanded={menuOpen}
+              >
+                <span className={styles.hamburgerLine} />
+                <span className={styles.hamburgerLine} />
+                <span className={styles.hamburgerLine} />
+              </button>
+            </div>
+          )}
+
           {/* 桌面版：左側 Logo */}
           {!isMobile && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginLeft: '-0.75rem' }}>
