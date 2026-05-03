@@ -31,7 +31,8 @@ export default function WorkShiftEditor({ isOpen, onClose, onSave, shift, mode }
       setFormData(shift);
     } else if (mode === 'add') {
       setFormData({
-        date: new Date().toISOString().split('T')[0],
+        // 為避免點擊空白日期新增時被「今天」覆寫，新增模式優先使用傳入日期
+        date: shift?.date ?? new Date().toISOString().split('T')[0],
         startTime: '09:00',
         endTime: '18:00',
         note: '',
