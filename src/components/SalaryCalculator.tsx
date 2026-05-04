@@ -7,9 +7,11 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useScheduleData } from '@/hooks/useScheduleData';
 import { useSalaryData, type SalaryRecord } from '@/hooks/useSalaryData';
+import { useShiftTemplates } from '@/hooks/useShiftTemplates';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import { type WorkShift } from '@/data/schedule';
+import { generateShiftTemplateId, type ShiftTemplate, type Weekday } from '@/data/shiftTemplates';
 import { parseExcelFile, convertToExportFormat, type ImportValidation } from '@/utils/excelParser';
 
 /** 身份類型 */
@@ -20,6 +22,9 @@ const ROLE_HOURLY_RATES: Record<RoleType, number> = {
   assistant: 200,    // 助教
   instructor: 500,   // 講師
 };
+
+const WEEKDAY_LABELS = ['日', '一', '二', '三', '四', '五', '六'] as const;
+const WEEKDAY_SHORT_LABELS = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'] as const;
 
 export default function SalaryCalculator() {
   const { shifts } = useScheduleData();
@@ -33,6 +38,14 @@ export default function SalaryCalculator() {
     batchUpdateRecords,
     batchDeleteRecords 
   } = useSalaryData();
+  const {
+    templates,
+    loading: templatesLoading,
+    canEdit: canEditTemplates,
+    addTemplate,
+    updateTemplate,
+    deleteTemplate,
+  } = useShiftTemplates();
   const { toast } = useToast();
   const { confirm } = useConfirm();
   
@@ -93,6 +106,22 @@ export default function SalaryCalculator() {
   const [selectedRecordIds, setSelectedRecordIds] = useState<Set<string>>(new Set()); // 批次選擇
   const [showBatchEditModal, setShowBatchEditModal] = useState(false);
   const [batchNewHourlyRate, setBatchNewHourlyRate] = useState<number>(200);
+
+  const [newTemplate, setNewTemplate] = useState<Omit<ShiftTemplate, 'id' | 'createdAt'>>({
+    name: '',
+    weekday: 1,
+    startTime: '09:00',
+    endTime: '17:00',
+    workHours: 8,
+    hourlyRate: 200,
+    isDefault: false,
+  });
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+
+  const [lastAppliedTemplateInfo, setLastAppliedTemplateInfo] = useState<{
+    date: string;
+    templateId: string;
+  } | null>(null);
   
   // 批量編輯多欄位的狀態
   const [batchEditData, setBatchEditData] = useState({
@@ -131,6 +160,43 @@ export default function SalaryCalculator() {
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     }
   }, [filterMonth, pathname, router, searchParams]);
+
+  const getWeekdayLabel = (dateStr: string): string => {
+    if (!dateStr) return '--';
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return '--';
+    return WEEKDAY_SHORT_LABELS[date.getDay()] ?? '--';
+  };
+
+  useEffect(() => {
+    const template = pickTemplateForDate(currentRecord.date);
+    if (!template) {
+      setLastAppliedTemplateInfo(null);
+      return;
+    }
+
+    if (
+      lastAppliedTemplateInfo &&
+      lastAppliedTemplateInfo.date === currentRecord.date &&
+      lastAppliedTemplateInfo.templateId === template.id
+    ) {
+      return;
+    }
+
+    const hours = template.workHours ?? calculateWorkHoursFromTimes(template.startTime, template.endTime);
+    const normalizedHours = Number.isFinite(hours) ? hours : 0;
+    setCurrentRecord(prev => ({
+      ...prev,
+      startTime: template.startTime,
+      endTime: template.endTime,
+      hourlyRate: template.hourlyRate,
+    }));
+    setWorkHours(normalizedHours.toString());
+    setLastAppliedTemplateInfo({
+      date: currentRecord.date,
+      templateId: template.id,
+    });
+  }, [currentRecord.date, lastAppliedTemplateInfo, templates]);
 
   /**
    * 更新月份篩選
@@ -172,6 +238,19 @@ export default function SalaryCalculator() {
     ];
   }, []);
 
+  const shiftCategoryOptions = useMemo(() => {
+    const templateNames = templates
+      .map((template) => template.name.trim())
+      .filter((name) => name.length > 0);
+    const uniqueTemplateNames = Array.from(new Set(templateNames));
+
+    if (uniqueTemplateNames.length > 0) {
+      return uniqueTemplateNames;
+    }
+
+    return shiftCategories;
+  }, [templates, shiftCategories]);
+
   /**
    * 根據開始時間和工作時數，自動計算結束時間
    * 
@@ -203,6 +282,20 @@ export default function SalaryCalculator() {
     return Math.max(0, totalMinutes / 60);
   };
 
+  const getWeekday = (dateStr: string): Weekday => {
+    const date = new Date(dateStr);
+    return date.getDay() as Weekday;
+  };
+
+  const pickTemplateForDate = (dateStr: string): ShiftTemplate | undefined => {
+    const weekday = getWeekday(dateStr);
+    return templates.find(t => t.weekday === weekday);
+  };
+
+  const findTemplateByName = (name: string): ShiftTemplate | undefined => {
+    return templates.find(template => template.name === name);
+  };
+
   /** 計算工作時數 (小時) - 直接使用記錄中的 workHours */
   const calculateHours = (record: Omit<SalaryRecord, 'id'>): number => {
     return record.workHours || 0;
@@ -224,6 +317,112 @@ export default function SalaryCalculator() {
       id: Date.now().toString(),
     };
     addRecord(newRecord);
+  };
+
+  const resetTemplateForm = () => {
+    setEditingTemplateId(null);
+    setNewTemplate({
+      name: '',
+      weekday: 1,
+      startTime: '09:00',
+      endTime: '17:00',
+      workHours: 8,
+      hourlyRate: 200,
+      isDefault: false,
+    });
+  };
+
+  const handleStartEditTemplate = (template: ShiftTemplate) => {
+    if (!canEditTemplates) {
+      toast.warning('目前沒有編輯班別的權限');
+      return;
+    }
+
+    setEditingTemplateId(template.id);
+    setNewTemplate({
+      name: template.name,
+      weekday: template.weekday,
+      startTime: template.startTime,
+      endTime: template.endTime,
+      workHours: template.workHours ?? 0,
+      hourlyRate: template.hourlyRate,
+      isDefault: template.isDefault,
+    });
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!newTemplate.name.trim()) {
+      toast.warning('班別名稱不可為空');
+      return;
+    }
+
+    if (!canEditTemplates) {
+      toast.warning('目前沒有編輯班別的權限');
+      return;
+    }
+
+    if (newTemplate.isDefault) {
+      const sameWeekdayDefaults = templates.filter(
+        template => template.weekday === newTemplate.weekday && template.isDefault
+      );
+      for (const template of sameWeekdayDefaults) {
+        if (template.id !== editingTemplateId) {
+          await updateTemplate(template.id, { isDefault: false });
+        }
+      }
+    }
+
+    if (editingTemplateId) {
+      await updateTemplate(editingTemplateId, {
+        ...newTemplate,
+      });
+      resetTemplateForm();
+      return;
+    }
+
+    const template: ShiftTemplate = {
+      ...newTemplate,
+      id: generateShiftTemplateId(),
+      createdAt: Date.now(),
+    };
+
+    await addTemplate(template);
+    resetTemplateForm();
+  };
+
+  const handleSetDefaultTemplate = async (template: ShiftTemplate) => {
+    if (!canEditTemplates) {
+      toast.warning('目前沒有編輯班別的權限');
+      return;
+    }
+
+    if (template.isDefault) return;
+
+    const sameWeekdayDefaults = templates.filter(
+      item => item.weekday === template.weekday && item.isDefault
+    );
+    for (const item of sameWeekdayDefaults) {
+      await updateTemplate(item.id, { isDefault: false });
+    }
+
+    await updateTemplate(template.id, { isDefault: true });
+  };
+
+  const handleDeleteTemplate = async (template: ShiftTemplate) => {
+    if (!canEditTemplates) {
+      toast.warning('目前沒有編輯班別的權限');
+      return;
+    }
+
+    const confirmed = await confirm({
+      title: '刪除班別',
+      message: `確定要刪除「${template.name}」嗎？此操作無法復原！`,
+      confirmText: '刪除',
+      danger: true,
+    });
+    if (!confirmed) return;
+
+    await deleteTemplate(template.id);
   };
 
   /** 刪除記錄 */
@@ -312,18 +511,24 @@ export default function SalaryCalculator() {
 
     // 將打工班表轉換為薪資記錄
     const newRecords: SalaryRecord[] = monthShifts.map(shift => {
+      const template = pickTemplateForDate(shift.date);
+      const startTime = template?.startTime ?? shift.startTime;
+      const endTime = template?.endTime ?? shift.endTime;
+      const hourlyRate = template?.hourlyRate ?? 200;
+
       // 根據時間段計算工作時數
-      const hours = calculateWorkHoursFromTimes(shift.startTime, shift.endTime);
+      const hours = template?.workHours ?? calculateWorkHoursFromTimes(startTime, endTime);
+      const normalizedHours = Number.isFinite(hours) ? hours : 0;
       
       return {
         id: `shift-${shift.id}-${Date.now()}`,
         date: shift.date,
-        startTime: shift.startTime,
-        endTime: shift.endTime,
-        workHours: hours,
+        startTime,
+        endTime,
+        workHours: normalizedHours,
         role: 'assistant' as RoleType, // 預設助教
-        hourlyRate: 200, // 預設助教時薪
-        shiftCategory: shift.note || '', // 使用班表的 note 作為班別
+        hourlyRate,
+        shiftCategory: template?.name || shift.note || '', // 以班別名稱優先
         workShiftId: shift.id,
       };
     });
@@ -1114,6 +1319,281 @@ export default function SalaryCalculator() {
         </div>
       )}
 
+      {/* 班別管理 */}
+      <div className="glass no-print" style={{ padding: 'var(--spacing-lg)', marginBottom: 'var(--spacing-lg)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)', flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>
+            班別管理
+          </h3>
+          {templatesLoading && (
+            <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>載入中...</span>
+          )}
+        </div>
+
+        {editingTemplateId && (
+          <div style={{
+            marginBottom: 'var(--spacing-md)',
+            color: 'var(--text-secondary)',
+            display: 'flex',
+            gap: '0.75rem',
+            alignItems: 'center',
+          }}>
+            <span>正在編輯：{newTemplate.name || '未命名班別'}</span>
+            <button
+              onClick={resetTemplateForm}
+              style={{
+                padding: '0.35rem 0.8rem',
+                borderRadius: '999px',
+                border: '1px solid rgba(255,255,255,0.15)',
+                background: 'transparent',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+              }}
+            >
+              取消編輯
+            </button>
+          </div>
+        )}
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+          gap: 'var(--spacing-md)',
+          marginBottom: 'var(--spacing-md)'
+        }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+              班別名稱
+            </label>
+            <input
+              type="text"
+              value={newTemplate.name}
+              onChange={(e) => setNewTemplate({ ...newTemplate, name: e.target.value })}
+              placeholder="例：週六班"
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                borderRadius: '8px',
+                border: '1px solid rgba(255,255,255,0.2)',
+                background: 'rgba(255,255,255,0.05)',
+                color: 'var(--text-primary)',
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+              星期
+            </label>
+            <select
+              value={newTemplate.weekday}
+              onChange={(e) => setNewTemplate({ ...newTemplate, weekday: Number(e.target.value) as Weekday })}
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                borderRadius: '8px',
+                border: '1px solid rgba(255,255,255,0.2)',
+                background: 'rgba(255,255,255,0.05)',
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+              }}
+            >
+              {WEEKDAY_LABELS.map((label, index) => (
+                <option key={label} value={index} style={{ background: '#1a1a2e', color: 'white' }}>
+                  {`星期${label}`}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+              開始時間
+            </label>
+            <input
+              type="time"
+              value={newTemplate.startTime}
+              onChange={(e) => setNewTemplate({ ...newTemplate, startTime: e.target.value })}
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                borderRadius: '8px',
+                border: '1px solid rgba(255,255,255,0.2)',
+                background: 'rgba(255,255,255,0.05)',
+                color: 'var(--text-primary)',
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+              結束時間
+            </label>
+            <input
+              type="time"
+              value={newTemplate.endTime}
+              onChange={(e) => setNewTemplate({ ...newTemplate, endTime: e.target.value })}
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                borderRadius: '8px',
+                border: '1px solid rgba(255,255,255,0.2)',
+                background: 'rgba(255,255,255,0.05)',
+                color: 'var(--text-primary)',
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+              時薪 (元)
+            </label>
+            <input
+              type="number"
+              value={newTemplate.hourlyRate}
+              onChange={(e) => setNewTemplate({ ...newTemplate, hourlyRate: Number(e.target.value) })}
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                borderRadius: '8px',
+                border: '1px solid rgba(255,255,255,0.2)',
+                background: 'rgba(255,255,255,0.05)',
+                color: 'var(--text-primary)',
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+              工作時數 (小時)
+            </label>
+            <input
+              type="number"
+              step="0.5"
+              min="0"
+              value={newTemplate.workHours ?? 0}
+              onChange={(e) => setNewTemplate({ ...newTemplate, workHours: Number(e.target.value) })}
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                borderRadius: '8px',
+                border: '1px solid rgba(255,255,255,0.2)',
+                background: 'rgba(255,255,255,0.05)',
+                color: 'var(--text-primary)',
+              }}
+            />
+          </div>
+
+          <label style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            fontSize: '0.9rem',
+            color: 'var(--text-secondary)',
+          }}>
+            <input
+              type="checkbox"
+              checked={newTemplate.isDefault}
+              onChange={(e) => setNewTemplate({ ...newTemplate, isDefault: e.target.checked })}
+            />
+            設為預設
+          </label>
+        </div>
+
+        <button
+          onClick={handleSaveTemplate}
+          disabled={!canEditTemplates}
+          style={{
+            padding: '0.6rem 1.2rem',
+            borderRadius: '8px',
+            border: 'none',
+            background: 'rgba(59, 130, 246, 0.2)',
+            color: '#60a5fa',
+            fontWeight: '600',
+            cursor: canEditTemplates ? 'pointer' : 'not-allowed',
+            transition: 'all 0.2s',
+          }}
+        >
+          {editingTemplateId ? '更新班別' : '新增班別'}
+        </button>
+
+        <div style={{ marginTop: 'var(--spacing-lg)' }}>
+          {templates.length === 0 ? (
+            <div style={{ color: 'var(--text-secondary)' }}>尚未建立班別</div>
+          ) : (
+            <div style={{ display: 'grid', gap: 'var(--spacing-sm)' }}>
+              {templates.map(template => (
+                <div
+                  key={template.id}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1.5fr 1fr 1.5fr 1fr auto',
+                    gap: 'var(--spacing-sm)',
+                    alignItems: 'center',
+                    padding: '0.75rem',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: 'rgba(255,255,255,0.03)',
+                  }}
+                >
+                  <div style={{ fontWeight: 600 }}>{template.name}</div>
+                  <div style={{ color: 'var(--text-secondary)' }}>{`星期${WEEKDAY_LABELS[template.weekday]}`}</div>
+                  <div>{template.startTime} - {template.endTime}</div>
+                  <div>{template.workHours ?? '-'}h / ${template.hourlyRate}</div>
+                  <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                    <button
+                      onClick={() => handleStartEditTemplate(template)}
+                      disabled={!canEditTemplates}
+                      style={{
+                        padding: '0.4rem 0.8rem',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: 'rgba(59, 130, 246, 0.18)',
+                        color: '#60a5fa',
+                        fontWeight: '600',
+                        cursor: canEditTemplates ? 'pointer' : 'not-allowed',
+                      }}
+                    >
+                      編輯
+                    </button>
+                    <button
+                      onClick={() => handleSetDefaultTemplate(template)}
+                      disabled={!canEditTemplates}
+                      style={{
+                        padding: '0.4rem 0.8rem',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: template.isDefault ? 'rgba(34, 197, 94, 0.25)' : 'rgba(34, 197, 94, 0.12)',
+                        color: '#22c55e',
+                        fontWeight: '600',
+                        cursor: canEditTemplates ? 'pointer' : 'not-allowed',
+                      }}
+                    >
+                      {template.isDefault ? '預設中' : '設為預設'}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTemplate(template)}
+                      disabled={!canEditTemplates}
+                      style={{
+                        padding: '0.4rem 0.8rem',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: 'rgba(239, 68, 68, 0.2)',
+                        color: '#ef4444',
+                        fontWeight: '600',
+                        cursor: canEditTemplates ? 'pointer' : 'not-allowed',
+                      }}
+                    >
+                      刪除
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* 新增記錄表單 */}
       <div id="add-record-form" className="glass no-print" style={{ padding: 'var(--spacing-lg)', marginBottom: 'var(--spacing-lg)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)', flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
@@ -1174,19 +1654,31 @@ export default function SalaryCalculator() {
             <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
               日期
             </label>
-            <input 
-              type="date"
-              value={currentRecord.date}
-              onChange={(e) => setCurrentRecord({ ...currentRecord, date: e.target.value })}
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(255,255,255,0.05)',
-                color: 'var(--text-primary)',
-              }}
-            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <input 
+                type="date"
+                value={currentRecord.date}
+                onChange={(e) => {
+                  setCurrentRecord({ ...currentRecord, date: e.target.value });
+                  setLastAppliedTemplateInfo(null);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  background: 'rgba(255,255,255,0.05)',
+                  color: 'var(--text-primary)',
+                }}
+              />
+              <span style={{
+                fontSize: '0.9rem',
+                color: 'var(--text-secondary)',
+                whiteSpace: 'nowrap',
+              }}>
+                {getWeekdayLabel(currentRecord.date)}
+              </span>
+            </div>
           </div>
 
           <div>
@@ -1303,7 +1795,24 @@ export default function SalaryCalculator() {
             </label>
             <select
               value={currentRecord.shiftCategory || ''}
-              onChange={(e) => setCurrentRecord({ ...currentRecord, shiftCategory: e.target.value })}
+              onChange={(e) => {
+                const value = e.target.value;
+                setCurrentRecord({ ...currentRecord, shiftCategory: value });
+
+                const template = findTemplateByName(value);
+                if (template) {
+                  const hours = template.workHours ?? calculateWorkHoursFromTimes(template.startTime, template.endTime);
+                  const normalizedHours = Number.isFinite(hours) ? hours : 0;
+                  setCurrentRecord((prev) => ({
+                    ...prev,
+                    startTime: template.startTime,
+                    endTime: template.endTime,
+                    hourlyRate: template.hourlyRate,
+                    shiftCategory: value,
+                  }));
+                  setWorkHours(normalizedHours.toString());
+                }
+              }}
               style={{
                 width: '100%',
                 padding: '0.5rem',
@@ -1315,7 +1824,7 @@ export default function SalaryCalculator() {
               }}
             >
               <option value="" style={{ background: '#1a1a2e', color: 'white' }}>-- 無班別 --</option>
-              {shiftCategories.map((category) => (
+              {shiftCategoryOptions.map((category) => (
                 <option key={category} value={category} style={{ background: '#1a1a2e', color: 'white' }}>{category}</option>
               ))}
             </select>
@@ -2156,29 +2665,38 @@ export default function SalaryCalculator() {
                 }}>
                   日期
                 </label>
-                <input 
-                  type="date"
-                  value={editingRecord.date}
-                  onChange={(e) => setEditingRecord({ ...editingRecord, date: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    border: '2px solid rgba(139, 92, 246, 0.3)',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    color: '#ffffff',
-                    fontSize: '0.95rem',
-                    transition: 'all 0.2s',
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.6)';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                  }}
-                />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <input 
+                    type="date"
+                    value={editingRecord.date}
+                    onChange={(e) => setEditingRecord({ ...editingRecord, date: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      borderRadius: '8px',
+                      border: '2px solid rgba(139, 92, 246, 0.3)',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      color: '#ffffff',
+                      fontSize: '0.95rem',
+                      transition: 'all 0.2s',
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.6)';
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                    }}
+                  />
+                  <span style={{
+                    fontSize: '0.9rem',
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {getWeekdayLabel(editingRecord.date)}
+                  </span>
+                </div>
               </div>
 
               <div>
@@ -2381,9 +2899,30 @@ export default function SalaryCalculator() {
                 }}>
                   班別 (選填)
                 </label>
-                <select
-                  value={editingRecord.shiftCategory || ''}
-                  onChange={(e) => setEditingRecord({ ...editingRecord, shiftCategory: e.target.value })}
+                  <select
+                    value={editingRecord.shiftCategory || ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setEditingRecord({ ...editingRecord, shiftCategory: value });
+
+                      const template = findTemplateByName(value);
+                      if (template) {
+                        const hours = template.workHours ?? calculateWorkHoursFromTimes(template.startTime, template.endTime);
+                        const normalizedHours = Number.isFinite(hours) ? hours : 0;
+                        setEditingRecord((prev) => {
+                          if (!prev) return prev;
+                          return {
+                            ...prev,
+                            startTime: template.startTime,
+                            endTime: template.endTime,
+                            hourlyRate: template.hourlyRate,
+                            workHours: normalizedHours,
+                            shiftCategory: value,
+                          };
+                        });
+                        setEditingWorkHours(normalizedHours.toString());
+                      }
+                    }}
                   style={{
                     width: '100%',
                     padding: '0.75rem',
@@ -2405,7 +2944,7 @@ export default function SalaryCalculator() {
                   }}
                 >
                   <option value="" style={{ background: '#1a1a2e', color: 'white' }}>-- 無班別 --</option>
-                  {shiftCategories.map((category) => (
+                  {shiftCategoryOptions.map((category) => (
                     <option key={category} value={category} style={{ background: '#1a1a2e', color: 'white' }}>{category}</option>
                   ))}
                 </select>
