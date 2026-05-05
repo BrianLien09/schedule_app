@@ -263,12 +263,6 @@ export default function WorkSchedulePage() {
             </div>
           )}
 
-          {/* 功能提示 */}
-          <div className={styles.hints}>
-            <span className={styles.hint}>💡 拖曳班次到其他日期可快速複製</span>
-            <span className={styles.hint}>💡 按住 Ctrl 點擊多個空白日期可批次新增</span>
-            <span className={styles.hint}>💡 點擊空白日期可新增單一班次</span>
-          </div>
 
           {/* 週標題 */}
           <div className={styles.weekdaysGrid}>
@@ -334,29 +328,45 @@ export default function WorkSchedulePage() {
           </div>
 
           {/* 詳細列表 */}
-          <div className={styles.detailsSection}>
-            <h3 className={styles.sectionTitle}>本月詳細列表</h3>
-            <div className={styles.shiftsGrid}>
-              {currentMonthShifts.map((shift: WorkShift) => {
-                const isSelected = selectedDate === shift.date;
-                return (
-                  <div
-                    key={shift.id}
-                    data-date={shift.date}
-                    className={`${styles.shiftCard} ${isSelected ? styles.shiftCardSelected : styles.shiftCardNormal}`}
-                  >
-                    <div className={styles.shiftDate}>{shift.date.split('-')[2]}日</div>
-                    <div className={styles.shiftDetails}>
-                      <div className={styles.shiftName}>{shift.note}</div>
-                      <div className={styles.shiftTime}>
-                        {shift.startTime} - {shift.endTime}
+          <details className={styles.detailsSection}>
+            <summary className={styles.detailsSummary}>
+              <span className={styles.sectionTitle}>本月詳細列表</span>
+              <span className={styles.detailsHints}>
+                <span className={styles.hintInline}>拖曳複製</span>
+                <span className={styles.hintDivider}>/</span>
+                <span className={styles.hintInline}>Ctrl多選</span>
+                <span className={styles.hintDivider}>/</span>
+                <span className={styles.hintInline}>點擊新增</span>
+              </span>
+              <span className={styles.detailsToggle}>
+                <span className={styles.detailsChevron} aria-hidden="true" />
+                <span className={styles.detailsToggleClosed}>展開</span>
+                <span className={styles.detailsToggleOpen}>收合</span>
+              </span>
+            </summary>
+            <div className={styles.detailsContent}>
+              <div className={styles.shiftsGrid}>
+                {currentMonthShifts.map((shift: WorkShift) => {
+                  const isSelected = selectedDate === shift.date;
+                  return (
+                    <div
+                      key={shift.id}
+                      data-date={shift.date}
+                      className={`${styles.shiftCard} ${isSelected ? styles.shiftCardSelected : styles.shiftCardNormal}`}
+                    >
+                      <div className={styles.shiftDate}>{shift.date.split('-')[2]}日</div>
+                      <div className={styles.shiftDetails}>
+                        <div className={styles.shiftName}>{shift.note}</div>
+                        <div className={styles.shiftTime}>
+                          {shift.startTime} - {shift.endTime}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          </details>
         </div>
       </div>
 

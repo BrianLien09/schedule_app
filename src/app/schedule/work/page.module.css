@@ -185,7 +185,7 @@
 }
 
 .sectionTitle {
-  margin-bottom: 1rem;
+  margin-bottom: 0;
   border-bottom: 1px solid var(--glass-border);
   padding-bottom: 0.5rem;
 }
@@ -387,27 +387,42 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* 功能提示 */
-.hints {
+/* 詳細列表標題列與提示 */
+.detailsSummary {
   display: flex;
-  gap: 1rem;
-  margin: 1rem 0;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  list-style: none;
 }
 
-.hint {
-  font-size: 0.85rem;
+.detailsSummary::-webkit-details-marker {
+  display: none;
+}
+
+.detailsHints {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
   color: var(--muted);
-  background: rgba(30, 41, 59, 0.6); /* slate-800 半透明 */
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  border: 1px solid rgba(71, 85, 105, 0.6); /* slate-600 */
+  white-space: nowrap;
 }
 
-/* 深色模式下的提示框（保持一致性） */
-:global([data-theme="dark"]) .hint {
-  background: rgba(30, 41, 59, 0.6); /* slate-800 半透明 */
-  border-color: rgba(71, 85, 105, 0.6); /* slate-600 */
+.hintInline {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(71, 85, 105, 0.6);
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+}
+
+:global([data-theme="dark"]) .hintInline {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(71, 85, 105, 0.6);
+}
+
+.hintDivider {
+  opacity: 0.6;
 }
 
 @media (max-width: 768px) {
@@ -425,13 +440,48 @@
     min-width: 120px;
   }
 
-  .hints {
-    flex-direction: column;
-    gap: 0.5rem;
+  .detailsHints {
+    font-size: 0.7rem;
+    gap: 0.3rem;
   }
 
-  .hint {
-    font-size: 0.75rem;
-    text-align: center;
+  .hintInline {
+    padding: 0.1rem 0.35rem;
+    border-radius: 5px;
   }
+}
+.detailsToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.detailsChevron {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.2s ease;
+  opacity: 0.7;
+}
+
+.detailsSection[open] .detailsChevron {
+  transform: rotate(45deg);
+}
+
+.detailsToggleOpen {
+  display: none;
+}
+
+.detailsSection[open] .detailsToggleOpen {
+  display: inline;
+}
+
+.detailsSection[open] .detailsToggleClosed {
+  display: none;
+}
+
+.detailsContent {
+  margin-top: 1.5rem;
 }
