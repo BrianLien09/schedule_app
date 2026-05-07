@@ -90,6 +90,14 @@ export default function SalaryCalculator() {
     const month = String(today.getMonth() + 1).padStart(2, '0');
     return `${year}-${month}`;
   });
+
+  // 薪資統計篩選狀態（獨立於記錄列表，避免互相影響）
+  const [statsFilter, setStatsFilter] = useState<string>(() => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+  });
   
   // 匯入月份選擇（獨立於篩選）
   const [importMonth, setImportMonth] = useState<string>(() => {
@@ -237,6 +245,29 @@ export default function SalaryCalculator() {
       { label: '上月', value: lastMonth, description: '僅顯示上個月記錄' },
     ];
   }, []);
+
+  const statsQuickFilters = useMemo(() => {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonthNum = today.getMonth() + 1;
+    const currentMonth = `${currentYear}-${String(currentMonthNum).padStart(2, '0')}`;
+
+    const lastMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const lastYear = lastMonthDate.getFullYear();
+    const lastMonthNum = lastMonthDate.getMonth() + 1;
+    const lastMonth = `${lastYear}-${String(lastMonthNum).padStart(2, '0')}`;
+
+    return [
+      { label: '全部', value: '', description: '顯示所有統計' },
+      { label: '本月', value: currentMonth, description: '僅顯示本月統計' },
+      { label: '上月', value: lastMonth, description: '僅顯示上月統計' },
+    ];
+  }, []);
+
+  const statsRecords = useMemo(() => {
+    if (!statsFilter) return records;
+    return records.filter(record => record.date.startsWith(statsFilter));
+  }, [records, statsFilter]);
 
   const shiftCategoryOptions = useMemo(() => {
     const templateNames = templates
@@ -766,16 +797,33 @@ export default function SalaryCalculator() {
     }, 0);
   }, [filteredRecords]);
 
+  const statsTotalPay = useMemo(() => {
+    return statsRecords.reduce((sum, record) => {
+      return sum + calculatePay(record);
+    }, 0);
+  }, [statsRecords]);
+
   /** 計算總工時（基於篩選後的記錄） */
   const totalHours = useMemo(() => {
     return filteredRecords.reduce((sum, r) => sum + calculateHours(r), 0);
   }, [filteredRecords]);
+
+  const statsTotalHours = useMemo(() => {
+    return statsRecords.reduce((sum, r) => sum + calculateHours(r), 0);
+  }, [statsRecords]);
 
   /** 計算平均時薪（基於篩選後的記錄） */
   const avgHourlyRate = useMemo(() => {
     if (totalHours === 0) return 0;
     return Math.round(totalPay / totalHours);
   }, [totalPay, totalHours]);
+
+  const statsAvgHourlyRate = useMemo(() => {
+    if (statsTotalHours === 0) return 0;
+    return Math.round(statsTotalPay / statsTotalHours);
+  }, [statsTotalPay, statsTotalHours]);
+
+  const statsWorkDays = useMemo(() => statsRecords.length, [statsRecords]);
 
   /** 計算月度統計資料 */
   interface MonthStats {
@@ -795,7 +843,7 @@ export default function SalaryCalculator() {
     // 先收集所有記錄的統計資料
     const statsMap = new Map<string, MonthStats>();
 
-    records.forEach(record => {
+    statsRecords.forEach(record => {
       const month = record.date.slice(0, 7); // 取 YYYY-MM
       const pay = calculatePay(record);
       const hours = calculateHours(record);
@@ -1095,9 +1143,9 @@ export default function SalaryCalculator() {
             color: 'black',
           }}>
             <div><strong>生成日期：</strong>{new Date().toLocaleDateString('zh-TW')}</div>
-            <div><strong>記錄總數：</strong>{filteredRecords.length} 筆</div>
-            <div><strong>總工時：</strong>{totalHours.toFixed(1)} 小時</div>
-            <div><strong>總計薪資：</strong>${totalPay.toLocaleString()}</div>
+              <div><strong>記錄總數：</strong>{statsWorkDays} 筆</div>
+              <div><strong>總工時：</strong>{statsTotalHours.toFixed(1)} 小時</div>
+              <div><strong>總計薪資：</strong>${statsTotalPay.toLocaleString()}</div>
           </div>
         </div>
       )}
@@ -1105,32 +1153,62 @@ export default function SalaryCalculator() {
       {/* 統計圖表區域 */}
       {records.length > 0 && monthlyStats.length > 0 && (
         <div className="glass no-print" style={{ padding: 'var(--spacing-lg)', marginBottom: 'var(--spacing-lg)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)', gap: 'var(--spacing-md)' }}>
             <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>
               薪資統計
             </h3>
-            <button
-              onClick={() => setShowStats(!showStats)}
-              style={{
-                padding: '0.5rem 1rem',
-                borderRadius: '8px',
-                border: 'none',
-                background: 'rgba(139, 92, 246, 0.2)',
-                color: '#a855f7',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                fontSize: '0.9rem',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(139, 92, 246, 0.3)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)';
-              }}
-            >
-              {showStats ? '隱藏圖表' : '顯示圖表'}
-            </button>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {statsQuickFilters.map(filter => (
+                  <button
+                    key={filter.value}
+                    onClick={() => setStatsFilter(filter.value)}
+                    style={{
+                      padding: '0.4rem 0.9rem',
+                      borderRadius: '8px',
+                      border: statsFilter === filter.value
+                        ? '2px solid var(--color-primary)'
+                        : '1px solid rgba(255,255,255,0.2)',
+                      background: statsFilter === filter.value
+                        ? 'rgba(139, 92, 246, 0.3)'
+                        : 'rgba(255,255,255,0.05)',
+                      color: statsFilter === filter.value
+                        ? 'var(--color-primary)'
+                        : 'var(--text-secondary)',
+                      fontWeight: statsFilter === filter.value ? '600' : '400',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      fontSize: '0.85rem',
+                    }}
+                    title={filter.description}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setShowStats(!showStats)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: 'rgba(139, 92, 246, 0.2)',
+                  color: '#a855f7',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  fontSize: '0.9rem',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(139, 92, 246, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)';
+                }}
+              >
+                {showStats ? '隱藏圖表' : '顯示圖表'}
+              </button>
+            </div>
           </div>
 
           {showStats && (
@@ -1152,7 +1230,7 @@ export default function SalaryCalculator() {
                     總收入
                   </div>
                   <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--color-primary)' }}>
-                    ${totalPay.toLocaleString()}
+                    ${statsTotalPay.toLocaleString()}
                   </div>
                 </div>
 
@@ -1166,7 +1244,7 @@ export default function SalaryCalculator() {
                     總工時
                   </div>
                   <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--color-secondary)' }}>
-                    {totalHours.toFixed(1)}h
+                    {statsTotalHours.toFixed(1)}h
                   </div>
                 </div>
 
@@ -1180,7 +1258,7 @@ export default function SalaryCalculator() {
                     平均時薪
                   </div>
                   <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#34d399' }}>
-                    ${avgHourlyRate}
+                    ${statsAvgHourlyRate}
                   </div>
                 </div>
 
@@ -1194,7 +1272,7 @@ export default function SalaryCalculator() {
                     工作天數
                   </div>
                   <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#fbbf24' }}>
-                    {filteredRecords.length} 天
+                    {statsWorkDays} 天
                   </div>
                 </div>
               </div>
@@ -1320,15 +1398,27 @@ export default function SalaryCalculator() {
       )}
 
       {/* 班別管理 */}
-      <div className="glass no-print" style={{ padding: 'var(--spacing-lg)', marginBottom: 'var(--spacing-lg)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)', flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
+      <details className="glass no-print" style={{ padding: 'var(--spacing-lg)', marginBottom: 'var(--spacing-lg)' }} open>
+        <summary style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 'var(--spacing-md)',
+          flexWrap: 'wrap',
+          gap: 'var(--spacing-md)',
+          cursor: 'pointer',
+          listStyle: 'none',
+        }}>
           <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>
             班別管理
           </h3>
-          {templatesLoading && (
-            <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>載入中...</span>
-          )}
-        </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            {templatesLoading && (
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>載入中...</span>
+            )}
+            <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>展開 / 收合</span>
+          </div>
+        </summary>
 
         {editingTemplateId && (
           <div style={{
@@ -1592,7 +1682,7 @@ export default function SalaryCalculator() {
             </div>
           )}
         </div>
-      </div>
+      </details>
 
       {/* 新增記錄表單 */}
       <div id="add-record-form" className="glass no-print" style={{ padding: 'var(--spacing-lg)', marginBottom: 'var(--spacing-lg)' }}>
