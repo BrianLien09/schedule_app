@@ -101,6 +101,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
       await signInWithPopup(auth, provider);
     } catch (error) {
+      // 以下錯誤碼均屬正常使用者行為，靜默處理即可，不向上拋出：
+      // - cancelled-popup-request：使用者重複點擊或頁面重整觸發
+      // - popup-closed-by-user：使用者主動關閉登入彈窗
+      const SILENT_AUTH_ERRORS = [
+        'auth/cancelled-popup-request',
+        'auth/popup-closed-by-user',
+      ];
+      if (
+        error instanceof Error &&
+        'code' in error &&
+        SILENT_AUTH_ERRORS.includes((error as { code: string }).code)
+      ) {
+        return;
+      }
       console.error('Google 登入失敗:', error);
       throw error;
     }

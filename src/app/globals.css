@@ -325,6 +325,12 @@ a {
   }
 }
 
+/* 全局 Select Option 暗色模式適配 */
+select option {
+  background-color: #1e293b;
+  color: #f8fafc;
+}
+
 /* Dropdown Styles */
 .dropdown {
   position: relative;
@@ -350,11 +356,24 @@ a {
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); /* Smooth Modern Ease */
 }
 
+/* 右側對齊的 Dropdown（避免 translateX(-50%) 向左偏） */
+.dropdown-content.dropdown-content-right {
+  left: auto !important;
+  right: 0 !important;
+  transform: translateY(10px) !important;
+}
+
 .dropdown:hover .dropdown-content {
   visibility: visible;
   opacity: 1;
   /* Slide into place */
   transform: translateX(-50%) translateY(0);
+}
+
+.dropdown:hover .dropdown-content.dropdown-content-right {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0) !important;
 }
 
 .dropdown-item {

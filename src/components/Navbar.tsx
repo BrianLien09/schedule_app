@@ -10,6 +10,8 @@ import { useToast } from '@/context/ToastContext';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import styles from './Navbar.module.css';
 
+const BASE_PATH = process.env.NODE_ENV === 'production' ? '/schedule_app' : '';
+
 export default function Navbar() {
   const pathname = usePathname();
   const { user, loading, signOut } = useAuth();
@@ -128,7 +130,7 @@ export default function Navbar() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
                 <img
-                  src="/schedule_app/avatar.jpg"
+                  src={`${BASE_PATH}/avatar.jpg`}
                   alt="Avatar"
                   style={{
                     width: '32px',
@@ -168,7 +170,7 @@ export default function Navbar() {
           {!isMobile && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginLeft: '-0.75rem' }}>
               <img
-                src="/schedule_app/avatar.jpg"
+                src={`${BASE_PATH}/avatar.jpg`}
                 alt="Avatar"
                 style={{
                   width: '40px',
@@ -203,13 +205,13 @@ export default function Navbar() {
               {!loading && (
                 <>
                   {user ? (
-                    <div className={`dropdown`}>
+                    <div className="dropdown" style={{ position: 'relative' }}>
                       <button
                         className="nav-link"
                         style={{ background: 'none', border: 'none', cursor: 'pointer' }}
                       >
                         <img
-                          src={user.photoURL || '/schedule_app/avatar.jpg'}
+                          src={user.photoURL || `${BASE_PATH}/avatar.jpg`}
                           alt="User Avatar"
                           style={{
                             width: '32px',
@@ -221,8 +223,7 @@ export default function Navbar() {
                         />
                       </button>
                       <div
-                        className="dropdown-content"
-                        style={{ right: 0, left: 'auto' }}
+                        className="dropdown-content dropdown-content-right"
                       >
                         <div className="dropdown-item" style={{ cursor: 'default', opacity: 0.7 }}>
                           <span>{user.displayName || user.email}</span>
@@ -372,7 +373,7 @@ export default function Navbar() {
                       }}
                     >
                       <img
-                        src={user.photoURL || '/schedule_app/avatar.jpg'}
+                        src={user.photoURL || `${BASE_PATH}/avatar.jpg`}
                         alt="User Avatar"
                         style={{
                           width: '32px',

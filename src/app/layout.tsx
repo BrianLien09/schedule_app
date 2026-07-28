@@ -9,9 +9,9 @@ export const metadata: Metadata = {
   title: "冥夜小助手",
   description: "個人日程表與遊戲攻略整理",
   icons: {
-    icon: '/schedule_app/icon.jpg',
+    icon: '/icon.jpg',
   },
-  manifest: '/schedule_app/manifest.json',
+  manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',

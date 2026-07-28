@@ -9,6 +9,7 @@ import { useConfirm } from '@/context/ConfirmContext';
 import LoginPrompt from '../../../components/LoginPrompt';
 import WorkShiftEditor from '../../../components/WorkShiftEditor';
 import { LoadingSpinner } from '../../../components/Loading';
+import { exportToICS, CalendarEventItem } from '@/utils/icsExport';
 import styles from './page.module.css';
 
 /**
@@ -212,12 +213,41 @@ export default function WorkSchedulePage() {
     setIsMultiSelectMode(false);
   };
 
+  // 匯出打工班表 .ics
+  const handleExportICS = () => {
+    if (shifts.length === 0) {
+      toast.warning('目前尚無打工班表可匯出');
+      return;
+    }
+
+    const events: CalendarEventItem[] = shifts.map((s) => {
+      const [startH, startM] = s.startTime.split(':').map(Number);
+      const [endH, endM] = s.endTime.split(':').map(Number);
+
+      const startDate = new Date(`${s.date}T00:00:00`);
+      startDate.setHours(startH, startM, 0);
+
+      const endDate = new Date(`${s.date}T00:00:00`);
+      endDate.setHours(endH, endM, 0);
+
+      return {
+        title: `[打工] ${s.location || '打工'}`,
+        location: s.location || '單位',
+        startDate,
+        endDate,
+        description: s.note ? `備註: ${s.note}` : '打工班表',
+      };
+    });
+
+    exportToICS('打工班表', events, 'work_shifts.ics');
+    toast.success('🎉 成功匯出打工班表 .ics 行事曆檔！');
+  };
+
   return (
-    <div className={styles.pageContainer}>
-      <div className={`glass ${styles.calendarContainer}`}>
-        {/* Work Month Calendar */}
-        <div>
-          <div className="calendar-header">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div className="glass" style={{ padding: '1.5rem', minHeight: '600px' }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+          <div className="calendar-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
             <button
               onClick={() => changeMonth(-1)}
               className="btn"
@@ -225,9 +255,26 @@ export default function WorkSchedulePage() {
             >
               &larr; 上個月
             </button>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
-              {currentMonth.getFullYear()} 年 {currentMonth.getMonth() + 1} 月
-            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>
+                {currentMonth.getFullYear()} 年 {currentMonth.getMonth() + 1} 月
+              </h2>
+              <button
+                onClick={handleExportICS}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '99px',
+                  background: 'rgba(56, 189, 248, 0.15)',
+                  color: 'var(--color-primary, #38bdf8)',
+                  border: '1px solid var(--glass-border)',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                }}
+              >
+                📅 匯出班表 (.ics)
+              </button>
+            </div>
             <button
               onClick={() => changeMonth(1)}
               className="btn"

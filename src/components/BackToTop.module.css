@@ -2,9 +2,9 @@
 
 .backToTop {
   position: fixed;
-  bottom: var(--spacing-xl);
-  right: var(--spacing-xl);
-  z-index: 1000;
+  bottom: 96px;
+  right: 28px;
+  z-index: 980;
   width: 44px;
   height: 44px;
   border-radius: 50%;

@@ -12,13 +12,14 @@ import CourseEditor from '../../../components/CourseEditor';
 import CourseNoteEditor from '../../../components/CourseNoteEditor';
 import CourseNoteList from '../../../components/CourseNoteList';
 import { LoadingSpinner } from '../../../components/Loading';
+import { exportToICS, CalendarEventItem } from '@/utils/icsExport';
 import styles from './page.module.css';
 
 export default function SchoolSchedulePage() {
   const { user, loading: authLoading } = useAuth();
   
   // 使用新的資料管理 hook
-  const { courses, deleteCourse, updateCourse, canEdit } = useScheduleData();
+  const { courses, addCourse, deleteCourse, updateCourse, canEdit } = useScheduleData();
   const { toast } = useToast();
   const { confirm } = useConfirm();
   
@@ -35,7 +36,28 @@ export default function SchoolSchedulePage() {
   // 編輯器狀態
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [editorMode, setEditorMode] = useState<'add' | 'edit'>('add');
   const [hoveredCourse, setHoveredCourse] = useState<string | null>(null);
+
+  // 學期管理狀態
+  // 預設學期清單（年份往後移一年：大一 2025、大二 2026、大三 2027、大四 2028）
+  const SEMESTER_OPTIONS = [
+    { value: '2025-1', label: '大一上學期 (2025-1)' },
+    { value: '2025-2', label: '大一下學期 (2025-2)' },
+    { value: '2026-1', label: '大二上學期 (2026-1)' },
+    { value: '2026-2', label: '大二下學期 (2026-2)' },
+    { value: '2027-1', label: '大三上學期 (2027-1)' },
+    { value: '2027-2', label: '大三下學期 (2027-2)' },
+    { value: '2028-1', label: '大四上學期 (2028-1)' },
+    { value: '2028-2', label: '大四下學期 (2028-2)' },
+  ];
+  // 預設選取當前學期（大二上學期 2026-1）
+  const [selectedSemester, setSelectedSemester] = useState<string>('2026-1');
+  
+  // 依學期篩選課程（若課程沒有 semester 欄位視為舊版課程，全部顯示在目前選中學期）
+  const filteredCourses = courses.filter(
+    (c) => !c.semester || c.semester === selectedSemester
+  );
   
   // 筆記編輯器狀態
   const [isNoteEditorOpen, setIsNoteEditorOpen] = useState(false);
@@ -68,9 +90,9 @@ export default function SchoolSchedulePage() {
     { id: 10, label: '第 10 節', time: '1710-1800', start: '17:10', end: '18:00' },
   ];
 
-  // Helper to check if a course is in a specific period
+  // 依學期篩選後的課程查詢
   const getCourseAtPeriod = (day: number, periodStart: string) => {
-    return courses.find(c => {
+    return filteredCourses.find(c => {
       return c.day === day && c.startTime === periodStart;
     });
   };
@@ -87,6 +109,17 @@ export default function SchoolSchedulePage() {
     return 1;
   };
 
+  // 處理新增課程
+  const handleAddCourse = () => {
+    if (!canEdit) {
+      toast.warning('您沒有編輯權限');
+      return;
+    }
+    setEditingCourse(null);
+    setEditorMode('add');
+    setIsEditorOpen(true);
+  };
+
   // 處理編輯課程
   const handleEditCourse = (course: Course, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -95,6 +128,7 @@ export default function SchoolSchedulePage() {
       return;
     }
     setEditingCourse(course);
+    setEditorMode('edit');
     setIsEditorOpen(true);
   };
 
@@ -116,9 +150,15 @@ export default function SchoolSchedulePage() {
     }
   };
 
-  // 儲存課程
+  // 儲存課程（支援新增與編輯兩種模式）
   const handleSaveCourse = (course: Course) => {
-    updateCourse(course.id, course);
+    if (editorMode === 'add') {
+      // 新增時自動帶入目前選中學期
+      addCourse({ ...course, semester: selectedSemester });
+      toast.success(`✅ 已新增「${course.name}」至 ${SEMESTER_OPTIONS.find(s => s.value === selectedSemester)?.label ?? selectedSemester}`);
+    } else {
+      updateCourse(course.id, course);
+    }
   };
 
   // 開啟筆記編輯器
@@ -160,13 +200,115 @@ export default function SchoolSchedulePage() {
     return notes.filter((note) => note.courseId === courseId).length;
   };
 
+  // 匯出 .ics 行事曆
+  const handleExportICS = () => {
+    if (courses.length === 0) {
+      toast.warning('目前課表尚無課程可匯出');
+      return;
+    }
+    const today = new Date();
+    const events: CalendarEventItem[] = [];
+
+    // 產生日曆中未來 16 週的每週課程
+    for (let week = 0; week < 16; week++) {
+      courses.forEach((c) => {
+        const eventDate = new Date(today);
+        const dayDiff = ((c.day - today.getDay() + 7) % 7) + week * 7;
+        eventDate.setDate(today.getDate() + dayDiff);
+
+        const [startH, startM] = c.startTime.split(':').map(Number);
+        const [endH, endM] = c.endTime.split(':').map(Number);
+
+        const startDate = new Date(eventDate);
+        startDate.setHours(startH, startM, 0);
+        const endDate = new Date(eventDate);
+        endDate.setHours(endH, endM, 0);
+
+        events.push({
+          title: `[課程] ${c.name}`,
+          location: c.location,
+          startDate,
+          endDate,
+          description: `教授: ${c.teacher || '未填寫'}`,
+        });
+      });
+    }
+
+    exportToICS('學校課表', events, 'school_courses.ics');
+    toast.success('🎉 成功匯出學校課表 .ics 行事曆檔！');
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div className="glass" style={{ padding: '1.5rem', minHeight: '600px' }}>
           <div>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>
-              大一下學期課表
-            </h2>
+            {/* 標題列：標題 + 學期選擇器 + 功能按鈕 */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '10px' }}>
+              <h2 style={{ fontSize: '1.5rem', margin: 0 }}>
+                📚 學校課表
+              </h2>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                {/* 學期選擇器 */}
+                <select
+                  value={selectedSemester}
+                  onChange={(e) => setSelectedSemester(e.target.value)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--glass-border)',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {SEMESTER_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value} style={{ background: '#1a1a2e', color: 'white' }}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+
+                {/* 新增課程按鈕 */}
+                {canEdit && (
+                  <button
+                    onClick={handleAddCourse}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '99px',
+                      background: 'rgba(139, 92, 246, 0.2)',
+                      color: '#a78bfa',
+                      border: '1px solid rgba(139, 92, 246, 0.4)',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    ＋ 新增課程
+                  </button>
+                )}
+
+                {/* 匯出按鈕 */}
+                <button
+                  onClick={handleExportICS}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '99px',
+                    background: 'rgba(56, 189, 248, 0.15)',
+                    color: 'var(--color-primary, #38bdf8)',
+                    border: '1px solid var(--glass-border)',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  📅 匯出行事曆 (.ics)
+                </button>
+              </div>
+            </div>
             
             {/* 提示訊息 */}
             {canEdit && (
@@ -202,7 +344,7 @@ export default function SchoolSchedulePage() {
                     {Array.from({ length: 5 }).map((_, dayIndex) => {
                       const day = dayIndex + 1;
                       const course = getCourseAtPeriod(day, period.start);
-                      const isOccupiedBySpan = courses.some(c => {
+                      const isOccupiedBySpan = filteredCourses.some(c => {
                           if (c.day !== day) return false;
                            const pStartIdx = periods.findIndex(p => p.start === c.startTime);
                            let pEndIdx = periods.findIndex(p => p.end === c.endTime);
@@ -367,7 +509,7 @@ export default function SchoolSchedulePage() {
         }}
         onSave={handleSaveCourse}
         course={editingCourse}
-        mode="edit"
+        mode={editorMode}
       />
 
       {/* 筆記編輯器 */}

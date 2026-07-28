@@ -1,27 +1,39 @@
 'use client';
+
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { CalendarIcon, GamepadIcon, SchoolIcon, BriefcaseIcon, WalletIcon } from '../components/Icons';
-import { StatCard, TimelineItem } from '../components/VisualComponents';
-import { useHomeDashboard } from '../hooks/useHomeDashboard';
-import { useScheduleData } from '../hooks/useScheduleData';
-import { useAllowanceData } from '../hooks/useAllowanceData';
-import { useAuth } from '../context/AuthContext';
-import LoginPrompt from '../components/LoginPrompt';
-import { formatDateForCopy, calculateKongBalance } from '../data/allowance';
-import { LoadingSpinner } from '../components/Loading';
+import {
+  SchoolIcon,
+  BriefcaseIcon,
+  WalletIcon,
+  CalendarIcon,
+  ToolboxIcon,
+} from '@/components/Icons';
+import { TimelineItem } from '@/components/VisualComponents';
+import { useHomeDashboard } from '@/hooks/useHomeDashboard';
+import { useScheduleData } from '@/hooks/useScheduleData';
+import { useAllowanceData } from '@/hooks/useAllowanceData';
+import { useSalaryData } from '@/hooks/useSalaryData';
+import { useAuth } from '@/context/AuthContext';
+import LoginPrompt from '@/components/LoginPrompt';
+import { formatDateForCopy, calculateKongBalance } from '@/data/allowance';
+import { LoadingSpinner } from '@/components/Loading';
+import QuickActionModal from '@/components/QuickActionModal';
+import CommandPalette from '@/components/CommandPalette';
+import FloatingQuickActions from '@/components/FloatingQuickActions';
 import styles from './page.module.css';
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
-  
-  // 使用新的資料管理 hook
+
+  // 資料 Hooks
   const { courses, shifts, events } = useScheduleData();
   const { records: allowanceRecords } = useAllowanceData();
-  
+  const { records: salaryRecords } = useSalaryData();
+
   const {
     currentTimeStr,
     currentDayOfWeek,
-    currentMonth,
     thisWeekClasses,
     thisMonthWorkDays,
     nextEvent,
@@ -31,10 +43,79 @@ export default function Home() {
     upcomingImportantEvents,
   } = useHomeDashboard(courses, shifts, events);
 
-  // 取得最新的生活費記錄
+  // 彈窗 Modal 狀態
+  const [quickModalOpen, setQuickModalOpen] = useState(false);
+  const [quickModalTab, setQuickModalTab] = useState<'allowance' | 'work'>('allowance');
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+
+  // 動態進度條計算與即時秒鐘計時器
+  const [nowDate, setNowDate] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNowDate(new Date()), 10000); // 每 10 秒更新一次
+    return () => clearInterval(timer);
+  }, []);
+
+  // 鍵盤 Ctrl+K 全局監聽
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const latestAllowance = allowanceRecords.length > 0 ? allowanceRecords[0] : null;
 
-  // 檢查登入狀態
+  // 計算本月薪資統計（與薪資計算器邏輯一致）
+  const currentMonthStr = useMemo(() => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+  }, []);
+
+  const thisMonthSalaryStats = useMemo(() => {
+    const monthRecords = salaryRecords.filter((r) => r.date.startsWith(currentMonthStr));
+    const totalPay = monthRecords.reduce((sum, r) => sum + r.workHours * r.hourlyRate, 0);
+    const totalHours = monthRecords.reduce((sum, r) => sum + r.workHours, 0);
+    const workDays = monthRecords.length;
+    return { totalPay, totalHours, workDays };
+  }, [salaryRecords, currentMonthStr]);
+
+  // 計算目前行程剩餘時間與進度百分比
+  let progressPercent = 0;
+  let remainingMinutesStr = '';
+
+  if (currentEvent && currentEvent.time) {
+    const times = currentEvent.time.split(' - ');
+    if (times.length === 2) {
+      const [startStr, endStr] = times;
+      const todayDateStr = nowDate.toISOString().slice(0, 10);
+      const start = new Date(`${todayDateStr}T${startStr}:00`);
+      const end = new Date(`${todayDateStr}T${endStr}:00`);
+      const now = nowDate;
+
+      const totalMs = end.getTime() - start.getTime();
+      const elapsedMs = now.getTime() - start.getTime();
+
+      if (totalMs > 0) {
+        progressPercent = Math.min(100, Math.max(0, Math.round((elapsedMs / totalMs) * 100)));
+        const remainingMs = end.getTime() - now.getTime();
+        if (remainingMs > 0) {
+          const remMin = Math.ceil(remainingMs / (1000 * 60));
+          const hours = Math.floor(remMin / 60);
+          const mins = remMin % 60;
+          remainingMinutesStr = hours > 0 ? `${hours} 小時 ${mins} 分鐘` : `${mins} 分鐘`;
+        }
+      }
+    }
+  }
+
+  // 登入狀態檢查
   if (authLoading) {
     return (
       <div className={styles.pageContainer}>
@@ -47,168 +128,240 @@ export default function Home() {
     return <LoginPrompt />;
   }
 
+  // 招呼語
+  const hour = nowDate.getHours();
+  const greetingStr =
+    hour < 12 ? '☀️ 早安' : hour < 18 ? '☕ 下午好' : '🌙 晚上好';
+
   return (
     <div className={styles.pageContainer}>
-      {/* 統計卡片區 */}
-      <div className={styles.statsGrid}>
-        <StatCard
-          icon={<CalendarIcon size={32} />}
-          label="本週課程"
-          value={thisWeekClasses}
-          subtext="堂課"
-          color="var(--color-primary)"
-        />
-        <StatCard
-          icon={<CalendarIcon size={32} />}
-          label="本月打工"
-          value={thisMonthWorkDays}
-          subtext="天"
-          color="var(--color-highlight)"
-        />
-        <div className={`glass card ${styles.eventCard}`}>
-          {/* Top Section: Current Event */}
-          <div className={styles.eventSectionTop}>
-            <div className={styles.eventLabel}>
-              <span className="animate-pulse">●</span> {currentEvent ? '正在進行' : '目前狀態'}
-            </div>
+      {/* ===== 1. 頂部動態問候與快捷按鈕列 ===== */}
+      <div className={styles.heroGreeting}>
+        <div className={styles.greetingText}>
+          <div className={styles.greetingTitle}>
+            {greetingStr}，{user.displayName || '使用者'}！
+          </div>
+          <div className={styles.greetingSubtitle}>
+            今天是 {nowDate.toLocaleDateString('zh-TW', { month: 'long', day: 'numeric', weekday: 'long' })}
+          </div>
+        </div>
 
-            {currentEvent ? (
-              <div className={styles.eventContent}>
-                <div
-                  className={`${styles.eventIcon} ${
-                    currentEvent.type === 'class' ? styles.eventIconClass : styles.eventIconWork
-                  }`}
-                >
-                  {currentEvent.type === 'class' ? <SchoolIcon size={28} /> : <BriefcaseIcon size={28} />}
-                </div>
-                <div>
-                  <div className={styles.eventTitle}>{currentEvent.title}</div>
-                  <div className={styles.eventTime}>{currentEvent.time}</div>
-                </div>
-              </div>
-            ) : (
-              <div className={styles.eventContentFaded}>
-                <div className={styles.eventIcon + ' ' + styles.eventIconFree}>
-                  <span className={styles.eventEmoji}>☕</span>
-                </div>
-                <div>
-                  <div className={styles.eventTitle}>目前空檔</div>
-                  <div className={styles.eventTime}>休息一下,準備迎接挑戰</div>
-                </div>
-              </div>
-            )}
+        <div className={styles.quickActionBar}>
+          <button
+            className={styles.quickBtn}
+            onClick={() => {
+              setQuickModalTab('allowance');
+              setQuickModalOpen(true);
+            }}
+          >
+            <span>💵 記生活費</span>
+          </button>
+
+          <button
+            className={styles.quickBtn}
+            onClick={() => {
+              setQuickModalTab('work');
+              setQuickModalOpen(true);
+            }}
+          >
+            <span>💼 登記打工</span>
+          </button>
+
+          <button
+            className={styles.quickBtn}
+            onClick={() => setCommandPaletteOpen(true)}
+          >
+            <span>🔍 搜尋 (Ctrl+K)</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ===== 2. 核心 Highlights 雙欄 Grid ===== */}
+      <div className={styles.heroGrid}>
+        {/* 左側主視覺卡片：即時焦點與時間軸倒數 */}
+        <div className={styles.liveFocusCard}>
+          <div className={styles.cardHeaderLabel}>
+            <span>
+              <span className={styles.pulseDot}></span>{' '}
+              {currentEvent ? '正在進行中' : '今日行程狀態'}
+            </span>
+            <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+              {currentTimeStr}
+            </span>
           </div>
 
-          {/* Bottom Section: Next Event */}
-          <div className={styles.eventSection}>
-            <div className={styles.eventLabelMuted}>{nextEvent ? '稍後行程' : '今日後續'}</div>
-
-            {nextEvent ? (
-              <div className={styles.eventContent}>
-                <div
-                  className={`${styles.eventIconSmall} ${
-                    nextEvent.type === 'class' ? styles.eventIconClassLight : styles.eventIconWorkLight
-                  }`}
-                >
-                  {nextEvent.type === 'class' ? <SchoolIcon size={20} /> : <BriefcaseIcon size={20} />}
-                </div>
-                <div>
-                  <div className={styles.eventTitleSmall}>{nextEvent.title}</div>
-                  <div className={styles.eventTimeNext}>
-                    {nextEvent.time} <span className={styles.eventLocationMuted}>@ {nextEvent.location}</span>
-                  </div>
+          {currentEvent ? (
+            <div className={styles.currentEventRow}>
+              <div className={styles.currentIcon}>
+                {currentEvent.type === 'class' ? (
+                  <SchoolIcon size={28} />
+                ) : (
+                  <BriefcaseIcon size={28} />
+                )}
+              </div>
+              <div className={styles.eventMeta}>
+                <div className={styles.eventTitle}>{currentEvent.title}</div>
+                <div className={styles.eventSubInfo}>
+                  <span>🕒 {currentEvent.time}</span>
+                  {currentEvent.location && <span>📍 {currentEvent.location}</span>}
                 </div>
               </div>
-            ) : (
-              <div className={styles.eventContentFadedMore}>
-                <div className={styles.eventIconSmall + ' ' + styles.eventIconDone}>
-                  <span className={styles.eventEmojiSmall}>🌙</span>
+            </div>
+          ) : (
+            <div className={styles.currentEventRow}>
+              <div className={styles.currentIcon} style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
+                ☕
+              </div>
+              <div className={styles.eventMeta}>
+                <div className={styles.eventTitle}>目前無進行中行程</div>
+                <div className={styles.eventSubInfo}>
+                  {nextEvent ? `下個行程：${nextEvent.title} (${nextEvent.time})` : '今日行程順利完成 ✨'}
                 </div>
-                <div>
-                  <div className={styles.eventTitleSmall}>今日行程已結束</div>
-                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 倒數進度條 */}
+          {currentEvent && (
+            <div className={styles.progressContainer}>
+              <div className={styles.progressLabel}>
+                <span>
+                  {remainingMinutesStr ? `距離結束剩餘 ${remainingMinutesStr}` : '時間倒數中'}
+                </span>
+                <span>{progressPercent}%</span>
+              </div>
+              <div className={styles.progressBarTrack}>
+                <div
+                  className={styles.progressBarFill}
+                  style={{ width: `${progressPercent}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
+
+          {/* 膠囊統計 Badges (解決過去巨大空白問題) */}
+          <div className={styles.pillBadgesRow}>
+            <div className={styles.pillBadge}>
+              <SchoolIcon size={16} />
+              <span>本週課程：</span>
+              <span className={styles.pillBadgeValue}>{thisWeekClasses} 堂</span>
+            </div>
+
+            <div className={styles.pillBadge}>
+              <BriefcaseIcon size={16} />
+              <span>本月打工：</span>
+              <span className={styles.pillBadgeValue}>{thisMonthWorkDays} 天</span>
+            </div>
+
+            {nextEvent && (
+              <div className={styles.pillBadge} style={{ borderColor: 'rgba(251, 191, 36, 0.3)' }}>
+                <span>稍後：</span>
+                <span style={{ fontWeight: 600 }}>{nextEvent.title} ({nextEvent.time})</span>
               </div>
             )}
           </div>
         </div>
 
-        {/* 生活費記錄卡片 */}
-        <div className={`glass card ${styles.allowanceCard}`}>
-          <div className={styles.allowanceHeader}>
-            <WalletIcon size={20} />
-            <span>生活費記錄</span>
+        {/* 右側：生活費小帳簿卡片 */}
+        <div className={styles.allowanceCard}>
+          <div className={styles.allowanceCardHeader}>
+            <div className={styles.allowanceTitle}>
+              <WalletIcon size={20} />
+              <span>生活費帳簿摘要</span>
+            </div>
+            <button
+              onClick={() => {
+                setQuickModalTab('allowance');
+                setQuickModalOpen(true);
+              }}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--color-primary)',
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              + 記一筆
+            </button>
           </div>
+
           {latestAllowance ? (
-            <div className={styles.allowanceContent}>
-              <div className={styles.allowanceRow}>
-                <span className={styles.allowanceLabel}>最近匯入</span>
-                <span className={styles.allowanceValue}>
-                  {formatDateForCopy(latestAllowance.date)}
-                </span>
-              </div>
-              <div className={styles.allowanceRow}>
-                <span className={styles.allowanceLabel}>匯入金額</span>
-                <span className={`${styles.allowanceValue} ${styles.allowanceAmount}`}>
-                  NT$ {latestAllowance.amount.toLocaleString()}
-                </span>
-              </div>
-              <div className={styles.allowanceRow}>
-                <span className={styles.allowanceLabel}>來源</span>
-                <span className={styles.allowanceValue}>
-                  {latestAllowance.sourceType}
-                </span>
-              </div>
-              <div className={styles.allowanceRow}>
-                <span className={styles.allowanceLabel}>帳簿餘額</span>
-                <span className={styles.allowanceValue}>
+            <>
+              <div className={styles.allowanceBalanceBlock}>
+                <span className={styles.balanceLabel}>帳簿總餘額</span>
+                <span className={styles.balanceValue}>
                   NT$ {latestAllowance.totalBalance.toLocaleString()}
                 </span>
               </div>
-              {latestAllowance.sourceType === '生活費匯款' ? (
-                <div className={styles.allowanceSplit}>
-                  <div className={styles.allowanceSplitItem}>
-                    <span className={styles.allowanceSplitLabel}>小呆餘額</span>
-                    <span className={styles.allowanceSplitValue}>
-                      NT$ {latestAllowance.xiaoBalance.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className={styles.allowanceSplitDivider}></div>
-                  <div className={styles.allowanceSplitItem}>
-                    <span className={styles.allowanceSplitLabel}>孔呆餘額</span>
-                    <span className={styles.allowanceSplitValue}>
-                      NT$ {calculateKongBalance(latestAllowance.totalBalance, latestAllowance.xiaoBalance).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className={styles.allowanceRow}>
-                  <span className={styles.allowanceLabel}>小呆餘額</span>
-                  <span className={styles.allowanceValue}>
-                    NT$ {latestAllowance.xiaoBalance.toLocaleString()}
+
+              {/* 小呆/孔呆餘額分割條 */}
+              <div className={styles.splitBarContainer}>
+                <div className={styles.splitInfoRow}>
+                  <span className={styles.xiaoLabel}>
+                    小呆: NT$ {latestAllowance.xiaoBalance.toLocaleString()}
+                  </span>
+                  <span className={styles.kongLabel}>
+                    孔呆: NT${' '}
+                    {calculateKongBalance(
+                      latestAllowance.totalBalance,
+                      latestAllowance.xiaoBalance
+                    ).toLocaleString()}
                   </span>
                 </div>
-              )}
-              <Link href="/tools/allowance" className={styles.allowanceLink}>
-                查看詳細記錄 →
+                <div className={styles.splitTrack}>
+                  <div
+                    className={styles.splitXiaoFill}
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        Math.max(
+                          0,
+                          (latestAllowance.xiaoBalance / (latestAllowance.totalBalance || 1)) * 100
+                        )
+                      )}%`,
+                    }}
+                  ></div>
+                </div>
+              </div>
+
+              <Link href="/tools/allowance" className={styles.cardActionLink}>
+                查看詳細流水帳明細 →
               </Link>
-            </div>
+            </>
           ) : (
-            <div className={styles.allowanceEmpty}>
+            <div className={styles.emptyBlock}>
               <p>尚無生活費記錄</p>
-              <Link href="/tools/allowance" className={styles.allowanceLink}>
-                建立第一筆記錄 →
-              </Link>
+              <button
+                className={styles.quickBtn}
+                onClick={() => {
+                  setQuickModalTab('allowance');
+                  setQuickModalOpen(true);
+                }}
+              >
+                建立第一筆記錄
+              </button>
             </div>
           )}
         </div>
       </div>
 
-      <div className={styles.gridAuto}>
-        {/* 今日時間軸 */}
-        <section className="glass card">
-          <h3 className={styles.sectionHeader}>📅 今日課程</h3>
+      {/* ===== 3. 中間二合一 Section (今日時間軸 + 即將到來) ===== */}
+      <div className={styles.dualSection}>
+        {/* 左欄：今日課程時間軸 */}
+        <div className={styles.contentCard}>
+          <div className={styles.sectionHeader}>
+            <span>📅 今日課程行程</span>
+            <Link
+              href="/schedule/school"
+              style={{ fontSize: '0.85rem', color: 'var(--color-primary)', textDecoration: 'none' }}
+            >
+              完整課表 →
+            </Link>
+          </div>
 
-          <div className={styles.timelineContainer}>
+          <div className={styles.timelineList}>
             {todaySchedule.length > 0 ? (
               todaySchedule.map((item) => {
                 const isPast = item.endTime < currentTimeStr;
@@ -226,86 +379,138 @@ export default function Home() {
                 );
               })
             ) : (
-              <div className={styles.emptyState}>
-                {currentDayOfWeek === 0 || currentDayOfWeek === 6 ? (
-                  <>
-                    <div className={styles.emptyStateIcon}>🎉</div>
-                    <div className={styles.emptyStateTitle}>今天是週末!</div>
-                    <div className={styles.emptyStateSubtitle}>好好休息,享受美好時光 ✨</div>
-                  </>
-                ) : (
-                  <>
-                    <div className={styles.emptyStateIcon}>☕</div>
-                    <div className={styles.emptyStateTitle}>今天沒有課程</div>
-                    <div className={styles.emptyStateSubtitle}>可以好好利用這段時間!</div>
-                  </>
-                )}
+              <div className={styles.emptyBlock}>
+                <span className={styles.emptyEmoji}>
+                  {currentDayOfWeek === 0 || currentDayOfWeek === 6 ? '🎉' : '☕'}
+                </span>
+                <span>
+                  {currentDayOfWeek === 0 || currentDayOfWeek === 6
+                    ? '週末美好假期，好好休息吧！'
+                    : '今日沒有課程安排'}
+                </span>
               </div>
             )}
           </div>
+        </div>
 
-          <Link href="/schedule" className={`btn ${styles.linkButton}`}>
-            查看完整日程 &rarr;
-          </Link>
-        </section>
-
-        {/* Important Events */}
-        <section className="glass card">
-          <h3 className={styles.sectionTitle}>⚡ 即將到來</h3>
-          <div className={styles.eventsGrid}>
-            {upcomingImportantEvents.map((event) => (
-              <div key={event.id} className={styles.eventItem}>
-                <div
-                  className={`${styles.eventDot} ${
-                    event.type === 'deadline'
-                      ? styles.eventDotDeadline
-                      : event.type === 'holiday'
-                      ? styles.eventDotHoliday
-                      : styles.eventDotOther
-                  }`}
-                />
-                <div className={styles.eventDetails}>
-                  <div className={styles.eventName}>{event.title}</div>
-                  <div className={styles.eventDate}>{event.date}</div>
-                </div>
-                {event.type === 'deadline' && <span className={styles.urgentBadge}>緊急</span>}
-              </div>
-            ))}
+        {/* 右欄：本月薪資統計 */}
+        <div className={styles.contentCard}>
+          <div className={styles.sectionHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>💼 本月薪資統計</span>
+            <Link href="/tools/salary" style={{ fontSize: '0.8rem', color: 'var(--color-primary)', textDecoration: 'none' }}>
+              詳細紀錄 →
+            </Link>
           </div>
-        </section>
-      </div>
 
-      {/* Current Month Work Shifts Summary */}
-      <section className="glass card">
-        <h3 className={styles.monthTitle}>
-          <CalendarIcon size={24} />
-          <span>本月打工一覽 ({currentMonth}月)</span>
-        </h3>
-        <div className={styles.workShiftsGrid}>
-          {monthlyWorkShifts.map((shift) => (
-            <div key={shift.id} className={styles.workShiftCard}>
-              <div className={styles.workShiftDate}>
-                {shift.date.split('-')[1]}/{shift.date.split('-')[2]}
-              </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {/* 總收入 */}
+            <div style={{
+              padding: '14px 16px',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(139, 92, 246, 0.04))',
+              border: '1px solid rgba(139, 92, 246, 0.25)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
               <div>
-                <div className={styles.workShiftName}>{shift.note}</div>
-                <div className={styles.workShiftTime}>
-                  {shift.startTime} - {shift.endTime}
+                <div style={{ fontSize: '0.8rem', color: 'var(--muted)', marginBottom: '2px' }}>本月總收入</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#a78bfa' }}>
+                  NT$ {thisMonthSalaryStats.totalPay.toLocaleString()}
+                </div>
+              </div>
+              <span style={{ fontSize: '2rem' }}>💰</span>
+            </div>
+
+            {/* 總工時 + 工作天數 */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div style={{
+                padding: '12px 14px',
+                borderRadius: '10px',
+                background: 'rgba(56, 189, 248, 0.08)',
+                border: '1px solid rgba(56, 189, 248, 0.2)',
+              }}>
+                <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginBottom: '4px' }}>總工時</div>
+                <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#38bdf8' }}>
+                  {thisMonthSalaryStats.totalHours.toFixed(1)} h
+                </div>
+              </div>
+              <div style={{
+                padding: '12px 14px',
+                borderRadius: '10px',
+                background: 'rgba(251, 191, 36, 0.08)',
+                border: '1px solid rgba(251, 191, 36, 0.2)',
+              }}>
+                <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginBottom: '4px' }}>工作天數</div>
+                <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#fbbf24' }}>
+                  {thisMonthSalaryStats.workDays} 天
                 </div>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
 
-      <section className={styles.gamesSection}>
-        <h3 className={styles.gamesSectionTitle}>休息一下?</h3>
-        <p className={styles.gamesSectionSubtitle}>工作學習之餘,也別忘了放鬆心情。</p>
-        <Link href="/games" className={`btn ${styles.gamesButton}`}>
-          <GamepadIcon size={20} />
-          <span>前往攻略中心</span>
-        </Link>
-      </section>
+            {/* 無記錄提示 */}
+            {thisMonthSalaryStats.workDays === 0 && (
+              <div className={styles.emptyBlock}>
+                <span className={styles.emptyEmoji}>📋</span>
+                <span>本月尚無打工記錄</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ===== 4. 底部打工 Glance ===== */}
+      {monthlyWorkShifts.length > 0 && (
+        <div className={styles.workGlanceCard}>
+          <div className={styles.workGlanceHeader}>
+            <div style={{ fontWeight: 700, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <BriefcaseIcon size={20} />
+              <span>本月打工安排 Glance ({monthlyWorkShifts.length} 天)</span>
+            </div>
+            <Link
+              href="/schedule/work"
+              style={{ fontSize: '0.85rem', color: 'var(--color-primary)', textDecoration: 'none' }}
+            >
+              打工月曆詳情 →
+            </Link>
+          </div>
+
+          <div className={styles.workGlanceGrid}>
+            {monthlyWorkShifts.slice(0, 12).map((shift) => (
+              <div key={shift.id} className={styles.shiftPill}>
+                <span className={styles.shiftDate}>{shift.date.slice(5)}</span>
+                <span className={styles.shiftTime}>
+                  {shift.startTime} - {shift.endTime}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ===== 彈窗與全域 Floating Speed Dial ===== */}
+      <QuickActionModal
+        isOpen={quickModalOpen}
+        initialTab={quickModalTab}
+        onClose={() => setQuickModalOpen(false)}
+      />
+
+      <CommandPalette
+        isOpen={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        onOpenQuickModal={(tab) => {
+          setQuickModalTab(tab);
+          setQuickModalOpen(true);
+        }}
+      />
+
+      <FloatingQuickActions
+        onOpenQuickModal={(tab) => {
+          setQuickModalTab(tab);
+          setQuickModalOpen(true);
+        }}
+        onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+      />
     </div>
   );
 }
