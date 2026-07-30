@@ -468,32 +468,41 @@ export default function WorkSchedulePage() {
                           isSelected ? styles.shiftCardSelected : styles.shiftCardNormal
                         }`}
                       >
-                        <div className={styles.shiftDate}>{shift.date.split('-')[2]}日</div>
-                        <div className={styles.shiftDetails}>
-                          <div 
-                            className={styles.shiftName}
+                        {/* 卡片頁首：日期與角色/時薪 */}
+                        <div className={styles.cardHeader}>
+                          <div className={styles.shiftDateBadge}>
+                            {shift.date.split('-')[2]} 日
+                          </div>
+                          <div
+                            className={styles.roleBadge}
                             style={{
-                              display: 'inline-block',
-                              padding: '2px 8px',
-                              borderRadius: '6px',
-                              fontSize: '0.85rem',
-                              fontWeight: '600',
+                              background: shift.role === 'instructor' ? 'rgba(200, 141, 85, 0.18)' : 'rgba(95, 113, 134, 0.18)',
+                              color: shift.role === 'instructor' ? '#c88d55' : 'var(--color-secondary)',
+                              border: shift.role === 'instructor' ? '1px dashed rgba(200, 141, 85, 0.4)' : '1px dashed rgba(95, 113, 134, 0.4)',
+                            }}
+                          >
+                            {roleLabel} ${rate}/h
+                          </div>
+                        </div>
+
+                        {/* 卡片內文：打工名稱與時間工時 */}
+                        <div className={styles.cardBody}>
+                          <div
+                            className={styles.shiftNameTag}
+                            style={{
                               background: badgeStyle.background,
                               color: badgeStyle.color,
                             }}
                           >
                             {shiftTitle}
                           </div>
-                          <div className={styles.shiftTime}>
-                            {shift.startTime} - {shift.endTime} ({shift.workHours ?? '-'}h)
-                          </div>
-                          <div className={styles.shiftMeta}>
-                            <span className={styles.roleBadge}>
-                              {roleLabel} ${rate}/h
-                            </span>
+                          <div className={styles.shiftTimeText}>
+                            ⏰ {shift.startTime} - {shift.endTime} ({shift.workHours ?? '-'}小時)
                           </div>
                         </div>
-                        <div className={styles.shiftActions}>
+
+                        {/* 卡片頁尾：操作按鈕 */}
+                        <div className={styles.cardFooter}>
                           <button
                             className={`${styles.actionBtn} ${styles.editBtn}`}
                             onClick={() => handleOpenEditShift(shift)}

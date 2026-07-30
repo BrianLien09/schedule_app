@@ -188,109 +188,124 @@
 
 .shiftsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
 }
 
 .shiftCard {
   background: #f0ece1;
-  border: 2px dashed rgba(220, 208, 194, 0.7);
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(139, 121, 101, 0.06);
-  transition: all 180ms ease;
+  border: 2px dashed rgba(220, 208, 194, 0.8);
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(139, 121, 101, 0.08);
+  transition: all 200ms ease;
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1.15rem;
 }
 
 .shiftCard:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   border-color: var(--color-primary);
-  box-shadow: 0 8px 20px rgba(139, 121, 101, 0.12);
+  box-shadow: 0 8px 22px rgba(139, 121, 101, 0.14);
 }
 
 .shiftCardNormal {
   background: #f0ece1;
-  border-left: 4px solid var(--color-secondary);
 }
 
 .shiftCardSelected {
-  background: rgba(184, 126, 107, 0.18);
-  border-left: 4px solid var(--color-primary);
-  box-shadow: 0 4px 16px rgba(139, 121, 101, 0.15);
+  background: rgba(184, 126, 107, 0.12);
+  border-color: var(--color-primary);
+  box-shadow: 0 6px 18px rgba(139, 121, 101, 0.15);
 }
 
-.shiftDate {
-  font-weight: bold;
-  color: var(--color-accent); /* 翠綠色 */
-  font-size: 1.2rem;
-  min-width: 50px;
-  text-align: center;
-}
-
-.shiftDetails {
-  flex: 1;
-}
-
-.shiftName {
-  font-weight: bold;
-  color: var(--foreground);
-}
-
-.shiftTime {
-  font-size: 0.9rem;
-  opacity: 0.8;
-  color: var(--foreground);
-}
-
-.shiftMeta {
+.cardHeader {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
-  margin-top: 0.25rem;
+}
+
+.shiftDateBadge {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #3d3a36;
+  background: rgba(220, 208, 194, 0.45);
+  padding: 0.25rem 0.65rem;
+  border-radius: 8px;
+  border: 1px dashed rgba(220, 208, 194, 0.8);
 }
 
 .roleBadge {
-  font-size: 0.75rem;
-  padding: 0.15rem 0.4rem;
-  border-radius: 4px;
-  background: rgba(8, 145, 178, 0.2);
-  color: var(--color-primary-light);
+  font-size: 0.8rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 99px;
   font-weight: 600;
 }
 
-.shiftActions {
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.shiftNameTag {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  white-space: normal;
+  word-break: break-word;
+}
+
+.shiftTimeText {
+  font-size: 0.875rem;
+  color: #5f6368;
+  font-weight: 500;
+}
+
+.cardFooter {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed rgba(220, 208, 194, 0.7);
 }
 
 .actionBtn {
-  background: transparent;
-  border: 1px solid var(--glass-border);
-  border-radius: 6px;
-  padding: 0.3rem 0.6rem;
-  font-size: 0.8rem;
-  color: var(--foreground);
+  border-radius: 8px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.825rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
-.actionBtn:hover {
-  background: var(--glass-bg-hover);
-  transform: translateY(-1px);
+.editBtn {
+  background: rgba(95, 113, 134, 0.12);
+  color: var(--color-secondary);
+  border: 1px dashed rgba(95, 113, 134, 0.4);
 }
 
 .editBtn:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary-light);
+  background: rgba(95, 113, 134, 0.22);
+  transform: translateY(-1px);
+}
+
+.deleteBtn {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+  border: 1px dashed rgba(220, 38, 38, 0.3);
 }
 
 .deleteBtn:hover {
-  border-color: #ef4444;
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.15);
+  background: rgba(220, 38, 38, 0.2);
+  transform: translateY(-1px);
 }
 
 /* ========== 新功能樣式 ========== */
