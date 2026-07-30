@@ -17,6 +17,12 @@ export interface WorkShift {
   endTime: string;
   location?: string;
   note?: string;
+  role?: 'assistant' | 'instructor';
+  hourlyRate?: number;
+  workHours?: number;
+  shiftCategory?: string;
+  salaryRecordId?: string;
+  legacyWorkShiftId?: string;
 }
 
 export interface Event {

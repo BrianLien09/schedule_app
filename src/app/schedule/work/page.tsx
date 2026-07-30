@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { type WorkShift } from '../../../data/schedule';
 import { useWorkCalendar } from '../../../hooks/useWorkCalendar';
 import { useScheduleData } from '../../../hooks/useScheduleData';
@@ -26,12 +27,19 @@ export default function WorkSchedulePage() {
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const { confirm } = useConfirm();
-  
-  // 使用新的資料管理 hook
-  const { shifts, addWorkShift } = useScheduleData();
-  
-  const { currentMonth, selectedDate, changeMonth, getDaysInMonth, getShiftsForDate, currentMonthShifts, handleDateClick } =
-    useWorkCalendar(shifts);
+
+  // 使用共享資料 Hook（包含 CRUD 操作）
+  const { shifts, addWorkShift, updateWorkShift, deleteWorkShift } = useScheduleData();
+
+  const {
+    currentMonth,
+    selectedDate,
+    changeMonth,
+    getDaysInMonth,
+    getShiftsForDate,
+    currentMonthShifts,
+    handleDateClick,
+  } = useWorkCalendar(shifts);
 
   const { days, startDay } = getDaysInMonth(currentMonth);
 
@@ -45,8 +53,8 @@ export default function WorkSchedulePage() {
 
   // ========== 編輯器狀態 ==========
   const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [editorMode, setEditorMode] = useState<'add' | 'batch'>('add');
-  const [editingDate, setEditingDate] = useState<string | null>(null);
+  const [editorMode, setEditorMode] = useState<'add' | 'edit' | 'batch'>('add');
+  const [editingShift, setEditingShift] = useState<WorkShift | null>(null);
 
   // 檢查登入狀態
   if (authLoading) {
@@ -89,57 +97,92 @@ export default function WorkSchedulePage() {
     if (!draggedShift) return;
 
     const targetDate = formatDate(day);
-    
-    // 檢查目標日期是否已有班次
-    const existingShifts = getShiftsForDate(day);
-    if (existingShifts.length > 0) {
-      toast.warning('此日期已有班次，無法複製');
-      return;
-    }
 
     // 複製班次到新日期
     const newShift: WorkShift = {
-      id: `shift-${Date.now()}-${Math.random()}`,
+      id: `shift-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       date: targetDate,
       startTime: draggedShift.startTime,
       endTime: draggedShift.endTime,
       note: draggedShift.note,
+      shiftCategory: draggedShift.shiftCategory || draggedShift.note,
+      role: draggedShift.role || 'assistant',
+      hourlyRate: draggedShift.hourlyRate || 200,
+      workHours: draggedShift.workHours,
     };
 
     addWorkShift(newShift);
+    toast.success(`已將班次複製到 ${targetDate}`);
     setDraggedShift(null);
   };
 
-  // ========== 多選功能 ==========
+  // ========== 多選與日期點擊功能 ==========
   const handleDayClick = (day: number, e: React.MouseEvent) => {
-    const shifts = getShiftsForDate(day);
-    
+    const dayShifts = getShiftsForDate(day);
+
     // Ctrl/Cmd 點擊：多選模式
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
-      
-      // 只能選擇空白日期
-      if (shifts.length > 0) {
+
+      if (dayShifts.length > 0) {
         return;
       }
 
       setIsMultiSelectMode(true);
-      
+
       if (selectedDays.includes(day)) {
-        setSelectedDays(selectedDays.filter(d => d !== day));
+        setSelectedDays(selectedDays.filter((d) => d !== day));
       } else {
         setSelectedDays([...selectedDays, day]);
       }
-    } 
-    // 一般點擊：有班次則顯示詳情
-    else if (shifts.length > 0) {
+    }
+    // 一般點擊有班次的日期：捲動到下方列表並標記選擇
+    else if (dayShifts.length > 0) {
       handleDateClick(day);
     }
-    // 點擊空白日期：開啟單日新增
+    // 點擊空白日期：開啟新增彈窗
     else {
-      setEditingDate(formatDate(day));
+      const dateStr = formatDate(day);
+      setEditingShift({
+        id: '',
+        date: dateStr,
+        startTime: '09:00',
+        endTime: '18:00',
+        role: 'assistant',
+        hourlyRate: 200,
+        note: '',
+      } as WorkShift);
       setEditorMode('add');
       setIsEditorOpen(true);
+    }
+  };
+
+  // 開啟編輯指定班表
+  const handleOpenEditShift = (shift: WorkShift, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    setEditingShift(shift);
+    setEditorMode('edit');
+    setIsEditorOpen(true);
+  };
+
+  // 刪除指定班表
+  const handleDeleteShift = async (shiftId: string) => {
+    const target = shifts.find((s) => s.id === shiftId);
+    const dateText = target?.date || '';
+    const nameText = target?.shiftCategory || target?.note || '打工班表';
+
+    const confirmed = await confirm({
+      title: '刪除打工班表',
+      message: `確定要刪除 ${dateText} 「${nameText}」嗎？此操作會同時刪除對應的薪資計算記錄。`,
+      confirmText: '刪除',
+      danger: true,
+    });
+
+    if (confirmed) {
+      await deleteWorkShift(shiftId);
+      toast.success('已刪除打工班表與薪資記錄');
     }
   };
 
@@ -149,30 +192,31 @@ export default function WorkSchedulePage() {
       toast.info('請先選擇日期（按住 Ctrl 點擊多個空白日期）');
       return;
     }
+    setEditingShift(null);
     setEditorMode('batch');
     setIsEditorOpen(true);
   };
 
-  // 儲存班次
-  const handleSaveShift = (shift: WorkShift) => {
-    if (editorMode === 'add') {
-      addWorkShift(shift);
+  // 儲存班次 (新增 / 編輯 / 批次)
+  const handleSaveShift = async (shift: WorkShift) => {
+    if (editorMode === 'edit') {
+      await updateWorkShift(shift.id, shift);
+      toast.success('已成功更新打工班表');
+    } else if (editorMode === 'add') {
+      await addWorkShift(shift);
+      toast.success('已成功新增打工班表');
     } else if (editorMode === 'batch') {
-      // 批次新增到所有選中的日期
-      selectedDays.forEach(day => {
+      for (const day of selectedDays) {
         const newShift: WorkShift = {
-          id: `shift-${Date.now()}-${Math.random()}-${day}`,
+          ...shift,
+          id: `shift-${Date.now()}-${Math.random().toString(36).substring(2, 7)}-${day}`,
           date: formatDate(day),
-          startTime: shift.startTime,
-          endTime: shift.endTime,
-          note: shift.note,
         };
-        addWorkShift(newShift);
-      });
-      
-      // 清空選擇
+        await addWorkShift(newShift);
+      }
       setSelectedDays([]);
       setIsMultiSelectMode(false);
+      toast.success(`已成功新增 ${selectedDays.length} 天班表`);
     }
   };
 
@@ -183,7 +227,7 @@ export default function WorkSchedulePage() {
   };
 
   // 快速套用模板
-  const handleApplyTemplate = async (template: typeof SHIFT_TEMPLATES[0]) => {
+  const handleApplyTemplate = async (template: (typeof SHIFT_TEMPLATES)[0]) => {
     if (selectedDays.length === 0) {
       toast.info('請先選擇日期（按住 Ctrl 點擊多個空白日期）');
       return;
@@ -198,19 +242,23 @@ export default function WorkSchedulePage() {
       return;
     }
 
-    selectedDays.forEach(day => {
+    for (const day of selectedDays) {
       const newShift: WorkShift = {
-        id: `shift-${Date.now()}-${Math.random()}-${day}`,
+        id: `shift-${Date.now()}-${Math.random().toString(36).substring(2, 7)}-${day}`,
         date: formatDate(day),
         startTime: template.startTime,
         endTime: template.endTime,
         note: template.note,
+        shiftCategory: template.note,
+        role: 'assistant',
+        hourlyRate: 200,
       };
-      addWorkShift(newShift);
-    });
+      await addWorkShift(newShift);
+    }
 
     setSelectedDays([]);
     setIsMultiSelectMode(false);
+    toast.success(`已成功為 ${selectedDays.length} 個日期套用模板`);
   };
 
   // 匯出打工班表 .ics
@@ -231,7 +279,7 @@ export default function WorkSchedulePage() {
       endDate.setHours(endH, endM, 0);
 
       return {
-        title: `[打工] ${s.location || '打工'}`,
+        title: `[打工] ${s.shiftCategory || s.note || s.location || '打工'}`,
         location: s.location || '單位',
         startDate,
         endDate,
@@ -247,7 +295,17 @@ export default function WorkSchedulePage() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div className="glass" style={{ padding: '1.5rem', minHeight: '600px' }}>
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-          <div className="calendar-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+          {/* 月曆標題區 */}
+          <div
+            className="calendar-header"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '10px',
+            }}
+          >
             <button
               onClick={() => changeMonth(-1)}
               className="btn"
@@ -255,7 +313,7 @@ export default function WorkSchedulePage() {
             >
               &larr; 上個月
             </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
               <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>
                 {currentMonth.getFullYear()} 年 {currentMonth.getMonth() + 1} 月
               </h2>
@@ -274,6 +332,24 @@ export default function WorkSchedulePage() {
               >
                 📅 匯出班表 (.ics)
               </button>
+              <Link
+                href={`/tools/salary?month=${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '99px',
+                  background: 'rgba(168, 85, 247, 0.15)',
+                  color: '#a855f7',
+                  border: '1px solid var(--glass-border)',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                }}
+              >
+                💰 檢視本月薪資
+              </Link>
             </div>
             <button
               onClick={() => changeMonth(1)}
@@ -287,9 +363,7 @@ export default function WorkSchedulePage() {
           {/* 多選提示與操作區 */}
           {isMultiSelectMode && (
             <div className={styles.multiSelectBar}>
-              <div className={styles.multiSelectInfo}>
-                已選擇 {selectedDays.length} 個日期
-              </div>
+              <div className={styles.multiSelectInfo}>已選擇 {selectedDays.length} 個日期</div>
               <div className={styles.multiSelectActions}>
                 <button className={`btn ${styles.templateButton}`} onClick={handleBatchAdd}>
                   📝 批次新增
@@ -310,7 +384,6 @@ export default function WorkSchedulePage() {
             </div>
           )}
 
-
           {/* 週標題 */}
           <div className={styles.weekdaysGrid}>
             {['一', '二', '三', '四', '五', '六', '日'].map((d) => (
@@ -330,8 +403,8 @@ export default function WorkSchedulePage() {
             {/* 日期 */}
             {Array.from({ length: days }).map((_, i) => {
               const day = i + 1;
-              const shifts = getShiftsForDate(day);
-              const hasShifts = shifts.length > 0;
+              const dayShifts = getShiftsForDate(day);
+              const hasShifts = dayShifts.length > 0;
               const isSelected = selectedDays.includes(day);
               const isDragOver = dragOverDay === day;
 
@@ -347,7 +420,7 @@ export default function WorkSchedulePage() {
                   } ${isSelected ? styles.dayCellSelected : ''} ${
                     isDragOver ? styles.dayCellDragOver : ''
                   } ${hasShifts ? 'card' : ''}`}
-                  style={{ cursor: hasShifts ? 'pointer' : 'default' }}
+                  style={{ cursor: 'pointer' }}
                 >
                   <div
                     className={`${styles.dayNumber} ${
@@ -356,34 +429,34 @@ export default function WorkSchedulePage() {
                   >
                     {day}
                   </div>
-                  {shifts.map((shift) => (
+                  {dayShifts.map((shift) => (
                     <div
                       key={shift.id}
                       className={styles.shiftBadge}
                       draggable
                       onDragStart={(e) => handleDragStart(shift, e)}
+                      onClick={(e) => handleOpenEditShift(shift, e)}
+                      title="點擊編輯班表"
                     >
-                      {shift.note || '打工'}
+                      {shift.shiftCategory || shift.note || '打工'}
                     </div>
                   ))}
-                  {isSelected && (
-                    <div className={styles.selectedOverlay}>✓</div>
-                  )}
+                  {isSelected && <div className={styles.selectedOverlay}>✓</div>}
                 </div>
               );
             })}
           </div>
 
-          {/* 詳細列表 */}
-          <details className={styles.detailsSection}>
+          {/* 本月詳細列表 */}
+          <details className={styles.detailsSection} open>
             <summary className={styles.detailsSummary}>
               <span className={styles.sectionTitle}>本月詳細列表</span>
               <span className={styles.detailsHints}>
+                <span className={styles.hintInline}>點擊班次編輯</span>
+                <span className={styles.hintDivider}>/</span>
                 <span className={styles.hintInline}>拖曳複製</span>
                 <span className={styles.hintDivider}>/</span>
                 <span className={styles.hintInline}>Ctrl多選</span>
-                <span className={styles.hintDivider}>/</span>
-                <span className={styles.hintInline}>點擊新增</span>
               </span>
               <span className={styles.detailsToggle}>
                 <span className={styles.detailsChevron} aria-hidden="true" />
@@ -393,24 +466,56 @@ export default function WorkSchedulePage() {
             </summary>
             <div className={styles.detailsContent}>
               <div className={styles.shiftsGrid}>
-                {currentMonthShifts.map((shift: WorkShift) => {
-                  const isSelected = selectedDate === shift.date;
-                  return (
-                    <div
-                      key={shift.id}
-                      data-date={shift.date}
-                      className={`${styles.shiftCard} ${isSelected ? styles.shiftCardSelected : styles.shiftCardNormal}`}
-                    >
-                      <div className={styles.shiftDate}>{shift.date.split('-')[2]}日</div>
-                      <div className={styles.shiftDetails}>
-                        <div className={styles.shiftName}>{shift.note}</div>
-                        <div className={styles.shiftTime}>
-                          {shift.startTime} - {shift.endTime}
+                {currentMonthShifts.length === 0 ? (
+                  <p style={{ opacity: 0.7, padding: '1rem' }}>本月尚無排定打工班表。</p>
+                ) : (
+                  currentMonthShifts.map((shift: WorkShift) => {
+                    const isSelected = selectedDate === shift.date;
+                    const roleLabel = shift.role === 'instructor' ? '講師' : '助教';
+                    const rate = shift.hourlyRate || (shift.role === 'instructor' ? 500 : 200);
+
+                    return (
+                      <div
+                        key={shift.id}
+                        data-date={shift.date}
+                        className={`${styles.shiftCard} ${
+                          isSelected ? styles.shiftCardSelected : styles.shiftCardNormal
+                        }`}
+                      >
+                        <div className={styles.shiftDate}>{shift.date.split('-')[2]}日</div>
+                        <div className={styles.shiftDetails}>
+                          <div className={styles.shiftName}>
+                            {shift.shiftCategory || shift.note || '打工'}
+                          </div>
+                          <div className={styles.shiftTime}>
+                            {shift.startTime} - {shift.endTime} ({shift.workHours ?? '-'}h)
+                          </div>
+                          <div className={styles.shiftMeta}>
+                            <span className={styles.roleBadge}>
+                              {roleLabel} ${rate}/h
+                            </span>
+                          </div>
+                        </div>
+                        <div className={styles.shiftActions}>
+                          <button
+                            className={`${styles.actionBtn} ${styles.editBtn}`}
+                            onClick={() => handleOpenEditShift(shift)}
+                            title="編輯班表"
+                          >
+                            ✏️ 編輯
+                          </button>
+                          <button
+                            className={`${styles.actionBtn} ${styles.deleteBtn}`}
+                            onClick={() => handleDeleteShift(shift.id)}
+                            title="刪除班表"
+                          >
+                            🗑️ 刪除
+                          </button>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </div>
             </div>
           </details>
@@ -422,11 +527,12 @@ export default function WorkSchedulePage() {
         isOpen={isEditorOpen}
         onClose={() => {
           setIsEditorOpen(false);
-          setEditingDate(null);
+          setEditingShift(null);
         }}
         onSave={handleSaveShift}
-        shift={editingDate ? { id: '', date: editingDate, startTime: '09:00', endTime: '18:00', note: '' } as WorkShift : null}
-        mode="add"
+        onDelete={handleDeleteShift}
+        shift={editingShift}
+        mode={editorMode === 'edit' ? 'edit' : 'add'}
       />
     </div>
   );

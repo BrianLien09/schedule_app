@@ -266,6 +266,55 @@
   color: var(--foreground);
 }
 
+.shiftMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.roleBadge {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  background: rgba(8, 145, 178, 0.2);
+  color: var(--color-primary-light);
+  font-weight: 600;
+}
+
+.shiftActions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.actionBtn {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+  color: var(--foreground);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.actionBtn:hover {
+  background: var(--glass-bg-hover);
+  transform: translateY(-1px);
+}
+
+.editBtn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary-light);
+}
+
+.deleteBtn:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+}
+
 /* ========== 新功能樣式 ========== */
 
 /* 多選狀態 */

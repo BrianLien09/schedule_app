@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import {
-  getDocuments,
   setDocument,
   updateDocument,
   deleteDocument,
@@ -9,62 +8,32 @@ import {
   batchSetDocuments,
 } from '@/services/firestoreService';
 import { hasWriteAccess } from '@/config/permissions';
+import type { SalaryRecord } from '@/data/workRecords';
+
+export type { RoleType, SalaryRecord } from '@/data/workRecords';
 
 /**
- * 共用資料路徑
- * 
- * 所有家人共用同一份資料，儲存在 Firestore 的 /shared/ 路徑下。
- * 權限控制由 Firestore Security Rules 處理。
+ * 共用薪資資料固定放在 shared collection，讓月曆與薪資工具讀到同一份班表。
  */
 const SHARED_DATA_PATH = 'shared';
 
-/** 身份類型 */
-type RoleType = 'assistant' | 'instructor';
-
-/** 單筆工作記錄 */
-export interface SalaryRecord {
-  id: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  workHours: number; // 實際工作時數（用於薪資計算）
-  hourlyRate: number;
-  role: RoleType;
-  shiftCategory?: string;
-  workShiftId?: string;
-}
-
-/**
- * Salary Data Management Hook
- * 
- * 管理薪資記錄的資料，支援：
- * - Firestore 雲端同步（必須登入）
- * - 即時監聽資料變更
- * - 共用資料（所有白名單成員共用同一份資料）
- */
 export function useSalaryData() {
   const { user } = useAuth();
   const [records, setRecords] = useState<SalaryRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [canEdit, setCanEdit] = useState(false);
 
-  /**
-   * 當使用者登入時，訂閱 Firestore 資料變更
-   */
   useEffect(() => {
     if (!user) {
-      // 未登入：不顯示任何資料
       setRecords([]);
       setLoading(false);
       setCanEdit(false);
       return;
     }
 
-    // 已登入：使用共用資料路徑
     setLoading(true);
     setCanEdit(hasWriteAccess(user.email));
 
-    // 訂閱即時資料變更
     const unsubscribe = subscribeToCollection<SalaryRecord>(
       SHARED_DATA_PATH,
       'salaryRecords',
@@ -74,15 +43,12 @@ export function useSalaryData() {
       }
     );
 
-    // 清理函數：元件卸載時取消訂閱
     return () => unsubscribe();
   }, [user]);
 
-  // ========== 薪資記錄管理 ==========
-  
   const addRecord = async (record: SalaryRecord) => {
     if (!user || !canEdit) {
-      console.warn('❌ 無編輯權限');
+      console.warn('目前沒有寫入權限');
       return;
     }
 
@@ -91,7 +57,7 @@ export function useSalaryData() {
 
   const updateRecord = async (id: string, updatedRecord: Partial<SalaryRecord>) => {
     if (!user || !canEdit) {
-      console.warn('❌ 無編輯權限');
+      console.warn('目前沒有寫入權限');
       return;
     }
 
@@ -100,29 +66,37 @@ export function useSalaryData() {
 
   const deleteRecord = async (id: string) => {
     if (!user || !canEdit) {
-      console.warn('❌ 無編輯權限');
+      console.warn('目前沒有寫入權限');
       return;
     }
 
+    const targetRecord = records.find((record) => record.id === id);
+
     await deleteDocument(SHARED_DATA_PATH, 'salaryRecords', id);
+
+    if (targetRecord?.workShiftId) {
+      await deleteDocument(SHARED_DATA_PATH, 'workShifts', targetRecord.workShiftId);
+    }
   };
 
   const batchAddRecords = async (newRecords: SalaryRecord[]) => {
     if (!user || !canEdit) {
-      console.warn('❌ 無編輯權限');
+      console.warn('目前沒有寫入權限');
       return;
     }
 
     await batchSetDocuments(SHARED_DATA_PATH, 'salaryRecords', newRecords);
   };
 
-  const batchUpdateRecords = async (updates: Array<{ id: string; data: Partial<SalaryRecord> }>) => {
+  const batchUpdateRecords = async (
+    updates: Array<{ id: string; data: Partial<SalaryRecord> }>
+  ) => {
     if (!user || !canEdit) {
-      console.warn('❌ 無編輯權限');
+      console.warn('目前沒有寫入權限');
       return;
     }
 
-    const promises = updates.map(({ id, data }) => 
+    const promises = updates.map(({ id, data }) =>
       updateDocument(SHARED_DATA_PATH, 'salaryRecords', id, data)
     );
     await Promise.all(promises);
@@ -130,18 +104,26 @@ export function useSalaryData() {
 
   const batchDeleteRecords = async (ids: string[]) => {
     if (!user || !canEdit) {
-      console.warn('❌ 無編輯權限');
+      console.warn('目前沒有寫入權限');
       return;
     }
 
-    const promises = ids.map(id => deleteDocument(SHARED_DATA_PATH, 'salaryRecords', id));
-    await Promise.all(promises);
+    const recordsToDelete = records.filter((record) => ids.includes(record.id));
+    const salaryDeletePromises = ids.map((id) =>
+      deleteDocument(SHARED_DATA_PATH, 'salaryRecords', id)
+    );
+    const legacyShiftDeletePromises = recordsToDelete
+      .map((record) => record.workShiftId)
+      .filter((workShiftId): workShiftId is string => Boolean(workShiftId))
+      .map((workShiftId) => deleteDocument(SHARED_DATA_PATH, 'workShifts', workShiftId));
+
+    await Promise.all([...salaryDeletePromises, ...legacyShiftDeletePromises]);
   };
 
   return {
     records,
     loading,
-    canEdit, // 新增：是否有編輯權限
+    canEdit,
     addRecord,
     updateRecord,
     deleteRecord,

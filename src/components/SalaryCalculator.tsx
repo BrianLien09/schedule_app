@@ -1940,6 +1940,48 @@ export default function SalaryCalculator() {
         </button>
       </div>
 
+      {/* 跨月份提示（當篩選月份沒有記錄，但總共有記錄時） */}
+      {records.length > 0 && filteredRecords.length === 0 && Boolean(filterMonth) && (
+        <div
+          className="no-print"
+          style={{
+            padding: '1rem 1.25rem',
+            marginBottom: 'var(--spacing-lg)',
+            borderRadius: '12px',
+            background: 'rgba(234, 179, 8, 0.12)',
+            border: '1px solid rgba(234, 179, 8, 0.3)',
+            color: '#fbbf24',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.75rem',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '1.2rem' }}>💡</span>
+            <span>
+              當前選擇的月份 (<strong>{filterMonth}</strong>) 尚無記錄，但共有 <strong>{records.length}</strong> 筆打工記錄在其他月份。
+            </span>
+          </div>
+          <button
+            onClick={() => updateFilterMonth('')}
+            style={{
+              padding: '0.4rem 0.9rem',
+              borderRadius: '8px',
+              border: 'none',
+              background: '#fbbf24',
+              color: '#0f172a',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+            }}
+          >
+            切換至「全部」顯示所有記錄
+          </button>
+        </div>
+      )}
+
       {/* 記錄列表 */}
       {records.length > 0 && (
         <div className="glass" style={{ 

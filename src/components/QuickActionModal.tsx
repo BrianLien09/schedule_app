@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAllowanceData } from '@/hooks/useAllowanceData';
 import { useScheduleData } from '@/hooks/useScheduleData';
-import { useSalaryData, type SalaryRecord } from '@/hooks/useSalaryData';
+import { ROLE_HOURLY_RATES, calculateWorkHours, type RoleType } from '@/data/workRecords';
 import { useShiftTemplates } from '@/hooks/useShiftTemplates';
 import { useToast } from '@/context/ToastContext';
 import { generateAllowanceId } from '@/data/allowance';
@@ -11,22 +11,10 @@ import { generateWorkShiftId } from '@/data/schedule';
 import styles from './QuickActionModal.module.css';
 
 /** 身份類型 (與 SalaryCalculator 保持一致) */
-type RoleType = 'assistant' | 'instructor';
 
 /** 身份對應時薪 (與 SalaryCalculator 保持一致) */
-const ROLE_HOURLY_RATES: Record<RoleType, number> = {
-  assistant: 200,
-  instructor: 500,
-};
 
 /** 計算兩個 HH:mm 字串之間的工作時數 */
-function calculateWorkHours(startTime: string, endTime: string): number {
-  const [sh, sm] = startTime.split(':').map(Number);
-  const [eh, em] = endTime.split(':').map(Number);
-  const diff = (eh * 60 + em) - (sh * 60 + sm);
-  return Math.max(0, parseFloat((diff / 60).toFixed(1)));
-}
-
 interface QuickActionModalProps {
   isOpen: boolean;
   initialTab?: 'allowance' | 'work';
@@ -54,7 +42,6 @@ export default function QuickActionModal({
   // 班表資料 Hook
   const { addWorkShift } = useScheduleData();
   // 薪資記錄 Hook（同步寫入薪資記錄）
-  const { addRecord: addSalaryRecord } = useSalaryData();
   // 班別模板 Hook
   const { templates } = useShiftTemplates();
 
@@ -134,7 +121,7 @@ export default function QuickActionModal({
     }
   };
 
-  // 提交打工班表快捷新增（同時寫入 workShifts 與 salaryRecords）
+  // 提交打工班表快捷新增（自動寫入 salaryRecords 實現同步）
   const handleShiftSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (startTime >= endTime) {
@@ -145,29 +132,19 @@ export default function QuickActionModal({
     const workShiftId = generateWorkShiftId();
 
     try {
-      // 1. 寫入 workShifts（打工班表月曆）
+      // 寫入打工班表與薪資記錄（addWorkShift 會自動建立對應薪資記錄）
       await addWorkShift({
         id: workShiftId,
         date: shiftDate,
         startTime,
         endTime,
         note: shiftCategory || undefined,
-        location: undefined,
-      });
-
-      // 2. 同步寫入 salaryRecords（薪資計算器）
-      const salaryRecord: SalaryRecord = {
-        id: `salary-${workShiftId}`,
-        date: shiftDate,
-        startTime,
-        endTime,
-        workHours,
+        shiftCategory: shiftCategory || undefined,
         role,
         hourlyRate,
-        shiftCategory: shiftCategory || undefined,
-        workShiftId,
-      };
-      await addSalaryRecord(salaryRecord);
+        workHours,
+        location: undefined,
+      });
 
       toast.success(`🎉 成功新增 ${shiftCategory || '打工'} 班表，並同步薪資記錄！`);
       onClose();
