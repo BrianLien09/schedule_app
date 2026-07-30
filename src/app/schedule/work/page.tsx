@@ -309,22 +309,21 @@ export default function WorkSchedulePage() {
             <button
               onClick={() => changeMonth(-1)}
               className="btn"
-              style={{ background: 'rgba(255,255,255,0.3)', color: 'white' }}
             >
               &larr; 上個月
             </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>
-                {currentMonth.getFullYear()} 年 {currentMonth.getMonth() + 1} 月
-              </h2>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0, color: 'var(--foreground)' }}>
+              {currentMonth.getFullYear()} 年 {currentMonth.getMonth() + 1} 月
+            </h2>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
               <button
                 onClick={handleExportICS}
                 style={{
                   padding: '6px 14px',
                   borderRadius: '99px',
-                  background: 'rgba(56, 189, 248, 0.15)',
-                  color: 'var(--color-primary, #38bdf8)',
-                  border: '1px solid var(--glass-border)',
+                  background: 'rgba(95, 113, 134, 0.15)',
+                  color: 'var(--color-secondary)',
+                  border: '1px dashed rgba(95, 113, 134, 0.4)',
                   cursor: 'pointer',
                   fontWeight: 600,
                   fontSize: '0.85rem',
@@ -337,9 +336,9 @@ export default function WorkSchedulePage() {
                 style={{
                   padding: '6px 14px',
                   borderRadius: '99px',
-                  background: 'rgba(168, 85, 247, 0.15)',
-                  color: '#a855f7',
-                  border: '1px solid var(--glass-border)',
+                  background: 'rgba(184, 126, 107, 0.15)',
+                  color: 'var(--color-primary)',
+                  border: '1px dashed rgba(184, 126, 107, 0.4)',
                   cursor: 'pointer',
                   fontWeight: 600,
                   fontSize: '0.85rem',
@@ -354,7 +353,6 @@ export default function WorkSchedulePage() {
             <button
               onClick={() => changeMonth(1)}
               className="btn"
-              style={{ background: 'rgba(255,255,255,0.3)', color: 'white' }}
             >
               下個月 &rarr;
             </button>

@@ -6,7 +6,7 @@
   height: 40px;
   border-radius: 50%;
   background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  border: 2px dashed var(--glass-border);
   color: var(--foreground);
   cursor: pointer;
   transition: all 0.3s ease;
@@ -15,15 +15,9 @@
 
 .themeToggle:hover {
   background: var(--glass-bg-hover);
-  border-color: var(--glass-border-hover);
-  transform: scale(1.1) rotate(15deg);
-  box-shadow: var(--glass-shadow-hover);
-}
-
-/* 深色模式下的 Hover 發光效果 */
-:global([data-theme="dark"]) .themeToggle:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6),
-              0 0 20px rgba(45, 212, 191, 0.3); /* 螢光青綠光暈 */
+  border-color: var(--color-primary);
+  transform: scale(1.08) rotate(15deg);
+  box-shadow: 0 6px 16px rgba(139, 121, 101, 0.16);
 }
 
 .themeToggle:active {

@@ -18,11 +18,11 @@ import styles from './AllowanceManager.module.css';
 // ========== 子元件：來源類型標籤 ==========
 // bgColor 為亮色模式下的半透明填充，讓 badge 在淺色背景上有層次感
 const sourceTypeConfig: Record<string, { icon: string; color: string; bgColor: string }> = {
-  '生活費匯款': { icon: '🎓', color: 'var(--color-primary)',   bgColor: 'rgba(45, 212, 191, 0.15)' },
-  '打工收入':   { icon: '💼', color: 'var(--color-accent)',    bgColor: 'rgba(52, 211, 153, 0.15)' },
-  '獎學金':     { icon: '🏆', color: 'var(--color-highlight)', bgColor: 'rgba(251, 191, 36, 0.15)' },
-  '退費':       { icon: '💸', color: 'var(--muted)',           bgColor: 'rgba(148, 163, 184, 0.12)' },
-  '其他':       { icon: '📦', color: 'var(--muted-dark)',      bgColor: 'rgba(203, 213, 225, 0.12)' },
+  '生活費匯款': { icon: '🎓', color: 'var(--color-primary)',   bgColor: 'rgba(184, 126, 107, 0.15)' },
+  '打工收入':   { icon: '💼', color: 'var(--color-secondary)', bgColor: 'rgba(95, 113, 134, 0.15)' },
+  '獎學金':     { icon: '🏆', color: 'var(--color-highlight)', bgColor: 'rgba(217, 119, 6, 0.15)' },
+  '退費':       { icon: '💸', color: 'var(--muted)',           bgColor: 'rgba(220, 208, 194, 0.3)' },
+  '其他':       { icon: '📦', color: 'var(--muted-dark)',      bgColor: 'rgba(220, 208, 194, 0.3)' },
 };
 
 interface SourceTypeBadgeProps {

@@ -19,10 +19,9 @@
   gap: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: 12px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  background: #f0ece1;
+  border: 2px dashed var(--glass-border);
+  box-shadow: 0 8px 24px rgba(139, 121, 101, 0.12);
   pointer-events: auto;
   animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1),
              fadeOut 0.4s ease-in forwards;
@@ -30,52 +29,32 @@
   font-size: 0.95rem;
   font-weight: 500;
   line-height: 1.4;
+  color: #3d3a36;
 }
 
 /* 各類型色彩 */
 .success {
-  background: rgba(5, 150, 105, 0.15);
-  border-color: rgba(52, 211, 153, 0.4);
-  color: var(--color-accent);
+  background: #f0ece1;
+  border-color: #65a30d;
+  color: #4d7c0f;
 }
 
 .error {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.4);
-  color: #f87171;
+  background: #f0ece1;
+  border-color: #dc2626;
+  color: #b91c1c;
 }
 
 .warning {
-  background: rgba(245, 158, 11, 0.15);
-  border-color: rgba(245, 158, 11, 0.4);
-  color: var(--color-highlight);
+  background: #f0ece1;
+  border-color: #d97706;
+  color: #b45309;
 }
 
 .info {
-  background: rgba(8, 145, 178, 0.15);
-  border-color: rgba(8, 145, 178, 0.4);
-  color: var(--color-primary);
-}
-
-/* 深色模式微調 */
-[data-theme="dark"] .success {
-  background: rgba(52, 211, 153, 0.12);
-  color: #6ee7b7;
-}
-
-[data-theme="dark"] .error {
-  background: rgba(239, 68, 68, 0.12);
-  color: #fca5a5;
-}
-
-[data-theme="dark"] .warning {
-  background: rgba(251, 191, 36, 0.12);
-  color: #fde68a;
-}
-
-[data-theme="dark"] .info {
-  background: rgba(45, 212, 191, 0.12);
-  color: #5eead4;
+  background: #f0ece1;
+  border-color: var(--color-secondary);
+  color: var(--color-secondary);
 }
 
 .icon {

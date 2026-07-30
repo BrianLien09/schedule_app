@@ -266,7 +266,7 @@
 .balanceValue {
   font-size: 1.8rem;
   font-weight: 800;
-  color: #10b981;
+  color: var(--color-primary);
   letter-spacing: -0.5px;
 }
 
@@ -275,22 +275,24 @@
   flex-direction: column;
   gap: 8px;
   padding: 12px;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(220, 208, 194, 0.4);
   border-radius: 12px;
+  border: 1px dashed rgba(220, 208, 194, 0.8);
 }
 
 .splitInfoRow {
   display: flex;
   justify-content: space-between;
   font-size: 0.82rem;
+  font-weight: 600;
 }
 
-.xiaoLabel { color: #38bdf8; }
-.kongLabel { color: #f43f5e; }
+.xiaoLabel { color: var(--color-secondary); }
+.kongLabel { color: var(--color-primary); }
 
 .splitTrack {
-  height: 8px;
-  background: rgba(244, 63, 94, 0.3);
+  height: 10px;
+  background: rgba(184, 126, 107, 0.25);
   border-radius: 99px;
   overflow: hidden;
   display: flex;
@@ -298,7 +300,7 @@
 
 .splitXiaoFill {
   height: 100%;
-  background: #38bdf8;
+  background: var(--color-secondary);
   transition: width 0.3s ease;
 }
 

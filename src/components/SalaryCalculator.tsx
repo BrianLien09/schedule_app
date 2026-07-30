@@ -1230,10 +1230,10 @@ export default function SalaryCalculator() {
                 <div style={{
                   padding: '1.25rem',
                   borderRadius: '12px',
-                  background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.05))',
-                  border: '1px solid rgba(139, 92, 246, 0.3)',
+                  background: 'rgba(184, 126, 107, 0.12)',
+                  border: '1px dashed rgba(184, 126, 107, 0.3)',
                 }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '0.5rem' }}>
                     總收入
                   </div>
                   <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--color-primary)' }}>
@@ -1244,10 +1244,10 @@ export default function SalaryCalculator() {
                 <div style={{
                   padding: '1.25rem',
                   borderRadius: '12px',
-                  background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(6, 182, 212, 0.05))',
-                  border: '1px solid rgba(6, 182, 212, 0.3)',
+                  background: 'rgba(95, 113, 134, 0.12)',
+                  border: '1px dashed rgba(95, 113, 134, 0.3)',
                 }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '0.5rem' }}>
                     總工時
                   </div>
                   <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--color-secondary)' }}>
@@ -1258,13 +1258,13 @@ export default function SalaryCalculator() {
                 <div style={{
                   padding: '1.25rem',
                   borderRadius: '12px',
-                  background: 'linear-gradient(135deg, rgba(52, 211, 153, 0.15), rgba(52, 211, 153, 0.05))',
-                  border: '1px solid rgba(52, 211, 153, 0.3)',
+                  background: 'rgba(120, 136, 155, 0.12)',
+                  border: '1px dashed rgba(120, 136, 155, 0.3)',
                 }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '0.5rem' }}>
                     平均時薪
                   </div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#34d399' }}>
+                  <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--color-secondary)' }}>
                     ${statsAvgHourlyRate}
                   </div>
                 </div>
@@ -1272,13 +1272,13 @@ export default function SalaryCalculator() {
                 <div style={{
                   padding: '1.25rem',
                   borderRadius: '12px',
-                  background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(251, 191, 36, 0.05))',
-                  border: '1px solid rgba(251, 191, 36, 0.3)',
+                  background: 'rgba(217, 119, 6, 0.12)',
+                  border: '1px dashed rgba(217, 119, 6, 0.3)',
                 }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '0.5rem' }}>
                     工作天數
                   </div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#fbbf24' }}>
+                  <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--color-highlight)' }}>
                     {statsWorkDays} 天
                   </div>
                 </div>
@@ -1290,7 +1290,7 @@ export default function SalaryCalculator() {
                   fontSize: '1rem', 
                   fontWeight: '600', 
                   marginBottom: 'var(--spacing-md)',
-                  color: 'var(--text-secondary)'
+                  color: 'var(--foreground)'
                 }}>
                   月度收入趨勢（最近 6 個月）
                 </h4>
@@ -1301,9 +1301,10 @@ export default function SalaryCalculator() {
                   gap: '1.5rem',
                   height: '280px',
                   padding: '1rem 1.5rem',
-                  background: 'rgba(255, 255, 255, 0.02)',
+                  background: '#f0ece1',
                   borderRadius: '12px',
-                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  border: '2px dashed rgba(220, 208, 194, 0.7)',
+                  boxShadow: 'var(--glass-shadow)',
                   position: 'relative',
                 }}>
                   {monthlyStats.map((stat) => {
@@ -1335,7 +1336,7 @@ export default function SalaryCalculator() {
                           top: labelTop,
                           fontSize: '0.85rem',
                           fontWeight: '600',
-                          color: stat.totalPay === 0 ? 'var(--text-secondary)' : 'var(--color-primary)',
+                          color: stat.totalPay === 0 ? 'var(--muted)' : 'var(--color-primary)',
                           whiteSpace: 'nowrap',
                           transform: 'translateY(-100%)',
                           opacity: stat.totalPay === 0 ? 0.6 : 1,
@@ -1352,11 +1353,11 @@ export default function SalaryCalculator() {
                             width: '100%',
                             height: `${barHeight}%`,
                             minHeight: '20px',
-                            background: 'linear-gradient(to top, var(--color-primary), var(--color-secondary))',
+                            background: 'linear-gradient(to top, var(--color-primary, #b87e6b) 0%, #d89e8b 100%)',
                             borderRadius: '8px 8px 0 0',
                             transition: 'all 0.3s ease',
                             cursor: 'pointer',
-                            boxShadow: '0 -4px 12px rgba(139, 92, 246, 0.3)',
+                            boxShadow: '0 4px 12px rgba(184, 126, 107, 0.2)',
                           }}
                           onMouseEnter={(e) => {
                             e.currentTarget.style.filter = 'brightness(1.2)';
@@ -1802,8 +1803,8 @@ export default function SalaryCalculator() {
                 cursor: 'pointer',
               }}
             >
-              <option value="assistant" style={{ background: '#1a1a2e', color: 'white' }}>助教 ($200/hr)</option>
-              <option value="instructor" style={{ background: '#1a1a2e', color: 'white' }}>講師 ($500/hr)</option>
+              <option value="assistant" style={{ background: '#f0ece1', color: '#3d3a36' }}>助教 ($200/hr)</option>
+              <option value="instructor" style={{ background: '#f0ece1', color: '#3d3a36' }}>講師 ($500/hr)</option>
             </select>
           </div>
 
@@ -1920,9 +1921,9 @@ export default function SalaryCalculator() {
                 cursor: 'pointer',
               }}
             >
-              <option value="" style={{ background: '#1a1a2e', color: 'white' }}>-- 無班別 --</option>
+              <option value="" style={{ background: '#f0ece1', color: '#3d3a36' }}>-- 無班別 --</option>
               {shiftCategoryOptions.map((category) => (
-                <option key={category} value={category} style={{ background: '#1a1a2e', color: 'white' }}>{category}</option>
+                <option key={category} value={category} style={{ background: '#f0ece1', color: '#3d3a36' }}>{category}</option>
               ))}
             </select>
           </div>
@@ -1934,14 +1935,21 @@ export default function SalaryCalculator() {
             padding: '0.75rem 1.5rem',
             borderRadius: '8px',
             border: 'none',
-            background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))',
-            color: 'white',
+            background: 'var(--color-primary)',
+            color: '#f0ece1',
             fontWeight: '600',
+            boxShadow: '0 4px 12px rgba(139, 121, 101, 0.15)',
             cursor: 'pointer',
-            transition: 'transform 0.2s, opacity 0.2s',
+            transition: 'transform 0.2s, background 0.2s',
           }}
-          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.03)';
+            e.currentTarget.style.background = 'var(--color-primary-hover)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.background = 'var(--color-primary)';
+          }}
         >
           新增記錄
         </button>
@@ -2878,8 +2886,8 @@ export default function SalaryCalculator() {
                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
                   }}
                 >
-                  <option value="assistant" style={{ background: '#1a1a2e', color: 'white' }}>助教 ($200/hr)</option>
-                  <option value="instructor" style={{ background: '#1a1a2e', color: 'white' }}>講師 ($500/hr)</option>
+                  <option value="assistant" style={{ background: '#f0ece1', color: '#3d3a36' }}>助教 ($200/hr)</option>
+                  <option value="instructor" style={{ background: '#f0ece1', color: '#3d3a36' }}>講師 ($500/hr)</option>
                 </select>
               </div>
 
@@ -3082,9 +3090,9 @@ export default function SalaryCalculator() {
                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
                   }}
                 >
-                  <option value="" style={{ background: '#1a1a2e', color: 'white' }}>-- 無班別 --</option>
+                  <option value="" style={{ background: '#f0ece1', color: '#3d3a36' }}>-- 無班別 --</option>
                   {shiftCategoryOptions.map((category) => (
-                    <option key={category} value={category} style={{ background: '#1a1a2e', color: 'white' }}>{category}</option>
+                    <option key={category} value={category} style={{ background: '#f0ece1', color: '#3d3a36' }}>{category}</option>
                   ))}
                 </select>
               </div>

@@ -13,10 +13,10 @@
   width: 56px;
   height: 56px;
   border-radius: 28px;
-  background: linear-gradient(135deg, var(--color-primary, #38bdf8), #0284c7);
-  color: #fff;
-  border: none;
-  box-shadow: 0 8px 24px rgba(56, 189, 248, 0.4);
+  background: var(--color-primary);
+  color: #f0ece1;
+  border: 1px solid rgba(184, 126, 107, 0.3);
+  box-shadow: 0 8px 24px rgba(139, 121, 101, 0.25);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -27,13 +27,14 @@
 
 .mainFab:hover {
   transform: scale(1.08) rotate(45deg);
-  box-shadow: 0 12px 28px rgba(56, 189, 248, 0.55);
+  background: var(--color-primary-hover);
+  box-shadow: 0 12px 28px rgba(139, 121, 101, 0.35);
 }
 
 .mainFabActive {
   transform: rotate(45deg);
-  background: #e11d48;
-  box-shadow: 0 8px 24px rgba(225, 29, 72, 0.4);
+  background: #dc2626;
+  box-shadow: 0 8px 24px rgba(220, 38, 38, 0.3);
 }
 
 .menuList {
@@ -59,22 +60,22 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--card-bg, #1e293b);
-  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
+  background: #f0ece1;
+  border: 2px dashed rgba(220, 208, 194, 0.8);
   padding: 8px 16px;
   border-radius: 99px;
-  color: var(--foreground, #f8fafc);
+  color: var(--foreground);
   font-size: 0.9rem;
   font-weight: 600;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 20px rgba(139, 121, 101, 0.12);
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s ease;
 }
 
 .menuItem:hover {
-  background: var(--color-primary, #38bdf8);
-  color: #fff;
+  background: var(--color-primary);
+  color: #f0ece1;
   transform: translateX(-4px);
 }
 

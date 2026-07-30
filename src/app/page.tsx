@@ -407,15 +407,15 @@ export default function Home() {
             <div style={{
               padding: '14px 16px',
               borderRadius: '12px',
-              background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(139, 92, 246, 0.04))',
-              border: '1px solid rgba(139, 92, 246, 0.25)',
+              background: 'rgba(184, 126, 107, 0.12)',
+              border: '1px dashed rgba(184, 126, 107, 0.3)',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
             }}>
               <div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--muted)', marginBottom: '2px' }}>本月總收入</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#a78bfa' }}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-primary)' }}>
                   NT$ {thisMonthSalaryStats.totalPay.toLocaleString()}
                 </div>
               </div>
@@ -427,11 +427,11 @@ export default function Home() {
               <div style={{
                 padding: '12px 14px',
                 borderRadius: '10px',
-                background: 'rgba(56, 189, 248, 0.08)',
-                border: '1px solid rgba(56, 189, 248, 0.2)',
+                background: 'rgba(95, 113, 134, 0.1)',
+                border: '1px dashed rgba(95, 113, 134, 0.3)',
               }}>
                 <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginBottom: '4px' }}>總工時</div>
-                <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#38bdf8' }}>
+                <div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--color-secondary)' }}>
                   {thisMonthSalaryStats.totalHours.toFixed(1)} h
                 </div>
               </div>
