@@ -77,8 +77,8 @@
 
 /* select 的下拉選項樣式 */
 .formGroup select option {
-  background: #1a1f2e;
-  color: var(--text-primary);
+  background: #f0ece1;
+  color: #3d3a36;
   padding: 8px 14px;
   font-weight: 500;
 }

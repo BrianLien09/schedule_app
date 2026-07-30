@@ -256,15 +256,15 @@ export default function SchoolSchedulePage() {
                   style={{
                     padding: '6px 12px',
                     borderRadius: '8px',
-                    border: '1px solid var(--glass-border)',
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    color: 'var(--text-primary)',
+                    background: '#f0ece1',
+                    color: 'var(--foreground)',
+                    border: '2px dashed rgba(220, 208, 194, 0.8)',
                     fontSize: '0.9rem',
                     cursor: 'pointer',
                   }}
                 >
                   {SEMESTER_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value} style={{ background: '#1a1a2e', color: 'white' }}>
+                    <option key={opt.value} value={opt.value} style={{ background: '#f0ece1', color: '#3d3a36' }}>
                       {opt.label}
                     </option>
                   ))}
@@ -277,9 +277,10 @@ export default function SchoolSchedulePage() {
                     style={{
                       padding: '8px 16px',
                       borderRadius: '99px',
-                      background: 'rgba(139, 92, 246, 0.2)',
-                      color: '#a78bfa',
-                      border: '1px solid rgba(139, 92, 246, 0.4)',
+                      background: 'var(--color-primary)',
+                      color: '#f0ece1',
+                      border: 'none',
+                      boxShadow: '0 4px 12px rgba(139, 121, 101, 0.15)',
                       cursor: 'pointer',
                       fontWeight: 600,
                       fontSize: '0.85rem',
@@ -296,9 +297,9 @@ export default function SchoolSchedulePage() {
                   style={{
                     padding: '8px 16px',
                     borderRadius: '99px',
-                    background: 'rgba(56, 189, 248, 0.15)',
-                    color: 'var(--color-primary, #38bdf8)',
-                    border: '1px solid var(--glass-border)',
+                    background: 'rgba(95, 113, 134, 0.15)',
+                    color: 'var(--color-secondary)',
+                    border: '1px dashed rgba(95, 113, 134, 0.4)',
                     cursor: 'pointer',
                     fontWeight: 600,
                     fontSize: '0.85rem',

@@ -1987,10 +1987,10 @@ export default function SalaryCalculator() {
             style={{
               padding: '0.4rem 0.9rem',
               borderRadius: '8px',
-              border: 'none',
-              background: '#fbbf24',
-              color: '#0f172a',
-              fontWeight: 'bold',
+              border: '1px solid #d4c8bc',
+              background: '#e4dcd2',
+              color: '#5e5650',
+              fontWeight: '600',
               cursor: 'pointer',
               fontSize: '0.875rem',
             }}
@@ -2019,20 +2019,20 @@ export default function SalaryCalculator() {
                     style={{
                       padding: '0.5rem 1rem',
                       borderRadius: '8px',
-                      border: 'none',
-                      background: 'rgba(251, 191, 36, 0.2)',
-                      color: '#fbbf24',
+                      border: '1px dashed rgba(200, 141, 85, 0.4)',
+                      background: 'rgba(200, 141, 85, 0.12)',
+                      color: '#c88d55',
                       fontWeight: '600',
                       cursor: 'pointer',
                       transition: 'all 0.2s',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(251, 191, 36, 0.3)';
-                      e.currentTarget.style.transform = 'scale(1.05)';
+                      e.currentTarget.style.background = 'rgba(200, 141, 85, 0.22)';
+                      e.currentTarget.style.transform = 'translateY(-1px)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(251, 191, 36, 0.2)';
-                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.background = 'rgba(200, 141, 85, 0.12)';
+                      e.currentTarget.style.transform = 'translateY(0)';
                     }}
                   >
                     批次編輯 ({selectedRecordIds.size})
@@ -2042,20 +2042,20 @@ export default function SalaryCalculator() {
                     style={{
                       padding: '0.5rem 1rem',
                       borderRadius: '8px',
-                      border: 'none',
-                      background: 'rgba(239, 68, 68, 0.2)',
-                      color: '#ef4444',
+                      border: '1px dashed rgba(184, 107, 107, 0.4)',
+                      background: 'rgba(184, 107, 107, 0.12)',
+                      color: '#b86b6b',
                       fontWeight: '600',
                       cursor: 'pointer',
                       transition: 'all 0.2s',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.3)';
-                      e.currentTarget.style.transform = 'scale(1.05)';
+                      e.currentTarget.style.background = 'rgba(184, 107, 107, 0.22)';
+                      e.currentTarget.style.transform = 'translateY(-1px)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
-                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.background = 'rgba(184, 107, 107, 0.12)';
+                      e.currentTarget.style.transform = 'translateY(0)';
                     }}
                   >
                     批量刪除 ({selectedRecordIds.size})
@@ -2065,20 +2065,20 @@ export default function SalaryCalculator() {
                     style={{
                       padding: '0.5rem 1rem',
                       borderRadius: '8px',
-                      border: 'none',
-                      background: 'rgba(100, 116, 139, 0.2)',
-                      color: '#94a3b8',
+                      border: '1px dashed rgba(120, 120, 120, 0.4)',
+                      background: 'rgba(120, 120, 120, 0.12)',
+                      color: '#787878',
                       fontWeight: '600',
                       cursor: 'pointer',
                       transition: 'all 0.2s',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(100, 116, 139, 0.3)';
-                      e.currentTarget.style.transform = 'scale(1.05)';
+                      e.currentTarget.style.background = 'rgba(120, 120, 120, 0.22)';
+                      e.currentTarget.style.transform = 'translateY(-1px)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(100, 116, 139, 0.2)';
-                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.background = 'rgba(120, 120, 120, 0.12)';
+                      e.currentTarget.style.transform = 'translateY(0)';
                     }}
                   >
                     取消選擇
@@ -2091,11 +2091,6 @@ export default function SalaryCalculator() {
                 style={{
                   padding: '0.5rem 1rem',
                   borderRadius: '8px',
-                  border: 'none',
-                  background: 'rgba(139, 92, 246, 0.2)',
-                  color: '#a855f7',
-                  fontWeight: '600',
-                  cursor: 'pointer',
                   transition: 'all 0.2s',
                 }}
                 onMouseEnter={(e) => {
@@ -2115,20 +2110,20 @@ export default function SalaryCalculator() {
                 style={{
                   padding: '0.5rem 1rem',
                   borderRadius: '8px',
-                  border: 'none',
-                  background: 'rgba(239, 68, 68, 0.2)',
-                  color: '#ef4444',
+                  border: '1px dashed rgba(184, 126, 107, 0.4)',
+                  background: 'rgba(184, 126, 107, 0.12)',
+                  color: 'var(--color-primary)',
                   fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.3)';
-                  e.currentTarget.style.transform = 'scale(1.05)';
+                  e.currentTarget.style.background = 'rgba(184, 126, 107, 0.22)';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
-                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.background = 'rgba(184, 126, 107, 0.12)';
+                  e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
                 匯出 PDF
@@ -2139,20 +2134,20 @@ export default function SalaryCalculator() {
                 style={{
                   padding: '0.5rem 1rem',
                   borderRadius: '8px',
-                  border: 'none',
-                  background: 'rgba(52, 211, 153, 0.2)',
-                  color: '#34d399',
+                  border: '1px dashed rgba(200, 141, 85, 0.4)',
+                  background: 'rgba(200, 141, 85, 0.12)',
+                  color: '#c88d55',
                   fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(52, 211, 153, 0.3)';
-                  e.currentTarget.style.transform = 'scale(1.05)';
+                  e.currentTarget.style.background = 'rgba(200, 141, 85, 0.22)';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(52, 211, 153, 0.2)';
-                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.background = 'rgba(200, 141, 85, 0.12)';
+                  e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
                 匯出 Excel
@@ -2166,23 +2161,23 @@ export default function SalaryCalculator() {
                 style={{
                   padding: '0.5rem 1rem',
                   borderRadius: '8px',
-                  border: 'none',
-                  background: isImporting ? 'rgba(156, 163, 175, 0.2)' : 'rgba(96, 165, 250, 0.2)',
-                  color: isImporting ? '#9ca3af' : '#60a5fa',
+                  border: '1px dashed rgba(95, 113, 134, 0.4)',
+                  background: 'rgba(95, 113, 134, 0.12)',
+                  color: 'var(--color-secondary)',
                   fontWeight: '600',
                   cursor: isImporting ? 'not-allowed' : 'pointer',
                   transition: 'all 0.2s',
                 }}
                 onMouseEnter={(e) => {
                   if (!isImporting) {
-                    e.currentTarget.style.background = 'rgba(96, 165, 250, 0.3)';
-                    e.currentTarget.style.transform = 'scale(1.05)';
+                    e.currentTarget.style.background = 'rgba(95, 113, 134, 0.22)';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!isImporting) {
-                    e.currentTarget.style.background = 'rgba(96, 165, 250, 0.2)';
-                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.background = 'rgba(95, 113, 134, 0.12)';
+                    e.currentTarget.style.transform = 'translateY(0)';
                   }
                 }}
               >
@@ -2208,9 +2203,9 @@ export default function SalaryCalculator() {
             flexWrap: 'wrap',
             marginBottom: 'var(--spacing-md)',
             padding: 'var(--spacing-md)',
-            background: 'rgba(255,255,255,0.02)',
+            background: 'rgba(220, 208, 194, 0.25)',
             borderRadius: '12px',
-            border: '1px solid rgba(255,255,255,0.05)',
+            border: '2px dashed rgba(220, 208, 194, 0.7)',
           }}>
             {/* 快速選項按鈕 */}
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -2223,17 +2218,18 @@ export default function SalaryCalculator() {
                     borderRadius: '8px',
                     border: filterMonth === filter.value 
                       ? '2px solid var(--color-primary)' 
-                      : '1px solid rgba(255,255,255,0.2)',
+                      : '2px dashed rgba(220, 208, 194, 0.7)',
                     background: filterMonth === filter.value 
-                      ? 'rgba(139, 92, 246, 0.3)' 
-                      : 'rgba(255,255,255,0.05)',
-                    color: filterMonth === filter.value 
                       ? 'var(--color-primary)' 
-                      : 'var(--text-secondary)',
-                    fontWeight: filterMonth === filter.value ? '600' : '400',
+                      : '#f0ece1',
+                    color: filterMonth === filter.value 
+                      ? '#f0ece1' 
+                      : 'var(--foreground)',
+                    fontWeight: filterMonth === filter.value ? '600' : '500',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
                     fontSize: '0.9rem',
+                    boxShadow: filterMonth === filter.value ? '0 4px 12px rgba(139, 121, 101, 0.2)' : 'none',
                   }}
                   onMouseEnter={(e) => {
                     if (filterMonth !== filter.value) {
@@ -2429,8 +2425,8 @@ export default function SalaryCalculator() {
                         <span style={{
                           padding: '0.25rem 0.5rem',
                           borderRadius: '4px',
-                          background: isPrintMode ? 'transparent' : (record.role === 'instructor' ? 'rgba(251, 191, 36, 0.2)' : 'rgba(6, 182, 212, 0.2)'),
-                          color: isPrintMode ? 'black' : (record.role === 'instructor' ? '#fbbf24' : '#06b6d4'),
+                          background: isPrintMode ? 'transparent' : (record.role === 'instructor' ? 'rgba(200, 141, 85, 0.18)' : 'rgba(95, 113, 134, 0.18)'),
+                          color: isPrintMode ? 'black' : (record.role === 'instructor' ? '#c88d55' : 'var(--color-secondary)'),
                           fontSize: '0.85rem',
                           fontWeight: '600',
                         }}>
@@ -2446,9 +2442,10 @@ export default function SalaryCalculator() {
                           <span style={{
                             padding: '0.25rem 0.5rem',
                             borderRadius: '4px',
-                            background: 'rgba(168, 85, 247, 0.2)',
-                            color: '#a855f7',
+                            background: 'rgba(184, 126, 107, 0.15)',
+                            color: 'var(--color-primary)',
                             fontSize: '0.85rem',
+                            fontWeight: '600',
                           }}>
                             {displayShiftName}
                           </span>
@@ -2456,7 +2453,7 @@ export default function SalaryCalculator() {
                         {displayShiftName !== '-' && isPrintMode && (
                           <span>{displayShiftName}</span>
                         )}
-                        {displayShiftName === '-' && <span style={{ color: isPrintMode ? 'black' : 'var(--text-secondary)' }}>-</span>}
+                        {displayShiftName === '-' && <span style={{ color: isPrintMode ? 'black' : 'var(--muted)' }}>-</span>}
                       </td>
                       <td style={{ 
                         padding: '0.75rem',
@@ -2492,17 +2489,18 @@ export default function SalaryCalculator() {
                             <button
                               onClick={() => handleEditRecord(record)}
                               style={{
-                                padding: '0.25rem 0.75rem',
+                                padding: '0.25rem 0.65rem',
                                 borderRadius: '6px',
-                                border: 'none',
-                                background: 'rgba(251, 191, 36, 0.2)',
-                                color: '#fbbf24',
+                                border: '1px dashed rgba(200, 141, 85, 0.4)',
+                                background: 'rgba(200, 141, 85, 0.12)',
+                                color: '#c88d55',
                                 fontSize: '0.85rem',
+                                fontWeight: '600',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s',
                               }}
-                              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(251, 191, 36, 0.3)'}
-                              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(251, 191, 36, 0.2)'}
+                              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(200, 141, 85, 0.22)'}
+                              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(200, 141, 85, 0.12)'}
                               title="編輯此記錄"
                             >
                               編輯
@@ -2510,17 +2508,18 @@ export default function SalaryCalculator() {
                             <button
                               onClick={() => handleCopyRecord(record)}
                               style={{
-                                padding: '0.25rem 0.75rem',
+                                padding: '0.25rem 0.65rem',
                                 borderRadius: '6px',
-                                border: 'none',
-                                background: 'rgba(59, 130, 246, 0.2)',
-                                color: '#3b82f6',
+                                border: '1px dashed rgba(95, 113, 134, 0.4)',
+                                background: 'rgba(95, 113, 134, 0.12)',
+                                color: 'var(--color-secondary)',
                                 fontSize: '0.85rem',
+                                fontWeight: '600',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s',
                               }}
-                              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.3)'}
-                              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)'}
+                              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(95, 113, 134, 0.22)'}
+                              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(95, 113, 134, 0.12)'}
                               title="複製此記錄"
                             >
                               複製
@@ -2528,17 +2527,18 @@ export default function SalaryCalculator() {
                             <button
                               onClick={() => handleDeleteRecord(record.id)}
                               style={{
-                                padding: '0.25rem 0.75rem',
+                                padding: '0.25rem 0.65rem',
                                 borderRadius: '6px',
-                                border: 'none',
-                                background: 'rgba(239, 68, 68, 0.2)',
-                                color: '#ef4444',
+                                border: '1px dashed rgba(220, 38, 38, 0.3)',
+                                background: 'rgba(220, 38, 38, 0.1)',
+                                color: '#dc2626',
                                 fontSize: '0.85rem',
+                                fontWeight: '600',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s',
                               }}
-                              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.3)'}
-                              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
+                              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(220, 38, 38, 0.2)'}
+                              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(220, 38, 38, 0.1)'}
                               title="刪除此記錄"
                             >
                               刪除
@@ -2630,8 +2630,8 @@ export default function SalaryCalculator() {
           top: 0,
           width: '800px',
           padding: '40px',
-          background: '#1a1a2e',
-          color: '#ffffff',
+          background: '#f0ece1',
+          color: '#3d3a36',
         }}
       >
         <h1 style={{ 
@@ -3253,17 +3253,17 @@ export default function SalaryCalculator() {
                     width: '100%',
                     padding: '0.875rem',
                     borderRadius: '8px',
-                    border: '2px solid rgba(139, 92, 246, 0.3)',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    color: '#ffffff',
+                    border: '2px dashed rgba(220, 208, 194, 0.8)',
+                    background: 'rgba(220, 208, 194, 0.35)',
+                    color: 'var(--foreground)',
                     fontSize: '1rem',
                     fontWeight: '500',
                     cursor: 'pointer',
                   }}
                 >
-                  <option value="" style={{ background: '#1e1e2d', color: '#fff' }}>-- 不修改 --</option>
-                  <option value="assistant" style={{ background: '#1e1e2d', color: '#fff' }}>助教</option>
-                  <option value="instructor" style={{ background: '#1e1e2d', color: '#fff' }}>講師</option>
+                  <option value="" style={{ background: '#f0ece1', color: '#3d3a36' }}>-- 不修改 --</option>
+                  <option value="assistant" style={{ background: '#f0ece1', color: '#3d3a36' }}>助教</option>
+                  <option value="instructor" style={{ background: '#f0ece1', color: '#3d3a36' }}>講師</option>
                 </select>
               </div>
 
