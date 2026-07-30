@@ -1,4 +1,4 @@
 :HL["/schedule_app/_next/static/chunks/aa24ea741daa73b5.css","style"]
-:HL["/schedule_app/_next/static/chunks/1a2818bd561a5931.css","style"]
+:HL["/schedule_app/_next/static/chunks/4312858085fdde31.css","style"]
 :HL["/schedule_app/_next/static/chunks/5458479bd370d0f2.css","style"]
-0:{"buildId":"NLgoSC6FS1giK2PxiMSeE","tree":{"name":"","paramType":null,"paramKey":"","hasRuntimePrefetch":false,"slots":{"children":{"name":"schedule","paramType":null,"paramKey":"schedule","hasRuntimePrefetch":false,"slots":{"children":{"name":"school","paramType":null,"paramKey":"school","hasRuntimePrefetch":false,"slots":{"children":{"name":"__PAGE__","paramType":null,"paramKey":"__PAGE__","hasRuntimePrefetch":false,"slots":null,"isRootLayout":false}},"isRootLayout":false}},"isRootLayout":false}},"isRootLayout":true},"staleTime":300}
+0:{"buildId":"vPmc2urLXrYc6yrvrE9yg","tree":{"name":"","paramType":null,"paramKey":"","hasRuntimePrefetch":false,"slots":{"children":{"name":"schedule","paramType":null,"paramKey":"schedule","hasRuntimePrefetch":false,"slots":{"children":{"name":"school","paramType":null,"paramKey":"school","hasRuntimePrefetch":false,"slots":{"children":{"name":"__PAGE__","paramType":null,"paramKey":"__PAGE__","hasRuntimePrefetch":false,"slots":null,"isRootLayout":false}},"isRootLayout":false}},"isRootLayout":false}},"isRootLayout":true},"staleTime":300}
