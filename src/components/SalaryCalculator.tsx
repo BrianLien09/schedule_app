@@ -836,14 +836,14 @@ export default function SalaryCalculator() {
   /**
    * 計算月度統計資料
    * 
-   * 以本月為起點，往前推 5 個月（共 6 個月）的趨勢
-   * 即使某些月份沒有記錄也會顯示（數值為 0）
+   * 使用全體資料 (records) 計算跨月趨勢，避免被單月篩選 (statsFilter) 限縮
+   * 以篩選月份或當前月份為終點，往前推 5 個月（共 6 個月）的趨勢
    */
   const getMonthlyStats = (): MonthStats[] => {
-    // 先收集所有記錄的統計資料
+    // 依據全體記錄 (records) 收集所有月份的統計資料
     const statsMap = new Map<string, MonthStats>();
 
-    statsRecords.forEach(record => {
+    records.forEach(record => {
       const month = record.date.slice(0, 7); // 取 YYYY-MM
       const pay = calculatePay(record);
       const hours = calculateHours(record);
@@ -863,12 +863,19 @@ export default function SalaryCalculator() {
       stats.recordCount += 1;
     });
 
-    // 生成從本月往前推 5 個月的月份列表（共 6 個月）
-    const today = new Date();
+    // 決定圖表終點月份：優先使用 statsFilter 或 filterMonth，若無則使用今天
+    const anchorMonthStr = statsFilter || filterMonth || '';
+    let anchorDate = new Date();
+    if (anchorMonthStr && /^\d{4}-\d{2}$/.test(anchorMonthStr)) {
+      const [year, month] = anchorMonthStr.split('-').map(Number);
+      anchorDate = new Date(year, month - 1, 1);
+    }
+
+    // 生成從終點月份往前推 5 個月的月份列表（共 6 個月）
     const monthsList: string[] = [];
     
     for (let i = 5; i >= 0; i--) {
-      const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const date = new Date(anchorDate.getFullYear(), anchorDate.getMonth() - i, 1);
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const monthStr = `${year}-${month}`;
