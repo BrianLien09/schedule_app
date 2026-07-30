@@ -1460,7 +1460,7 @@ export default function SalaryCalculator() {
           marginBottom: 'var(--spacing-md)'
         }}>
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
               班別名稱
             </label>
             <input
@@ -1470,17 +1470,17 @@ export default function SalaryCalculator() {
               placeholder="例：週六班"
               style={{
                 width: '100%',
-                padding: '0.5rem',
+                padding: '0.5rem 0.75rem',
                 borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(255,255,255,0.05)',
-                color: 'var(--text-primary)',
+                border: '2px dashed rgba(220, 208, 194, 0.8)',
+                background: 'rgba(220, 208, 194, 0.35)',
+                color: 'var(--foreground)',
               }}
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
               星期
             </label>
             <select
@@ -1488,16 +1488,16 @@ export default function SalaryCalculator() {
               onChange={(e) => setNewTemplate({ ...newTemplate, weekday: Number(e.target.value) as Weekday })}
               style={{
                 width: '100%',
-                padding: '0.5rem',
+                padding: '0.5rem 0.75rem',
                 borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(255,255,255,0.05)',
-                color: 'var(--text-primary)',
+                border: '2px dashed rgba(220, 208, 194, 0.8)',
+                background: 'rgba(220, 208, 194, 0.35)',
+                color: 'var(--foreground)',
                 cursor: 'pointer',
               }}
             >
               {WEEKDAY_LABELS.map((label, index) => (
-                <option key={label} value={index} style={{ background: '#1a1a2e', color: 'white' }}>
+                <option key={label} value={index} style={{ background: '#f0ece1', color: '#3d3a36' }}>
                   {`星期${label}`}
                 </option>
               ))}
@@ -1505,7 +1505,7 @@ export default function SalaryCalculator() {
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
               開始時間
             </label>
             <input
@@ -1514,17 +1514,17 @@ export default function SalaryCalculator() {
               onChange={(e) => setNewTemplate({ ...newTemplate, startTime: e.target.value })}
               style={{
                 width: '100%',
-                padding: '0.5rem',
+                padding: '0.5rem 0.75rem',
                 borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(255,255,255,0.05)',
-                color: 'var(--text-primary)',
+                border: '2px dashed rgba(220, 208, 194, 0.8)',
+                background: 'rgba(220, 208, 194, 0.35)',
+                color: 'var(--foreground)',
               }}
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
               結束時間
             </label>
             <input
@@ -1533,17 +1533,17 @@ export default function SalaryCalculator() {
               onChange={(e) => setNewTemplate({ ...newTemplate, endTime: e.target.value })}
               style={{
                 width: '100%',
-                padding: '0.5rem',
+                padding: '0.5rem 0.75rem',
                 borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(255,255,255,0.05)',
-                color: 'var(--text-primary)',
+                border: '2px dashed rgba(220, 208, 194, 0.8)',
+                background: 'rgba(220, 208, 194, 0.35)',
+                color: 'var(--foreground)',
               }}
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
               時薪 (元)
             </label>
             <input
@@ -1552,17 +1552,17 @@ export default function SalaryCalculator() {
               onChange={(e) => setNewTemplate({ ...newTemplate, hourlyRate: Number(e.target.value) })}
               style={{
                 width: '100%',
-                padding: '0.5rem',
+                padding: '0.5rem 0.75rem',
                 borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(255,255,255,0.05)',
-                color: 'var(--text-primary)',
+                border: '2px dashed rgba(220, 208, 194, 0.8)',
+                background: 'rgba(220, 208, 194, 0.35)',
+                color: 'var(--foreground)',
               }}
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
               工作時數 (小時)
             </label>
             <input
@@ -1573,11 +1573,11 @@ export default function SalaryCalculator() {
               onChange={(e) => setNewTemplate({ ...newTemplate, workHours: Number(e.target.value) })}
               style={{
                 width: '100%',
-                padding: '0.5rem',
+                padding: '0.5rem 0.75rem',
                 borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(255,255,255,0.05)',
-                color: 'var(--text-primary)',
+                border: '2px dashed rgba(220, 208, 194, 0.8)',
+                background: 'rgba(220, 208, 194, 0.35)',
+                color: 'var(--foreground)',
               }}
             />
           </div>
@@ -1587,7 +1587,8 @@ export default function SalaryCalculator() {
             alignItems: 'center',
             gap: '0.5rem',
             fontSize: '0.9rem',
-            color: 'var(--text-secondary)',
+            fontWeight: 600,
+            color: 'var(--foreground)',
           }}>
             <input
               type="checkbox"
@@ -1602,14 +1603,15 @@ export default function SalaryCalculator() {
           onClick={handleSaveTemplate}
           disabled={!canEditTemplates}
           style={{
-            padding: '0.6rem 1.2rem',
+            padding: '0.6rem 1.4rem',
             borderRadius: '8px',
             border: 'none',
-            background: 'rgba(59, 130, 246, 0.2)',
-            color: '#60a5fa',
+            background: 'var(--color-primary)',
+            color: '#f0ece1',
             fontWeight: '600',
             cursor: canEditTemplates ? 'pointer' : 'not-allowed',
             transition: 'all 0.2s',
+            boxShadow: '0 4px 12px rgba(139, 121, 101, 0.15)',
           }}
         >
           {editingTemplateId ? '更新班別' : '新增班別'}
@@ -1617,7 +1619,7 @@ export default function SalaryCalculator() {
 
         <div style={{ marginTop: 'var(--spacing-lg)' }}>
           {templates.length === 0 ? (
-            <div style={{ color: 'var(--text-secondary)' }}>尚未建立班別</div>
+            <div style={{ color: 'var(--muted)' }}>尚未建立班別</div>
           ) : (
             <div style={{ display: 'grid', gap: 'var(--spacing-sm)' }}>
               {templates.map(template => (
@@ -1628,14 +1630,14 @@ export default function SalaryCalculator() {
                     gridTemplateColumns: '1.5fr 1fr 1.5fr 1fr auto',
                     gap: 'var(--spacing-sm)',
                     alignItems: 'center',
-                    padding: '0.75rem',
+                    padding: '0.75rem 1rem',
                     borderRadius: '10px',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    background: 'rgba(255,255,255,0.03)',
+                    border: '2px dashed rgba(220, 208, 194, 0.7)',
+                    background: '#f0ece1',
                   }}
                 >
                   <div style={{ fontWeight: 600 }}>{template.name}</div>
-                  <div style={{ color: 'var(--text-secondary)' }}>{`星期${WEEKDAY_LABELS[template.weekday]}`}</div>
+                  <div style={{ color: 'var(--muted)' }}>{`星期${WEEKDAY_LABELS[template.weekday]}`}</div>
                   <div>{template.startTime} - {template.endTime}</div>
                   <div>{template.workHours ?? '-'}h / ${template.hourlyRate}</div>
                   <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
@@ -1645,9 +1647,9 @@ export default function SalaryCalculator() {
                       style={{
                         padding: '0.4rem 0.8rem',
                         borderRadius: '8px',
-                        border: 'none',
-                        background: 'rgba(59, 130, 246, 0.18)',
-                        color: '#60a5fa',
+                        border: '1px dashed rgba(95, 113, 134, 0.4)',
+                        background: 'rgba(95, 113, 134, 0.12)',
+                        color: 'var(--color-secondary)',
                         fontWeight: '600',
                         cursor: canEditTemplates ? 'pointer' : 'not-allowed',
                       }}
@@ -1660,9 +1662,9 @@ export default function SalaryCalculator() {
                       style={{
                         padding: '0.4rem 0.8rem',
                         borderRadius: '8px',
-                        border: 'none',
-                        background: template.isDefault ? 'rgba(34, 197, 94, 0.25)' : 'rgba(34, 197, 94, 0.12)',
-                        color: '#22c55e',
+                        border: '1px dashed rgba(184, 126, 107, 0.4)',
+                        background: template.isDefault ? 'var(--color-primary)' : 'rgba(184, 126, 107, 0.15)',
+                        color: template.isDefault ? '#f0ece1' : 'var(--color-primary)',
                         fontWeight: '600',
                         cursor: canEditTemplates ? 'pointer' : 'not-allowed',
                       }}
@@ -1675,9 +1677,9 @@ export default function SalaryCalculator() {
                       style={{
                         padding: '0.4rem 0.8rem',
                         borderRadius: '8px',
-                        border: 'none',
-                        background: 'rgba(239, 68, 68, 0.2)',
-                        color: '#ef4444',
+                        border: '1px dashed rgba(239, 68, 68, 0.3)',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        color: '#dc2626',
                         fontWeight: '600',
                         cursor: canEditTemplates ? 'pointer' : 'not-allowed',
                       }}
@@ -1749,7 +1751,7 @@ export default function SalaryCalculator() {
           marginBottom: 'var(--spacing-md)'
         }}>
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
               日期
             </label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -1762,17 +1764,18 @@ export default function SalaryCalculator() {
                 }}
                 style={{
                   width: '100%',
-                  padding: '0.5rem',
+                  padding: '0.5rem 0.75rem',
                   borderRadius: '8px',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  background: 'rgba(255,255,255,0.05)',
-                  color: 'var(--text-primary)',
+                  border: '2px dashed rgba(220, 208, 194, 0.8)',
+                  background: 'rgba(220, 208, 194, 0.35)',
+                  color: 'var(--foreground)',
                 }}
               />
               <span style={{
                 fontSize: '0.9rem',
-                color: 'var(--text-secondary)',
+                color: 'var(--muted)',
                 whiteSpace: 'nowrap',
+                fontWeight: 600,
               }}>
                 {getWeekdayLabel(currentRecord.date)}
               </span>
@@ -1780,7 +1783,7 @@ export default function SalaryCalculator() {
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
               身份
             </label>
             <select
@@ -1795,11 +1798,11 @@ export default function SalaryCalculator() {
               }}
               style={{
                 width: '100%',
-                padding: '0.5rem',
+                padding: '0.5rem 0.75rem',
                 borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(255,255,255,0.05)',
-                color: 'var(--text-primary)',
+                border: '2px dashed rgba(220, 208, 194, 0.8)',
+                background: 'rgba(220, 208, 194, 0.35)',
+                color: 'var(--foreground)',
                 cursor: 'pointer',
               }}
             >
@@ -1809,7 +1812,7 @@ export default function SalaryCalculator() {
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
               開始時間
             </label>
             <input 
@@ -1818,17 +1821,17 @@ export default function SalaryCalculator() {
               onChange={(e) => handleStartTimeChange(e.target.value)}
               style={{
                 width: '100%',
-                padding: '0.5rem',
+                padding: '0.5rem 0.75rem',
                 borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(255,255,255,0.05)',
-                color: 'var(--text-primary)',
+                border: '2px dashed rgba(220, 208, 194, 0.8)',
+                background: 'rgba(220, 208, 194, 0.35)',
+                color: 'var(--foreground)',
               }}
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
               結束時間
             </label>
             <input 
@@ -1837,17 +1840,17 @@ export default function SalaryCalculator() {
               onChange={(e) => handleEndTimeChange(e.target.value)}
               style={{
                 width: '100%',
-                padding: '0.5rem',
+                padding: '0.5rem 0.75rem',
                 borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(255,255,255,0.05)',
-                color: 'var(--text-primary)',
+                border: '2px dashed rgba(220, 208, 194, 0.8)',
+                background: 'rgba(220, 208, 194, 0.35)',
+                color: 'var(--foreground)',
               }}
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
               工作時數 (小時)
             </label>
             <input 
@@ -1858,18 +1861,18 @@ export default function SalaryCalculator() {
               onChange={(e) => handleWorkHoursChange(e.target.value)}
               style={{
                 width: '100%',
-                padding: '0.5rem',
+                padding: '0.5rem 0.75rem',
                 borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(255,255,255,0.05)',
-                color: 'var(--text-primary)',
+                border: '2px dashed rgba(220, 208, 194, 0.8)',
+                background: 'rgba(220, 208, 194, 0.35)',
+                color: 'var(--foreground)',
               }}
               placeholder="例：8"
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
               時薪 (元)
             </label>
             <input 
@@ -1878,17 +1881,17 @@ export default function SalaryCalculator() {
               onChange={(e) => setCurrentRecord({ ...currentRecord, hourlyRate: Number(e.target.value) })}
               style={{
                 width: '100%',
-                padding: '0.5rem',
+                padding: '0.5rem 0.75rem',
                 borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(255,255,255,0.05)',
-                color: 'var(--text-primary)',
+                border: '2px dashed rgba(220, 208, 194, 0.8)',
+                background: 'rgba(220, 208, 194, 0.35)',
+                color: 'var(--foreground)',
               }}
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
               班別 (選填)
             </label>
             <select
@@ -1913,11 +1916,11 @@ export default function SalaryCalculator() {
               }}
               style={{
                 width: '100%',
-                padding: '0.5rem',
+                padding: '0.5rem 0.75rem',
                 borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(255,255,255,0.05)',
-                color: 'var(--text-primary)',
+                border: '2px dashed rgba(220, 208, 194, 0.8)',
+                background: 'rgba(220, 208, 194, 0.35)',
+                color: 'var(--foreground)',
                 cursor: 'pointer',
               }}
             >
@@ -2740,10 +2743,10 @@ export default function SalaryCalculator() {
               width: '100%',
               maxHeight: '90vh',
               overflowY: 'auto',
-              background: 'rgba(30, 30, 45, 0.95)',
+              background: '#f0ece1',
               backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(139, 92, 246, 0.3)',
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.2)',
+              border: '2px dashed rgba(220, 208, 194, 0.8)',
+              boxShadow: '0 12px 36px rgba(139, 121, 101, 0.2)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -2753,14 +2756,12 @@ export default function SalaryCalculator() {
               justifyContent: 'space-between',
               marginBottom: '1.5rem',
               paddingBottom: '1rem',
-              borderBottom: '2px solid rgba(139, 92, 246, 0.3)'
+              borderBottom: '2px dashed rgba(220, 208, 194, 0.8)'
             }}>
               <h3 style={{ 
                 fontSize: '1.5rem', 
                 fontWeight: '700',
-                background: 'linear-gradient(to right, var(--color-primary), var(--color-secondary))',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
+                color: 'var(--foreground)',
                 margin: 0
               }}>
                 編輯工作記錄
@@ -2808,7 +2809,7 @@ export default function SalaryCalculator() {
                   marginBottom: '0.5rem', 
                   fontSize: '0.9rem',
                   fontWeight: '600',
-                  color: 'rgba(255, 255, 255, 0.9)'
+                  color: 'var(--foreground)'
                 }}>
                   日期
                 </label>
@@ -2821,25 +2822,18 @@ export default function SalaryCalculator() {
                       width: '100%',
                       padding: '0.75rem',
                       borderRadius: '8px',
-                      border: '2px solid rgba(139, 92, 246, 0.3)',
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      color: '#ffffff',
+                      border: '2px dashed rgba(220, 208, 194, 0.8)',
+                      background: 'rgba(220, 208, 194, 0.35)',
+                      color: 'var(--foreground)',
                       fontSize: '0.95rem',
                       transition: 'all 0.2s',
-                    }}
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.6)';
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
                     }}
                   />
                   <span style={{
                     fontSize: '0.9rem',
-                    color: 'rgba(255, 255, 255, 0.7)',
+                    color: 'var(--muted)',
                     whiteSpace: 'nowrap',
+                    fontWeight: 600,
                   }}>
                     {getWeekdayLabel(editingRecord.date)}
                   </span>
@@ -2852,7 +2846,7 @@ export default function SalaryCalculator() {
                   marginBottom: '0.5rem', 
                   fontSize: '0.9rem',
                   fontWeight: '600',
-                  color: 'rgba(255, 255, 255, 0.9)'
+                  color: 'var(--foreground)'
                 }}>
                   身份
                 </label>
@@ -2870,20 +2864,12 @@ export default function SalaryCalculator() {
                     width: '100%',
                     padding: '0.75rem',
                     borderRadius: '8px',
-                    border: '2px solid rgba(139, 92, 246, 0.3)',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    color: '#ffffff',
+                    border: '2px dashed rgba(220, 208, 194, 0.8)',
+                    background: 'rgba(220, 208, 194, 0.35)',
+                    color: 'var(--foreground)',
                     fontSize: '0.95rem',
                     transition: 'all 0.2s',
                     cursor: 'pointer',
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.6)';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
                   }}
                 >
                   <option value="assistant" style={{ background: '#f0ece1', color: '#3d3a36' }}>助教 ($200/hr)</option>
@@ -2897,7 +2883,7 @@ export default function SalaryCalculator() {
                   marginBottom: '0.5rem', 
                   fontSize: '0.9rem',
                   fontWeight: '600',
-                  color: 'rgba(255, 255, 255, 0.9)'
+                  color: 'var(--foreground)'
                 }}>
                   開始時間
                 </label>
@@ -2909,19 +2895,11 @@ export default function SalaryCalculator() {
                     width: '100%',
                     padding: '0.75rem',
                     borderRadius: '8px',
-                    border: '2px solid rgba(139, 92, 246, 0.3)',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    color: '#ffffff',
+                    border: '2px dashed rgba(220, 208, 194, 0.8)',
+                    background: 'rgba(220, 208, 194, 0.35)',
+                    color: 'var(--foreground)',
                     fontSize: '0.95rem',
                     transition: 'all 0.2s',
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.6)';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
                   }}
                 />
               </div>
@@ -2932,7 +2910,7 @@ export default function SalaryCalculator() {
                   marginBottom: '0.5rem', 
                   fontSize: '0.9rem',
                   fontWeight: '600',
-                  color: 'rgba(255, 255, 255, 0.9)'
+                  color: 'var(--foreground)'
                 }}>
                   結束時間
                 </label>
@@ -2944,19 +2922,11 @@ export default function SalaryCalculator() {
                     width: '100%',
                     padding: '0.75rem',
                     borderRadius: '8px',
-                    border: '2px solid rgba(139, 92, 246, 0.3)',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    color: '#ffffff',
+                    border: '2px dashed rgba(220, 208, 194, 0.8)',
+                    background: 'rgba(220, 208, 194, 0.35)',
+                    color: 'var(--foreground)',
                     fontSize: '0.95rem',
                     transition: 'all 0.2s',
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.6)';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
                   }}
                 />
               </div>
@@ -2967,7 +2937,7 @@ export default function SalaryCalculator() {
                   marginBottom: '0.5rem', 
                   fontSize: '0.9rem',
                   fontWeight: '600',
-                  color: 'rgba(255, 255, 255, 0.9)'
+                  color: 'var(--foreground)'
                 }}>
                   工作時數 (小時)
                 </label>
@@ -2982,24 +2952,14 @@ export default function SalaryCalculator() {
                     width: '100%',
                     padding: '0.75rem',
                     borderRadius: '8px',
-                    border: '2px solid rgba(139, 92, 246, 0.3)',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    color: '#ffffff',
+                    border: '2px dashed rgba(220, 208, 194, 0.8)',
+                    background: 'rgba(220, 208, 194, 0.35)',
+                    color: 'var(--foreground)',
                     fontSize: '0.95rem',
                     transition: 'all 0.2s',
                   }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.6)';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                  }}
                 />
               </div>
-
-              {/* 休息時間已改為智慧推算，編輯時保留原值 */}
 
               <div>
                 <label style={{ 
@@ -3007,7 +2967,7 @@ export default function SalaryCalculator() {
                   marginBottom: '0.5rem', 
                   fontSize: '0.9rem',
                   fontWeight: '600',
-                  color: 'rgba(255, 255, 255, 0.9)'
+                  color: 'var(--foreground)'
                 }}>
                   時薪 (元)
                 </label>
@@ -3019,19 +2979,11 @@ export default function SalaryCalculator() {
                     width: '100%',
                     padding: '0.75rem',
                     borderRadius: '8px',
-                    border: '2px solid rgba(139, 92, 246, 0.3)',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    color: '#ffffff',
+                    border: '2px dashed rgba(220, 208, 194, 0.8)',
+                    background: 'rgba(220, 208, 194, 0.35)',
+                    color: 'var(--foreground)',
                     fontSize: '0.95rem',
                     transition: 'all 0.2s',
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.6)';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
                   }}
                 />
               </div>
@@ -3042,7 +2994,7 @@ export default function SalaryCalculator() {
                   marginBottom: '0.5rem', 
                   fontSize: '0.9rem',
                   fontWeight: '600',
-                  color: 'rgba(255, 255, 255, 0.9)'
+                  color: 'var(--foreground)'
                 }}>
                   班別 (選填)
                 </label>
@@ -3074,20 +3026,12 @@ export default function SalaryCalculator() {
                     width: '100%',
                     padding: '0.75rem',
                     borderRadius: '8px',
-                    border: '2px solid rgba(139, 92, 246, 0.3)',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    color: '#ffffff',
+                    border: '2px dashed rgba(220, 208, 194, 0.8)',
+                    background: 'rgba(220, 208, 194, 0.35)',
+                    color: 'var(--foreground)',
                     fontSize: '0.95rem',
                     transition: 'all 0.2s',
                     cursor: 'pointer',
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.6)';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
                   }}
                 >
                   <option value="" style={{ background: '#f0ece1', color: '#3d3a36' }}>-- 無班別 --</option>
@@ -3102,13 +3046,13 @@ export default function SalaryCalculator() {
             <div style={{
               padding: '1.25rem',
               borderRadius: '10px',
-              background: 'rgba(139, 92, 246, 0.1)',
-              border: '1px solid rgba(139, 92, 246, 0.3)',
+              background: 'rgba(184, 126, 107, 0.12)',
+              border: '2px dashed rgba(220, 208, 194, 0.8)',
               marginBottom: '2rem'
             }}>
               <div style={{ 
                 fontSize: '0.85rem', 
-                color: 'rgba(255, 255, 255, 0.7)',
+                color: 'var(--muted)',
                 marginBottom: '0.75rem',
                 fontWeight: '600',
                 textTransform: 'uppercase',
@@ -3120,7 +3064,7 @@ export default function SalaryCalculator() {
                 display: 'flex', 
                 justifyContent: 'space-between',
                 fontSize: '1rem',
-                color: 'rgba(255, 255, 255, 0.9)'
+                color: 'var(--foreground)'
               }}>
                 <span>工作時數：</span>
                 <span style={{ fontWeight: '700', color: 'var(--color-secondary)' }}>
@@ -3133,8 +3077,8 @@ export default function SalaryCalculator() {
                 fontSize: '1rem',
                 marginTop: '0.75rem',
                 paddingTop: '0.75rem',
-                borderTop: '1px solid rgba(139, 92, 246, 0.2)',
-                color: 'rgba(255, 255, 255, 0.9)'
+                borderTop: '1px dashed rgba(220, 208, 194, 0.8)',
+                color: 'var(--foreground)'
               }}>
                 <span>預計薪資：</span>
                 <span style={{ fontWeight: '700', color: 'var(--color-primary)', fontSize: '1.25rem' }}>
@@ -3153,23 +3097,13 @@ export default function SalaryCalculator() {
                 style={{
                   padding: '0.875rem 2rem',
                   borderRadius: '10px',
-                  border: '2px solid rgba(255, 255, 255, 0.2)',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  color: 'rgba(255, 255, 255, 0.9)',
+                  border: '2px dashed rgba(220, 208, 194, 0.8)',
+                  background: '#f0ece1',
+                  color: 'var(--foreground)',
                   fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   fontSize: '0.95rem',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
                 }}
               >
                 取消
@@ -3180,21 +3114,13 @@ export default function SalaryCalculator() {
                   padding: '0.875rem 2rem',
                   borderRadius: '10px',
                   border: 'none',
-                  background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))',
-                  color: 'white',
+                  background: 'var(--color-primary)',
+                  color: '#f0ece1',
                   fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   fontSize: '0.95rem',
-                  boxShadow: '0 4px 12px rgba(139, 92, 246, 0.4)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 8px 20px rgba(139, 92, 246, 0.5)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.4)';
+                  boxShadow: '0 4px 12px rgba(139, 121, 101, 0.15)',
                 }}
               >
                 儲存變更
