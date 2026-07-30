@@ -1,6 +1,5 @@
 'use client';
 import { useState } from 'react';
-import Link from 'next/link';
 import { type WorkShift } from '../../../data/schedule';
 import { useWorkCalendar } from '../../../hooks/useWorkCalendar';
 import { useScheduleData } from '../../../hooks/useScheduleData';
@@ -10,7 +9,6 @@ import { useConfirm } from '@/context/ConfirmContext';
 import LoginPrompt from '../../../components/LoginPrompt';
 import WorkShiftEditor from '../../../components/WorkShiftEditor';
 import { LoadingSpinner } from '../../../components/Loading';
-import { exportToICS, CalendarEventItem } from '@/utils/icsExport';
 import styles from './page.module.css';
 
 /**
@@ -22,6 +20,40 @@ const SHIFT_TEMPLATES = [
   { name: '半天班 (上午)', startTime: '09:00', endTime: '13:00', note: '半天班' },
   { name: '半天班 (下午)', startTime: '13:00', endTime: '18:00', note: '半天班' },
 ];
+
+/**
+ * 依據打工角色 (role) 與內容名稱 (title) 動態計算 Woven & Weft 大地色系標籤樣式
+ */
+const getShiftBadgeStyle = (title: string, role?: string) => {
+  const isInstructor = role === 'instructor' || title.includes('講師');
+  const isAssistant = role === 'assistant' || title.includes('助教');
+
+  // 講師：暖陶琥珀色 (#c88d55)
+  if (isInstructor) {
+    return { background: '#c88d55', color: '#f0ece1' };
+  }
+
+  // 助教（且沒有其他特殊分類）：石板藍色 (#5f7186)
+  if (isAssistant) {
+    return { background: '#5f7186', color: '#f0ece1' };
+  }
+
+  // 其他打工類別：依名稱 Hash 散列其他大地色票
+  const palette = [
+    { background: '#b87e6b', color: '#f0ece1' }, // 鐵鏽紅 (Terracotta)
+    { background: '#6b8e78', color: '#f0ece1' }, // 鼠尾草綠 (Sage Green)
+    { background: '#886b86', color: '#f0ece1' }, // 灰紫紅 (Plum Slate)
+    { background: '#78716c', color: '#f0ece1' }, // 溫暖炭棕 (Warm Taupe)
+    { background: '#9e6d5b', color: '#f0ece1' }, // 深紅陶色
+  ];
+
+  let hash = 0;
+  for (let i = 0; i < title.length; i++) {
+    hash = title.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % palette.length;
+  return palette[index];
+};
 
 export default function WorkSchedulePage() {
   const { user, loading: authLoading } = useAuth();
@@ -261,36 +293,6 @@ export default function WorkSchedulePage() {
     toast.success(`已成功為 ${selectedDays.length} 個日期套用模板`);
   };
 
-  // 匯出打工班表 .ics
-  const handleExportICS = () => {
-    if (shifts.length === 0) {
-      toast.warning('目前尚無打工班表可匯出');
-      return;
-    }
-
-    const events: CalendarEventItem[] = shifts.map((s) => {
-      const [startH, startM] = s.startTime.split(':').map(Number);
-      const [endH, endM] = s.endTime.split(':').map(Number);
-
-      const startDate = new Date(`${s.date}T00:00:00`);
-      startDate.setHours(startH, startM, 0);
-
-      const endDate = new Date(`${s.date}T00:00:00`);
-      endDate.setHours(endH, endM, 0);
-
-      return {
-        title: `[打工] ${s.shiftCategory || s.note || s.location || '打工'}`,
-        location: s.location || '單位',
-        startDate,
-        endDate,
-        description: s.note ? `備註: ${s.note}` : '打工班表',
-      };
-    });
-
-    exportToICS('打工班表', events, 'work_shifts.ics');
-    toast.success('🎉 成功匯出打工班表 .ics 行事曆檔！');
-  };
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div className="glass" style={{ padding: '1.5rem', minHeight: '600px' }}>
@@ -302,57 +304,33 @@ export default function WorkSchedulePage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '10px',
+              gap: '1rem',
+              marginBottom: '1rem',
             }}
           >
             <button
               onClick={() => changeMonth(-1)}
               className="btn"
+              style={{ flexShrink: 0 }}
             >
               &larr; 上個月
             </button>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0, color: 'var(--foreground)' }}>
+            <h2 
+              style={{ 
+                fontSize: '1.5rem', 
+                fontWeight: 'bold', 
+                margin: 0, 
+                color: 'var(--foreground)',
+                textAlign: 'center',
+                flex: 1,
+              }}
+            >
               {currentMonth.getFullYear()} 年 {currentMonth.getMonth() + 1} 月
             </h2>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <button
-                onClick={handleExportICS}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: '99px',
-                  background: 'rgba(95, 113, 134, 0.15)',
-                  color: 'var(--color-secondary)',
-                  border: '1px dashed rgba(95, 113, 134, 0.4)',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: '0.85rem',
-                }}
-              >
-                📅 匯出班表 (.ics)
-              </button>
-              <Link
-                href={`/tools/salary?month=${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: '99px',
-                  background: 'rgba(184, 126, 107, 0.15)',
-                  color: 'var(--color-primary)',
-                  border: '1px dashed rgba(184, 126, 107, 0.4)',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: '0.85rem',
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                }}
-              >
-                💰 檢視本月薪資
-              </Link>
-            </div>
             <button
               onClick={() => changeMonth(1)}
               className="btn"
+              style={{ flexShrink: 0 }}
             >
               下個月 &rarr;
             </button>
@@ -427,18 +405,26 @@ export default function WorkSchedulePage() {
                   >
                     {day}
                   </div>
-                  {dayShifts.map((shift) => (
-                    <div
-                      key={shift.id}
-                      className={styles.shiftBadge}
-                      draggable
-                      onDragStart={(e) => handleDragStart(shift, e)}
-                      onClick={(e) => handleOpenEditShift(shift, e)}
-                      title="點擊編輯班表"
-                    >
-                      {shift.shiftCategory || shift.note || '打工'}
-                    </div>
-                  ))}
+                  {dayShifts.map((shift) => {
+                    const badgeTitle = shift.shiftCategory || shift.note || '打工';
+                    const badgeStyle = getShiftBadgeStyle(badgeTitle, shift.role);
+                    return (
+                      <div
+                        key={shift.id}
+                        className={styles.shiftBadge}
+                        style={{
+                          background: badgeStyle.background,
+                          color: badgeStyle.color,
+                        }}
+                        draggable
+                        onDragStart={(e) => handleDragStart(shift, e)}
+                        onClick={(e) => handleOpenEditShift(shift, e)}
+                        title={`點擊編輯：${badgeTitle}`}
+                      >
+                        {badgeTitle}
+                      </div>
+                    );
+                  })}
                   {isSelected && <div className={styles.selectedOverlay}>✓</div>}
                 </div>
               );
@@ -471,6 +457,8 @@ export default function WorkSchedulePage() {
                     const isSelected = selectedDate === shift.date;
                     const roleLabel = shift.role === 'instructor' ? '講師' : '助教';
                     const rate = shift.hourlyRate || (shift.role === 'instructor' ? 500 : 200);
+                    const shiftTitle = shift.shiftCategory || shift.note || '打工';
+                    const badgeStyle = getShiftBadgeStyle(shiftTitle, shift.role);
 
                     return (
                       <div
@@ -482,8 +470,19 @@ export default function WorkSchedulePage() {
                       >
                         <div className={styles.shiftDate}>{shift.date.split('-')[2]}日</div>
                         <div className={styles.shiftDetails}>
-                          <div className={styles.shiftName}>
-                            {shift.shiftCategory || shift.note || '打工'}
+                          <div 
+                            className={styles.shiftName}
+                            style={{
+                              display: 'inline-block',
+                              padding: '2px 8px',
+                              borderRadius: '6px',
+                              fontSize: '0.85rem',
+                              fontWeight: '600',
+                              background: badgeStyle.background,
+                              color: badgeStyle.color,
+                            }}
+                          >
+                            {shiftTitle}
                           </div>
                           <div className={styles.shiftTime}>
                             {shift.startTime} - {shift.endTime} ({shift.workHours ?? '-'}h)
