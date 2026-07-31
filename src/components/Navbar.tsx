@@ -149,7 +149,7 @@ export default function Navbar() {
                   whiteSpace: 'nowrap',
                   letterSpacing: '0.05em'
                 }}>
-                  冥夜小助手
+                  DayMate
                 </h1>
               </div>
               
@@ -170,8 +170,8 @@ export default function Navbar() {
           {!isMobile && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginLeft: '-0.75rem' }}>
               <img
-                src={`${BASE_PATH}/avatar.jpg`}
-                alt="Avatar"
+                src={`${BASE_PATH}/icon.png`}
+                alt="DayMate Logo"
                 style={{
                   width: '40px',
                   height: '40px',
@@ -189,7 +189,7 @@ export default function Navbar() {
                 whiteSpace: 'nowrap',
                 letterSpacing: '0.05em'
               }}>
-                冥夜小助手
+                DayMate
               </h1>
             </div>
           )}
@@ -208,17 +208,19 @@ export default function Navbar() {
                     <div className="dropdown" style={{ position: 'relative' }}>
                       <button
                         className="nav-link"
-                        style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
                       >
                         <img
                           src={user.photoURL || `${BASE_PATH}/avatar.jpg`}
                           alt="User Avatar"
                           style={{
-                            width: '32px',
-                            height: '32px',
+                            width: '38px',
+                            height: '38px',
                             borderRadius: '50%',
                             objectFit: 'cover',
-                            border: '2px solid var(--color-primary)'
+                            border: '2px solid var(--color-primary)',
+                            boxShadow: '0 2px 8px rgba(184, 126, 107, 0.25)',
+                            display: 'block'
                           }}
                         />
                       </button>
@@ -356,7 +358,7 @@ export default function Navbar() {
                 onClick={closeMenu}
               >
                 <MusicIcon size={18} />
-                <span>冥夜音樂</span>
+                <span>DayMate 音樂</span>
               </a>
             </li>
             {!loading && (

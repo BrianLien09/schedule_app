@@ -6,16 +6,16 @@ import PWAHandler from "@/components/PWAHandler";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "冥夜小助手",
-  description: "個人日程表與遊戲攻略整理",
+  title: "DayMate - 個人日程與薪資管理",
+  description: "課程表、打工班表、薪資計算與個人生活管理助手",
   icons: {
-    icon: '/icon.jpg',
+    icon: '/icon.png',
   },
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: '冥夜小助手',
+    title: 'DayMate',
   },
 };
 

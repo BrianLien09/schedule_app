@@ -25,7 +25,7 @@ export default function GlassRadioNav() {
    * 3: 薪資計算
    * 4: 生活費記錄
    * 5: 遊戲攻略
-   * 6: 冥夜音樂（外部連結，不會觸發）
+   * 6: DayMate 音樂（外部連結，不會觸發）
    */
   const getGliderPosition = useCallback((path: string): number => {
     if (path === '/') return 0;
@@ -34,7 +34,7 @@ export default function GlassRadioNav() {
     if (path.startsWith('/tools/salary')) return 3;
     if (path.startsWith('/tools/allowance')) return 4;
     if (path === '/games') return 5;
-    // 冥夜音樂是外部連結，不改變路由
+    // DayMate 音樂是外部連結，不改變路由
     return 0;
   }, []);
 
@@ -71,9 +71,7 @@ export default function GlassRadioNav() {
         htmlFor="nav-overview"
         onClick={(e) => handleNavClick(e, '/', 0)}
       >
-        <span>
-          <span>總覽</span>
-        </span>
+        <span>總覽</span>
       </label>
 
       {/* 學校課表 */}

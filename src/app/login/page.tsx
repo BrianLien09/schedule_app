@@ -48,8 +48,8 @@ export default function LoginPage() {
     <div className={styles.container}>
       <div className={styles.card}>
         <div className={styles.header}>
-          <h1 className={styles.title}>冥夜小助手</h1>
-          <p className={styles.subtitle}>整合課表、打工排班與遊戲攻略的個人助手</p>
+          <h1 className={styles.title}>DayMate</h1>
+          <p className={styles.subtitle}>個人日程、打工班表與薪資管理助手</p>
         </div>
 
         <div className={styles.content}>
