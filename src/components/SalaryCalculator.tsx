@@ -10,27 +10,22 @@ import { useSalaryData, type SalaryRecord } from '@/hooks/useSalaryData';
 import { useShiftTemplates } from '@/hooks/useShiftTemplates';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
-import { type WorkShift } from '@/data/schedule';
 import { generateShiftTemplateId, type ShiftTemplate, type Weekday } from '@/data/shiftTemplates';
 import { parseExcelFile, convertToExportFormat, type ImportValidation } from '@/utils/excelParser';
 
+import SalaryHeaderStats from './salary/SalaryHeaderStats';
+import SalaryRecordForm from './salary/SalaryRecordForm';
+import SalaryRecordList from './salary/SalaryRecordList';
+import SalaryAnalytics, { type MonthStats } from './salary/SalaryAnalytics';
+import ShiftTemplateManager from './salary/ShiftTemplateManager';
+
 /** 身份類型 */
 type RoleType = 'assistant' | 'instructor';
-
-/** 身份時薪對應 */
-const ROLE_HOURLY_RATES: Record<RoleType, number> = {
-  assistant: 200,    // 助教
-  instructor: 500,   // 講師
-};
-
-const WEEKDAY_LABELS = ['日', '一', '二', '三', '四', '五', '六'] as const;
-const WEEKDAY_SHORT_LABELS = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'] as const;
 
 export default function SalaryCalculator() {
   const { shifts } = useScheduleData();
   const { 
     records, 
-    loading: salaryLoading,
     addRecord, 
     updateRecord, 
     deleteRecord,
@@ -54,6 +49,9 @@ export default function SalaryCalculator() {
   const router = useRouter();
   const pathname = usePathname();
   
+  // 標籤頁狀態：'records' | 'analytics' | 'templates'
+  const [activeTab, setActiveTab] = useState<'records' | 'analytics' | 'templates'>('records');
+
   const [currentRecord, setCurrentRecord] = useState<Omit<SalaryRecord, 'id'>>({
     date: new Date().toISOString().split('T')[0],
     startTime: '09:00',
@@ -67,8 +65,8 @@ export default function SalaryCalculator() {
   // 新增記錄時的工作時數輔助欄位（小時）
   const [workHours, setWorkHours] = useState<string>('8');
   
-  // 班別類別選項（可自由新增）
-  const [shiftCategories, setShiftCategories] = useState<string[]>([
+  // 班別類別選項
+  const [shiftCategories] = useState<string[]>([
     '秋季班',
     '冬令營',
     '春季班',
@@ -80,18 +78,16 @@ export default function SalaryCalculator() {
   // 月份篩選狀態（用於顯示記錄）
   const [filterMonth, setFilterMonth] = useState<string>(() => {
     const urlMonth = searchParams.get('month');
-    // 驗證 URL 參數格式（YYYY-MM）
     if (urlMonth && /^\d{4}-\d{2}$/.test(urlMonth)) {
       return urlMonth;
     }
-    // 預設使用當前月份（本地時間）
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
     return `${year}-${month}`;
   });
 
-  // 薪資統計篩選狀態（獨立於記錄列表，避免互相影響）
+  // 薪資統計篩選狀態
   const [statsFilter, setStatsFilter] = useState<string>(() => {
     const today = new Date();
     const year = today.getFullYear();
@@ -99,7 +95,7 @@ export default function SalaryCalculator() {
     return `${year}-${month}`;
   });
   
-  // 匯入月份選擇（獨立於篩選）
+  // 匯入月份選擇
   const [importMonth, setImportMonth] = useState<string>(() => {
     const today = new Date();
     const year = today.getFullYear();
@@ -108,10 +104,10 @@ export default function SalaryCalculator() {
   });
   
   const [editingRecord, setEditingRecord] = useState<SalaryRecord | null>(null);
-  const [editingWorkHours, setEditingWorkHours] = useState<string>(''); // 編輯時的工作時數
+  const [editingWorkHours, setEditingWorkHours] = useState<string>(''); 
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showStats, setShowStats] = useState(true); // 控制統計圖表顯示
-  const [selectedRecordIds, setSelectedRecordIds] = useState<Set<string>>(new Set()); // 批次選擇
+  const [showStats, setShowStats] = useState(true); 
+  const [selectedRecordIds, setSelectedRecordIds] = useState<Set<string>>(new Set()); 
   const [showBatchEditModal, setShowBatchEditModal] = useState(false);
   const [batchNewHourlyRate, setBatchNewHourlyRate] = useState<number>(200);
 
@@ -131,7 +127,7 @@ export default function SalaryCalculator() {
     templateId: string;
   } | null>(null);
   
-  // 批量編輯多欄位的狀態
+  // 批量編輯多欄位狀態
   const [batchEditData, setBatchEditData] = useState({
     role: '' as '' | RoleType,
     startTime: '',
@@ -139,25 +135,19 @@ export default function SalaryCalculator() {
     workHours: '',
     shiftCategory: '',
   });
-  const [isPrintMode, setIsPrintMode] = useState(false); // 列印模式
+  const [isPrintMode, setIsPrintMode] = useState(false); 
   const pdfContentRef = useRef<HTMLDivElement>(null);
   
   // Excel 匯入相關狀態
   const [showImportModal, setShowImportModal] = useState(false);
   const [importValidation, setImportValidation] = useState<ImportValidation | null>(null);
   const [isImporting, setIsImporting] = useState(false);
-  const [showAllImportRecords, setShowAllImportRecords] = useState(false); // 控制是否顯示全部匯入記錄
+  const [showAllImportRecords, setShowAllImportRecords] = useState(false); 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  /**
-   * 同步 filterMonth 與 URL Search Params
-   * 
-   * 當 filterMonth 改變時，自動更新 URL，實現狀態持久化
-   */
+  /** 同步 filterMonth 與 URL Search Params */
   useEffect(() => {
     const currentMonth = searchParams.get('month');
-    
-    // 只在 filterMonth 與 URL 不同步時才更新
     if (filterMonth && filterMonth !== currentMonth) {
       const params = new URLSearchParams(searchParams.toString());
       params.set('month', filterMonth);
@@ -169,11 +159,23 @@ export default function SalaryCalculator() {
     }
   }, [filterMonth, pathname, router, searchParams]);
 
-  const getWeekdayLabel = (dateStr: string): string => {
-    if (!dateStr) return '--';
+  /** 根據日期自動帶入班別 */
+  const getWeekday = (dateStr: string): Weekday => {
     const date = new Date(dateStr);
-    if (Number.isNaN(date.getTime())) return '--';
-    return WEEKDAY_SHORT_LABELS[date.getDay()] ?? '--';
+    return date.getDay() as Weekday;
+  };
+
+  const pickTemplateForDate = (dateStr: string): ShiftTemplate | undefined => {
+    const weekday = getWeekday(dateStr);
+    return templates.find(t => t.weekday === weekday);
+  };
+
+  const calculateWorkHoursFromTimes = (startTime: string, endTime: string): number => {
+    const [startHour, startMin] = startTime.split(':').map(Number);
+    const [endHour, endMin] = endTime.split(':').map(Number);
+    const startMinutes = startHour * 60 + startMin;
+    const endMinutes = endHour * 60 + endMin;
+    return Math.max(0, (endMinutes - startMinutes) / 60);
   };
 
   useEffect(() => {
@@ -206,28 +208,15 @@ export default function SalaryCalculator() {
     });
   }, [currentRecord.date, lastAppliedTemplateInfo, templates]);
 
-  /**
-   * 更新月份篩選
-   * 
-   * @param month - YYYY-MM 格式的月份字串，空字串表示「全部」
-   */
   const updateFilterMonth = (month: string) => {
     setFilterMonth(month);
   };
 
-  /**
-   * 篩選後的記錄（基於 filterMonth）
-   * 
-   * 使用 useMemo 優化效能，避免不必要的重複計算
-   */
   const filteredRecords = useMemo(() => {
-    if (!filterMonth) return records; // 「全部」選項
+    if (!filterMonth) return records;
     return records.filter(record => record.date.startsWith(filterMonth));
   }, [records, filterMonth]);
 
-  /**
-   * 快速篩選選項
-   */
   const quickFilters = useMemo(() => {
     const today = new Date();
     const currentYear = today.getFullYear();
@@ -282,72 +271,36 @@ export default function SalaryCalculator() {
     return shiftCategories;
   }, [templates, shiftCategories]);
 
-  /**
-   * 根據開始時間和工作時數，自動計算結束時間
-   * 
-   * 邏輯：結束時間 = 開始時間 + 工作時數
-   * 例如：09:00 + 8小時 = 17:00
-   */
-  const calculateEndTimeFromHours = (startTime: string, workHoursValue: number): string => {
-    const [startHour, startMin] = startTime.split(':').map(Number);
-    const startMinutes = startHour * 60 + startMin;
-    const totalMinutes = startMinutes + (workHoursValue * 60);
-    
-    const endHour = Math.floor(totalMinutes / 60);
-    const endMin = totalMinutes % 60;
-    
-    return `${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
-  };
-
-  /**
-   * 根據開始時間和結束時間，計算實際工作時數
-   */
-  const calculateWorkHoursFromTimes = (startTime: string, endTime: string): number => {
-    const [startHour, startMin] = startTime.split(':').map(Number);
-    const [endHour, endMin] = endTime.split(':').map(Number);
-    
-    const startMinutes = startHour * 60 + startMin;
-    const endMinutes = endHour * 60 + endMin;
-    const totalMinutes = endMinutes - startMinutes;
-    
-    return Math.max(0, totalMinutes / 60);
-  };
-
-  const getWeekday = (dateStr: string): Weekday => {
-    const date = new Date(dateStr);
-    return date.getDay() as Weekday;
-  };
-
-  const pickTemplateForDate = (dateStr: string): ShiftTemplate | undefined => {
-    const weekday = getWeekday(dateStr);
-    return templates.find(t => t.weekday === weekday);
-  };
-
-  const findTemplateByName = (name: string): ShiftTemplate | undefined => {
-    return templates.find(template => template.name === name);
-  };
-
-  /** 計算工作時數 (小時) - 直接使用記錄中的 workHours */
   const calculateHours = (record: Omit<SalaryRecord, 'id'>): number => {
     return record.workHours || 0;
   };
 
-  /** 計算薪資 - 使用 workHours × hourlyRate */
   const calculatePay = (record: Omit<SalaryRecord, 'id'>): number => {
     return Math.round((record.workHours || 0) * record.hourlyRate);
   };
 
-  /** 新增記錄 */
   const handleAddRecord = () => {
-    // 從 workHours 字串轉換為數字
     const hours = parseFloat(workHours) || 0;
-    
     const newRecord: SalaryRecord = {
       ...currentRecord,
       workHours: hours,
       id: Date.now().toString(),
     };
     addRecord(newRecord);
+    toast.success('已新增打工記錄');
+  };
+
+  const handleApplyTemplate = (template: ShiftTemplate) => {
+    const hours = template.workHours ?? calculateWorkHoursFromTimes(template.startTime, template.endTime);
+    setCurrentRecord(prev => ({
+      ...prev,
+      startTime: template.startTime,
+      endTime: template.endTime,
+      hourlyRate: template.hourlyRate,
+      shiftCategory: template.name,
+    }));
+    setWorkHours(hours.toString());
+    toast.info(`已帶入「${template.name}」範本`);
   };
 
   const resetTemplateForm = () => {
@@ -368,7 +321,6 @@ export default function SalaryCalculator() {
       toast.warning('目前沒有編輯班別的權限');
       return;
     }
-
     setEditingTemplateId(template.id);
     setNewTemplate({
       name: template.name,
@@ -386,7 +338,6 @@ export default function SalaryCalculator() {
       toast.warning('班別名稱不可為空');
       return;
     }
-
     if (!canEditTemplates) {
       toast.warning('目前沒有編輯班別的權限');
       return;
@@ -404,9 +355,8 @@ export default function SalaryCalculator() {
     }
 
     if (editingTemplateId) {
-      await updateTemplate(editingTemplateId, {
-        ...newTemplate,
-      });
+      await updateTemplate(editingTemplateId, { ...newTemplate });
+      toast.success('已更新班別範本');
       resetTemplateForm();
       return;
     }
@@ -416,8 +366,8 @@ export default function SalaryCalculator() {
       id: generateShiftTemplateId(),
       createdAt: Date.now(),
     };
-
     await addTemplate(template);
+    toast.success('已新增班別範本');
     resetTemplateForm();
   };
 
@@ -426,7 +376,6 @@ export default function SalaryCalculator() {
       toast.warning('目前沒有編輯班別的權限');
       return;
     }
-
     if (template.isDefault) return;
 
     const sameWeekdayDefaults = templates.filter(
@@ -437,6 +386,7 @@ export default function SalaryCalculator() {
     }
 
     await updateTemplate(template.id, { isDefault: true });
+    toast.success(`已將「${template.name}」設為預設班別`);
   };
 
   const handleDeleteTemplate = async (template: ShiftTemplate) => {
@@ -444,7 +394,6 @@ export default function SalaryCalculator() {
       toast.warning('目前沒有編輯班別的權限');
       return;
     }
-
     const confirmed = await confirm({
       title: '刪除班別',
       message: `確定要刪除「${template.name}」嗎？此操作無法復原！`,
@@ -452,16 +401,15 @@ export default function SalaryCalculator() {
       danger: true,
     });
     if (!confirmed) return;
-
     await deleteTemplate(template.id);
+    toast.success('已刪除班別範本');
   };
 
-  /** 刪除記錄 */
   const handleDeleteRecord = (id: string) => {
     deleteRecord(id);
+    toast.success('已刪除打工記錄');
   };
 
-  /** 複製記錄 - 將資料填入新增表單 */
   const handleCopyRecord = (record: SalaryRecord) => {
     setCurrentRecord({
       date: record.date,
@@ -473,60 +421,13 @@ export default function SalaryCalculator() {
       shiftCategory: record.shiftCategory || '',
       workShiftId: record.workShiftId,
     });
-    
-    // 同步工作時數到輸入框
     setWorkHours(record.workHours.toString());
-    
-    // 捲動到新增工作記錄卡片，並加上偏移量避開導航欄
-    const addRecordForm = document.getElementById('add-record-form');
-    if (addRecordForm) {
-      const formRect = addRecordForm.getBoundingClientRect();
-      const formTop = formRect.top + window.scrollY;
-      
-      // 導航欄高度約 80-100px，加上 spacing-md（約 20px），總共預留 120px
-      const navbarHeight = 120;
-      const targetScrollPosition = formTop - navbarHeight;
-      
-      window.scrollTo({
-        top: targetScrollPosition,
-        behavior: 'smooth'
-      });
-    }
+    setActiveTab('records');
+    toast.info('已複製記錄到新增表單');
   };
 
-  /**
-   * 處理工作時數變更（獨立欄位，不影響時間段）
-   */
-  const handleWorkHoursChange = (newWorkHours: string) => {
-    setWorkHours(newWorkHours);
-  };
-
-  /**
-   * 處理開始時間變更（獨立欄位，不影響工作時數）
-   */
-  const handleStartTimeChange = (newStartTime: string) => {
-    setCurrentRecord({
-      ...currentRecord,
-      startTime: newStartTime,
-    });
-  };
-
-  /**
-   * 處理結束時間變更（獨立欄位，不影響工作時數）
-   */
-  const handleEndTimeChange = (newEndTime: string) => {
-    setCurrentRecord({
-      ...currentRecord,
-      endTime: newEndTime,
-    });
-  };
-
-  /** 從打工班表匯入記錄（根據選擇的月份） */
   const handleImportFromWorkShifts = () => {
-    // 找出尚未匯入的打工班表
     const existingWorkShiftIds = new Set(records.map(r => r.workShiftId).filter(Boolean));
-    
-    // 篩選指定月份的班表
     const [year, month] = importMonth.split('-').map(Number);
     const monthShifts = shifts.filter(shift => {
       const shiftDate = new Date(shift.date);
@@ -540,14 +441,11 @@ export default function SalaryCalculator() {
       return;
     }
 
-    // 將打工班表轉換為薪資記錄
     const newRecords: SalaryRecord[] = monthShifts.map(shift => {
       const template = pickTemplateForDate(shift.date);
       const startTime = template?.startTime ?? shift.startTime;
       const endTime = template?.endTime ?? shift.endTime;
       const hourlyRate = template?.hourlyRate ?? 200;
-
-      // 根據時間段計算工作時數
       const hours = template?.workHours ?? calculateWorkHoursFromTimes(startTime, endTime);
       const normalizedHours = Number.isFinite(hours) ? hours : 0;
       
@@ -557,9 +455,9 @@ export default function SalaryCalculator() {
         startTime,
         endTime,
         workHours: normalizedHours,
-        role: 'assistant' as RoleType, // 預設助教
+        role: 'assistant' as RoleType,
         hourlyRate,
-        shiftCategory: template?.name || shift.note || '', // 以班別名稱優先
+        shiftCategory: template?.name || shift.note || '',
         workShiftId: shift.id,
       };
     });
@@ -568,10 +466,8 @@ export default function SalaryCalculator() {
     toast.success(`成功匯入 ${newRecords.length} 筆 ${year} 年 ${month} 月的打工記錄！`);
   };
 
-  /** 取得顯示的班別名稱 */
   const getDisplayShiftName = (record: SalaryRecord): string => {
     if (record.shiftCategory) return record.shiftCategory;
-    // 向後相容：若有 workShiftId，從班表取得 note
     if (record.workShiftId) {
       const shift = shifts.find(s => s.id === record.workShiftId);
       return shift?.note || '-';
@@ -579,67 +475,29 @@ export default function SalaryCalculator() {
     return '-';
   };
 
-  /** 開啟編輯模式 */
   const handleEditRecord = (record: SalaryRecord) => {
     setEditingRecord({ ...record });
-    // 同步工作時數到輸入框
     setEditingWorkHours(record.workHours.toString());
     setShowEditModal(true);
   };
 
-  /**
-   * 處理編輯時的工作時數變更（獨立欄位）
-   */
-  const handleEditWorkHoursChange = (newWorkHours: string) => {
-    setEditingWorkHours(newWorkHours);
-  };
-
-  /**
-   * 處理編輯時的開始時間變更（獨立欄位）
-   */
-  const handleEditStartTimeChange = (newStartTime: string) => {
-    if (!editingRecord) return;
-    
-    setEditingRecord({
-      ...editingRecord,
-      startTime: newStartTime,
-    });
-  };
-
-  /**
-   * 處理編輯時的結束時間變更（獨立欄位）
-   */
-  const handleEditEndTimeChange = (newEndTime: string) => {
-    if (!editingRecord) return;
-    
-    setEditingRecord({
-      ...editingRecord,
-      endTime: newEndTime,
-    });
-  };
-
-  /** 儲存編輯 */
   const handleSaveEdit = () => {
     if (!editingRecord) return;
-    
-    // 從字串轉換工作時數
     const hours = parseFloat(editingWorkHours) || 0;
-    
     updateRecord(editingRecord.id, {
       ...editingRecord,
       workHours: hours,
     });
     setShowEditModal(false);
     setEditingRecord(null);
+    toast.success('已儲存變更');
   };
 
-  /** 取消編輯 */
   const handleCancelEdit = () => {
     setShowEditModal(false);
     setEditingRecord(null);
   };
 
-  /** 切換記錄的選擇狀態 */
   const toggleRecordSelection = (id: string) => {
     const newSelection = new Set(selectedRecordIds);
     if (newSelection.has(id)) {
@@ -650,7 +508,6 @@ export default function SalaryCalculator() {
     setSelectedRecordIds(newSelection);
   };
 
-  /** 全選/取消全選（只針對篩選後的記錄） */
   const toggleSelectAll = () => {
     if (selectedRecordIds.size === filteredRecords.length && filteredRecords.length > 0) {
       setSelectedRecordIds(new Set());
@@ -659,13 +516,11 @@ export default function SalaryCalculator() {
     }
   };
 
-  /** 開啟批次編輯模式 */
   const handleOpenBatchEdit = () => {
     if (selectedRecordIds.size === 0) {
       toast.warning('請先選擇要編輯的記錄！');
       return;
     }
-    // 重置批量編輯狀態
     setBatchNewHourlyRate(200);
     setBatchEditData({
       role: '',
@@ -677,51 +532,33 @@ export default function SalaryCalculator() {
     setShowBatchEditModal(true);
   };
 
-  /** 執行批次編輯 */
   const handleBatchEditHourlyRate = () => {
-    // 收集要更新的欄位
     const updateData: Partial<SalaryRecord> = {};
-    
-    // 時薪
     if (batchNewHourlyRate > 0) {
       updateData.hourlyRate = batchNewHourlyRate;
     }
-    
-    // 身份
     if (batchEditData.role) {
       updateData.role = batchEditData.role;
-      // 根據身份自動更新時薪（如果使用者沒有手動修改時薪）
       if (batchNewHourlyRate === 200) {
         updateData.hourlyRate = batchEditData.role === 'assistant' ? 200 : 350;
       }
     }
-    
-    // 開始時間
     if (batchEditData.startTime) {
       updateData.startTime = batchEditData.startTime;
     }
-    
-    // 結束時間
     if (batchEditData.endTime) {
       updateData.endTime = batchEditData.endTime;
     }
-    
-    // 工作時數：直接批次更新（完全獨立）
     if (batchEditData.workHours) {
       const hours = parseFloat(batchEditData.workHours);
       if (!isNaN(hours) && hours > 0) {
         updateData.workHours = hours;
       }
     }
-    
-    // 休息時間已改為智慧推算，不再允許批次編輯
-    
-    // 班別
     if (batchEditData.shiftCategory) {
       updateData.shiftCategory = batchEditData.shiftCategory;
     }
     
-    // 檢查是否至少有一個欄位要更新
     if (Object.keys(updateData).length === 0) {
       toast.warning('請至少填寫一個要修改的欄位！');
       return;
@@ -733,36 +570,15 @@ export default function SalaryCalculator() {
     }));
     
     batchUpdateRecords(updates);
-
     setShowBatchEditModal(false);
     setSelectedRecordIds(new Set());
-    
-    // 產生更新訊息
-    const updatedFields = [];
-    if (updateData.hourlyRate) updatedFields.push('時薪');
-    if (updateData.role) updatedFields.push('身份');
-    if (updateData.startTime) updatedFields.push('開始時間');
-    if (updateData.endTime) updatedFields.push('結束時間');
-    if (updateData.workHours) updatedFields.push('工作時數');
-    if (updateData.shiftCategory) updatedFields.push('班別');
-    
-    toast.success(`已成功更新 ${selectedRecordIds.size} 筆記錄的 ${updatedFields.join('、')}！`);
+    toast.success(`已成功更新 ${selectedRecordIds.size} 筆記錄！`);
   };
 
-  /** 取消批次編輯 */
   const handleCancelBatchEdit = () => {
     setShowBatchEditModal(false);
-    setBatchNewHourlyRate(200);
-    setBatchEditData({
-      role: '',
-      startTime: '',
-      endTime: '',
-      workHours: '',
-      shiftCategory: '',
-    });
   };
 
-  /** 批量刪除 */
   const handleBatchDelete = async () => {
     if (selectedRecordIds.size === 0) {
       toast.warning('請先選擇要刪除的記錄！');
@@ -779,9 +595,9 @@ export default function SalaryCalculator() {
 
     batchDeleteRecords(Array.from(selectedRecordIds));
     setSelectedRecordIds(new Set());
+    toast.success('已刪除選取的記錄');
   };
 
-  /** 開啟列印預覽 */
   const handlePrint = () => {
     setIsPrintMode(true);
     setTimeout(() => {
@@ -790,33 +606,26 @@ export default function SalaryCalculator() {
     }, 100);
   };
 
-  /** 計算總薪資（基於篩選後的記錄） */
   const totalPay = useMemo(() => {
-    return filteredRecords.reduce((sum, record) => {
-      return sum + calculatePay(record);
-    }, 0);
+    return filteredRecords.reduce((sum, record) => sum + calculatePay(record), 0);
   }, [filteredRecords]);
 
-  const statsTotalPay = useMemo(() => {
-    return statsRecords.reduce((sum, record) => {
-      return sum + calculatePay(record);
-    }, 0);
-  }, [statsRecords]);
-
-  /** 計算總工時（基於篩選後的記錄） */
   const totalHours = useMemo(() => {
     return filteredRecords.reduce((sum, r) => sum + calculateHours(r), 0);
   }, [filteredRecords]);
 
-  const statsTotalHours = useMemo(() => {
-    return statsRecords.reduce((sum, r) => sum + calculateHours(r), 0);
-  }, [statsRecords]);
-
-  /** 計算平均時薪（基於篩選後的記錄） */
   const avgHourlyRate = useMemo(() => {
     if (totalHours === 0) return 0;
     return Math.round(totalPay / totalHours);
   }, [totalPay, totalHours]);
+
+  const statsTotalPay = useMemo(() => {
+    return statsRecords.reduce((sum, record) => sum + calculatePay(record), 0);
+  }, [statsRecords]);
+
+  const statsTotalHours = useMemo(() => {
+    return statsRecords.reduce((sum, r) => sum + calculateHours(r), 0);
+  }, [statsRecords]);
 
   const statsAvgHourlyRate = useMemo(() => {
     if (statsTotalHours === 0) return 0;
@@ -825,45 +634,22 @@ export default function SalaryCalculator() {
 
   const statsWorkDays = useMemo(() => statsRecords.length, [statsRecords]);
 
-  /** 計算月度統計資料 */
-  interface MonthStats {
-    month: string; // YYYY-MM
-    totalPay: number;
-    totalHours: number;
-    recordCount: number;
-  }
-
-  /**
-   * 計算月度統計資料
-   * 
-   * 使用全體資料 (records) 計算跨月趨勢，避免被單月篩選 (statsFilter) 限縮
-   * 以篩選月份或當前月份為終點，往前推 5 個月（共 6 個月）的趨勢
-   */
   const getMonthlyStats = (): MonthStats[] => {
-    // 依據全體記錄 (records) 收集所有月份的統計資料
     const statsMap = new Map<string, MonthStats>();
-
     records.forEach(record => {
-      const month = record.date.slice(0, 7); // 取 YYYY-MM
+      const month = record.date.slice(0, 7);
       const pay = calculatePay(record);
       const hours = calculateHours(record);
 
       if (!statsMap.has(month)) {
-        statsMap.set(month, {
-          month,
-          totalPay: 0,
-          totalHours: 0,
-          recordCount: 0,
-        });
+        statsMap.set(month, { month, totalPay: 0, totalHours: 0, recordCount: 0 });
       }
-
       const stats = statsMap.get(month)!;
       stats.totalPay += pay;
       stats.totalHours += hours;
       stats.recordCount += 1;
     });
 
-    // 決定圖表終點月份：優先使用 statsFilter 或 filterMonth，若無則使用今天
     const anchorMonthStr = statsFilter || filterMonth || '';
     let anchorDate = new Date();
     if (anchorMonthStr && /^\d{4}-\d{2}$/.test(anchorMonthStr)) {
@@ -871,42 +657,27 @@ export default function SalaryCalculator() {
       anchorDate = new Date(year, month - 1, 1);
     }
 
-    // 生成從終點月份往前推 5 個月的月份列表（共 6 個月）
     const monthsList: string[] = [];
-    
     for (let i = 5; i >= 0; i--) {
       const date = new Date(anchorDate.getFullYear(), anchorDate.getMonth() - i, 1);
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
-      const monthStr = `${year}-${month}`;
-      monthsList.push(monthStr);
+      monthsList.push(`${year}-${month}`);
     }
 
-    // 組合 6 個月的統計資料（沒有記錄的月份顯示 0）
-    return monthsList.map(month => {
-      return statsMap.get(month) || {
-        month,
-        totalPay: 0,
-        totalHours: 0,
-        recordCount: 0,
-      };
-    });
+    return monthsList.map(month => statsMap.get(month) || { month, totalPay: 0, totalHours: 0, recordCount: 0 });
   };
 
   const monthlyStats = getMonthlyStats();
-  const maxMonthlyPay = Math.max(...monthlyStats.map(s => s.totalPay), 1); // 避免除以0
+  const maxMonthlyPay = Math.max(...monthlyStats.map(s => s.totalPay), 1);
 
-  /** 匯出 Excel（基於篩選後的記錄，使用統一格式） */
   const handleExportExcel = () => {
     if (filteredRecords.length === 0) {
       toast.warning('沒有可匯出的記錄！');
       return;
     }
 
-    // 使用統一格式：打工日期 | 工作內容 | 工作時長 (時) | 時薪($) | 應得薪資($)
     const exportData = filteredRecords.map(record => convertToExportFormat(record));
-
-    // 加入總計行
     const totalWorkHours = exportData.reduce((sum, row) => sum + row['工作時長 (時)'], 0);
     const totalPaySum = exportData.reduce((sum, row) => sum + row['應得薪資($)'], 0);
     
@@ -925,14 +696,13 @@ export default function SalaryCalculator() {
     const monthStr = filterMonth || '全部';
     const fileName = `薪資表_${monthStr}_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(wb, fileName);
+    toast.success('已下載 Excel 檔案');
   };
 
-  /** 處理檔案選擇 */
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // 檢查檔案類型
     if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
       toast.warning('請選擇 Excel 檔案（.xlsx 或 .xls）');
       return;
@@ -948,14 +718,12 @@ export default function SalaryCalculator() {
       toast.error('檔案解析失敗，請確認檔案格式是否正確');
     } finally {
       setIsImporting(false);
-      // 清空 input，允許重複選擇同一檔案
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     }
   };
 
-  /** 確認匯入 */
   const handleConfirmImport = async () => {
     if (!importValidation || !importValidation.success) {
       toast.warning('無有效資料可匯入');
@@ -963,12 +731,8 @@ export default function SalaryCalculator() {
     }
 
     try {
-      // 檢查重複日期
       const existingDates = new Set(records.map(r => r.date));
-      const recordsToImport = importValidation.records.filter(record => {
-        return !existingDates.has(record.date);
-      });
-
+      const recordsToImport = importValidation.records.filter(record => !existingDates.has(record.date));
       const duplicateCount = importValidation.records.length - recordsToImport.length;
 
       if (recordsToImport.length === 0) {
@@ -976,37 +740,31 @@ export default function SalaryCalculator() {
         return;
       }
 
-      // 匯入不重複的記錄
       await batchAddRecords(recordsToImport);
-      
       let message = `成功匯入 ${recordsToImport.length} 筆記錄！`;
       if (duplicateCount > 0) {
-        message += `\n已跳過 ${duplicateCount} 筆重複日期的記錄。`;
+        message += ` (已跳過 ${duplicateCount} 筆重複日期的記錄)`;
       }
-      
       toast.success(message);
       setShowImportModal(false);
       setImportValidation(null);
-      setShowAllImportRecords(false); // 重置顯示狀態
+      setShowAllImportRecords(false);
     } catch (error) {
       console.error('匯入失敗:', error);
       toast.error('匯入失敗，請稍後再試');
     }
   };
 
-  /** 取消匯入 */
   const handleCancelImport = () => {
     setShowImportModal(false);
     setImportValidation(null);
-    setShowAllImportRecords(false); // 重置顯示狀態
+    setShowAllImportRecords(false);
   };
 
-  /** 觸發檔案選擇 */
   const handleImportClick = () => {
     fileInputRef.current?.click();
   };
 
-  /** 匯出 PDF - 使用 html2canvas（基於篩選後的記錄） */
   const handleExportPDF = async () => {
     if (!pdfContentRef.current || filteredRecords.length === 0) {
       toast.warning('沒有可匯出的記錄！');
@@ -1014,7 +772,6 @@ export default function SalaryCalculator() {
     }
 
     try {
-      // 使用 html2canvas 截圖表格
       const canvas = await html2canvas(pdfContentRef.current, {
         scale: 2,
         backgroundColor: '#1a1a2e',
@@ -1030,17 +787,15 @@ export default function SalaryCalculator() {
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pdfWidth - 20; // 留 10mm 邊距
+      const imgWidth = pdfWidth - 20;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
       let heightLeft = imgHeight;
       let position = 10;
 
-      // 添加第一頁
       pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
       heightLeft -= pdfHeight - 20;
 
-      // 如果內容超過一頁，自動分頁
       while (heightLeft > 0) {
         position = heightLeft - imgHeight + 10;
         pdf.addPage();
@@ -1050,6 +805,7 @@ export default function SalaryCalculator() {
 
       const fileName = `薪資報表_${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(fileName);
+      toast.success('已下載 PDF 報表');
     } catch (error) {
       console.error('PDF 生成失敗:', error);
       toast.error('PDF 生成失敗，請稍後再試！');
@@ -1110,2748 +866,333 @@ export default function SalaryCalculator() {
         }
       `}</style>
 
-      <div style={{ maxWidth: '1000px', margin: '0 auto' }} className={isPrintMode ? 'print-friendly' : ''}>
-        <h2 style={{ 
-          fontSize: '1.5rem', 
-          fontWeight: 'bold', 
-          marginBottom: 'var(--spacing-lg)',
-          background: isPrintMode ? 'none' : 'linear-gradient(to right, var(--color-primary), var(--color-secondary))',
-          WebkitBackgroundClip: isPrintMode ? 'unset' : 'text',
-          WebkitTextFillColor: isPrintMode ? 'black' : 'transparent',
-          color: isPrintMode ? 'black' : 'inherit',
-        }}>
-        薪資計算器
-      </h2>
-
-      {/* 列印模式：報表資訊 */}
-      {isPrintMode && (
-        <div style={{
-          padding: '1.5rem',
-          marginBottom: '1.5rem',
-          border: '2px solid #333',
-          borderRadius: '8px',
-          background: '#f9f9f9',
-        }}>
-          <div style={{ marginBottom: '1rem' }}>
-            <h3 style={{ 
-              fontSize: '1.3rem', 
-              fontWeight: '700',
-              color: 'black',
-              marginBottom: '1rem',
-            }}>
-              薪資報表
-            </h3>
-          </div>
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '0.75rem',
-            fontSize: '0.95rem',
-            color: 'black',
+      <div style={{ maxWidth: '1000px', margin: '0 auto' }} className={isPrintMode ? 'print-friendly' : ''} ref={pdfContentRef}>
+        
+        {/* 標題與速覽卡片列 */}
+        <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+          <h2 style={{ 
+            fontSize: '1.5rem', 
+            fontWeight: 'bold', 
+            marginBottom: 'var(--spacing-md)',
+            background: isPrintMode ? 'none' : 'linear-gradient(to right, var(--color-primary), var(--color-secondary))',
+            WebkitBackgroundClip: isPrintMode ? 'unset' : 'text',
+            WebkitTextFillColor: isPrintMode ? 'black' : 'transparent',
+            color: isPrintMode ? 'black' : 'inherit',
           }}>
-            <div><strong>生成日期：</strong>{new Date().toLocaleDateString('zh-TW')}</div>
-              <div><strong>記錄總數：</strong>{statsWorkDays} 筆</div>
-              <div><strong>總工時：</strong>{statsTotalHours.toFixed(1)} 小時</div>
-              <div><strong>總計薪資：</strong>${statsTotalPay.toLocaleString()}</div>
-          </div>
-        </div>
-      )}
+            薪資計算助手
+          </h2>
 
-      {/* 統計圖表區域 */}
-      {records.length > 0 && monthlyStats.length > 0 && (
-        <div className="glass no-print" style={{ padding: 'var(--spacing-lg)', marginBottom: 'var(--spacing-lg)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)', gap: 'var(--spacing-md)' }}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>
-              薪資統計
-            </h3>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end' }}>
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                {statsQuickFilters.map(filter => (
-                  <button
-                    key={filter.value}
-                    onClick={() => setStatsFilter(filter.value)}
-                    style={{
-                      padding: '0.4rem 0.9rem',
-                      borderRadius: '8px',
-                      border: statsFilter === filter.value
-                        ? '2px solid var(--color-primary)'
-                        : '1px solid rgba(255,255,255,0.2)',
-                      background: statsFilter === filter.value
-                        ? 'rgba(139, 92, 246, 0.3)'
-                        : 'rgba(255,255,255,0.05)',
-                      color: statsFilter === filter.value
-                        ? 'var(--color-primary)'
-                        : 'var(--text-secondary)',
-                      fontWeight: statsFilter === filter.value ? '600' : '400',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      fontSize: '0.85rem',
-                    }}
-                    title={filter.description}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
-              </div>
-              <button
-                onClick={() => setShowStats(!showStats)}
-                style={{
-                  padding: '0.5rem 1rem',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: 'rgba(139, 92, 246, 0.2)',
-                  color: '#a855f7',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  fontSize: '0.9rem',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(139, 92, 246, 0.3)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)';
-                }}
-              >
-                {showStats ? '隱藏圖表' : '顯示圖表'}
-              </button>
-            </div>
-          </div>
-
-          {showStats && (
-            <>
-              {/* 總覽卡片 */}
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: 'var(--spacing-md)',
-                marginBottom: 'var(--spacing-lg)'
-              }}>
-                <div style={{
-                  padding: '1.25rem',
-                  borderRadius: '12px',
-                  background: 'rgba(184, 126, 107, 0.12)',
-                  border: '1px dashed rgba(184, 126, 107, 0.3)',
-                }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '0.5rem' }}>
-                    總收入
-                  </div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--color-primary)' }}>
-                    ${statsTotalPay.toLocaleString()}
-                  </div>
-                </div>
-
-                <div style={{
-                  padding: '1.25rem',
-                  borderRadius: '12px',
-                  background: 'rgba(95, 113, 134, 0.12)',
-                  border: '1px dashed rgba(95, 113, 134, 0.3)',
-                }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '0.5rem' }}>
-                    總工時
-                  </div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--color-secondary)' }}>
-                    {statsTotalHours.toFixed(1)}h
-                  </div>
-                </div>
-
-                <div style={{
-                  padding: '1.25rem',
-                  borderRadius: '12px',
-                  background: 'rgba(120, 136, 155, 0.12)',
-                  border: '1px dashed rgba(120, 136, 155, 0.3)',
-                }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '0.5rem' }}>
-                    平均時薪
-                  </div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--color-secondary)' }}>
-                    ${statsAvgHourlyRate}
-                  </div>
-                </div>
-
-                <div style={{
-                  padding: '1.25rem',
-                  borderRadius: '12px',
-                  background: 'rgba(217, 119, 6, 0.12)',
-                  border: '1px dashed rgba(217, 119, 6, 0.3)',
-                }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '0.5rem' }}>
-                    工作天數
-                  </div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--color-highlight)' }}>
-                    {statsWorkDays} 天
-                  </div>
-                </div>
-              </div>
-
-              {/* 月度趨勢圖表 */}
-              <div>
-                <h4 style={{ 
-                  fontSize: '1rem', 
-                  fontWeight: '600', 
-                  marginBottom: 'var(--spacing-md)',
-                  color: 'var(--foreground)'
-                }}>
-                  月度收入趨勢（最近 6 個月）
-                </h4>
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'flex-end', 
-                  justifyContent: 'space-around',
-                  gap: '1.5rem',
-                  height: '280px',
-                  padding: '1rem 1.5rem',
-                  background: '#f0ece1',
-                  borderRadius: '12px',
-                  border: '2px dashed rgba(220, 208, 194, 0.7)',
-                  boxShadow: 'var(--glass-shadow)',
-                  position: 'relative',
-                }}>
-                  {monthlyStats.map((stat) => {
-                    const heightPercent = (stat.totalPay / maxMonthlyPay) * 100;
-                    const barHeight = Math.max(heightPercent, 5); // 最小高度 5%
-                    const [year, month] = stat.month.split('-');
-                    
-                    // 當數值為 0 時，標籤顯示在長條圖上方而不是被擋住
-                    const labelTop = stat.totalPay === 0 
-                      ? 'calc(100% - 50px)' // 固定位置在長條圖上方
-                      : `${100 - barHeight - 12}%`; // 正常位置
-                    
-                    return (
-                      <div 
-                        key={stat.month}
-                        style={{
-                          flex: 1,
-                          maxWidth: '100px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          height: '100%',
-                          position: 'relative',
-                        }}
-                      >
-                        {/* 數值標籤 - 絕對定位在長條上方 */}
-                        <div style={{
-                          position: 'absolute',
-                          top: labelTop,
-                          fontSize: '0.85rem',
-                          fontWeight: '600',
-                          color: stat.totalPay === 0 ? 'var(--muted)' : 'var(--color-primary)',
-                          whiteSpace: 'nowrap',
-                          transform: 'translateY(-100%)',
-                          opacity: stat.totalPay === 0 ? 0.6 : 1,
-                        }}>
-                          ${(stat.totalPay / 1000).toFixed(1)}k
-                        </div>
-                        
-                        {/* 佔位空間 - 推動長條圖到底部 */}
-                        <div style={{ flex: 1 }}></div>
-                        
-                        {/* 長條圖 */}
-                        <div
-                          style={{
-                            width: '100%',
-                            height: `${barHeight}%`,
-                            minHeight: '20px',
-                            background: 'linear-gradient(to top, var(--color-primary, #b87e6b) 0%, #d89e8b 100%)',
-                            borderRadius: '8px 8px 0 0',
-                            transition: 'all 0.3s ease',
-                            cursor: 'pointer',
-                            boxShadow: '0 4px 12px rgba(184, 126, 107, 0.2)',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.filter = 'brightness(1.2)';
-                            e.currentTarget.style.transform = 'scaleY(1.05) translateY(-2px)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.filter = 'brightness(1)';
-                            e.currentTarget.style.transform = 'scaleY(1) translateY(0)';
-                          }}
-                          title={`${stat.month}: $${stat.totalPay.toLocaleString()} (${stat.totalHours.toFixed(1)}h, ${stat.recordCount}天)`}
-                        />
-                        
-                        {/* 月份標籤 */}
-                        <div style={{
-                          fontSize: '0.85rem',
-                          fontWeight: '600',
-                          color: 'var(--text-secondary)',
-                          textAlign: 'center',
-                          marginTop: '0.75rem',
-                        }}>
-                          {month}月
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* 圖例說明 */}
-                <div style={{
-                  marginTop: '1rem',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  borderRadius: '8px',
-                  fontSize: '0.85rem',
-                  color: 'var(--text-secondary)',
-                  display: 'flex',
-                  gap: '1.5rem',
-                  flexWrap: 'wrap',
-                }}>
-                  <span>💡 提示：將滑鼠移至長條上可查看詳細資訊</span>
-                </div>
-              </div>
-            </>
+          {/* 四大核心 KPI 速覽 */}
+          {!isPrintMode && (
+            <SalaryHeaderStats
+              totalPay={totalPay}
+              totalHours={totalHours}
+              avgHourlyRate={avgHourlyRate}
+              workDays={filteredRecords.length}
+            />
           )}
         </div>
-      )}
 
-      {/* 班別管理 */}
-      <details className="glass no-print" style={{ padding: 'var(--spacing-lg)', marginBottom: 'var(--spacing-lg)' }} open>
-        <summary style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 'var(--spacing-md)',
-          flexWrap: 'wrap',
-          gap: 'var(--spacing-md)',
-          cursor: 'pointer',
-          listStyle: 'none',
-        }}>
-          <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>
-            班別管理
-          </h3>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {templatesLoading && (
-              <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>載入中...</span>
-            )}
-            <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>展開 / 收合</span>
-          </div>
-        </summary>
-
-        {editingTemplateId && (
-          <div style={{
-            marginBottom: 'var(--spacing-md)',
-            color: 'var(--text-secondary)',
+        {/* 標籤頁 (Tabs) 導覽列 */}
+        {!isPrintMode && (
+          <div className="no-print" style={{
             display: 'flex',
-            gap: '0.75rem',
-            alignItems: 'center',
+            gap: '0.5rem',
+            marginBottom: 'var(--spacing-lg)',
+            borderBottom: '2px solid rgba(220, 208, 194, 0.5)',
+            paddingBottom: '0.25rem',
           }}>
-            <span>正在編輯：{newTemplate.name || '未命名班別'}</span>
             <button
-              onClick={resetTemplateForm}
+              type="button"
+              onClick={() => setActiveTab('records')}
               style={{
-                padding: '0.35rem 0.8rem',
-                borderRadius: '999px',
-                border: '1px solid rgba(255,255,255,0.15)',
-                background: 'transparent',
-                color: 'var(--text-secondary)',
+                padding: '0.6rem 1.25rem',
+                borderRadius: '8px 8px 0 0',
+                border: 'none',
+                background: activeTab === 'records' ? 'var(--color-primary)' : 'transparent',
+                color: activeTab === 'records' ? '#f0ece1' : 'var(--text-secondary)',
+                fontWeight: '600',
+                fontSize: '0.95rem',
                 cursor: 'pointer',
+                transition: 'all 0.2s',
               }}
             >
-              取消編輯
+              薪資明細與記帳
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('analytics')}
+              style={{
+                padding: '0.6rem 1.25rem',
+                borderRadius: '8px 8px 0 0',
+                border: 'none',
+                background: activeTab === 'analytics' ? 'var(--color-primary)' : 'transparent',
+                color: activeTab === 'analytics' ? '#f0ece1' : 'var(--text-secondary)',
+                fontWeight: '600',
+                fontSize: '0.95rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              統計與趨勢分析
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('templates')}
+              style={{
+                padding: '0.6rem 1.25rem',
+                borderRadius: '8px 8px 0 0',
+                border: 'none',
+                background: activeTab === 'templates' ? 'var(--color-primary)' : 'transparent',
+                color: activeTab === 'templates' ? '#f0ece1' : 'var(--text-secondary)',
+                fontWeight: '600',
+                fontSize: '0.95rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              班別範本管理
             </button>
           </div>
         )}
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-          gap: 'var(--spacing-md)',
-          marginBottom: 'var(--spacing-md)'
-        }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
-              班別名稱
-            </label>
-            <input
-              type="text"
-              value={newTemplate.name}
-              onChange={(e) => setNewTemplate({ ...newTemplate, name: e.target.value })}
-              placeholder="例：週六班"
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '8px',
-                border: '2px dashed rgba(220, 208, 194, 0.8)',
-                background: 'rgba(220, 208, 194, 0.35)',
-                color: 'var(--foreground)',
-              }}
+        {/* 標籤頁內容切換 */}
+        {activeTab === 'records' && (
+          <>
+            {/* 新增記錄表單 */}
+            <SalaryRecordForm
+              currentRecord={currentRecord}
+              setCurrentRecord={setCurrentRecord}
+              workHours={workHours}
+              setWorkHours={setWorkHours}
+              shiftCategoryOptions={shiftCategoryOptions}
+              templates={templates}
+              importMonth={importMonth}
+              setImportMonth={setImportMonth}
+              onAddRecord={handleAddRecord}
+              onImportFromWorkShifts={handleImportFromWorkShifts}
+              onApplyTemplate={handleApplyTemplate}
             />
-          </div>
 
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
-              星期
-            </label>
-            <select
-              value={newTemplate.weekday}
-              onChange={(e) => setNewTemplate({ ...newTemplate, weekday: Number(e.target.value) as Weekday })}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '8px',
-                border: '2px dashed rgba(220, 208, 194, 0.8)',
-                background: 'rgba(220, 208, 194, 0.35)',
-                color: 'var(--foreground)',
-                cursor: 'pointer',
-              }}
-            >
-              {WEEKDAY_LABELS.map((label, index) => (
-                <option key={label} value={index} style={{ background: '#f0ece1', color: '#3d3a36' }}>
-                  {`星期${label}`}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
-              開始時間
-            </label>
-            <input
-              type="time"
-              value={newTemplate.startTime}
-              onChange={(e) => setNewTemplate({ ...newTemplate, startTime: e.target.value })}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '8px',
-                border: '2px dashed rgba(220, 208, 194, 0.8)',
-                background: 'rgba(220, 208, 194, 0.35)',
-                color: 'var(--foreground)',
-              }}
+            {/* 明細表格與操作 */}
+            <SalaryRecordList
+              records={records}
+              filteredRecords={filteredRecords}
+              filterMonth={filterMonth}
+              updateFilterMonth={updateFilterMonth}
+              quickFilters={quickFilters}
+              selectedRecordIds={selectedRecordIds}
+              toggleRecordSelection={toggleRecordSelection}
+              toggleSelectAll={toggleSelectAll}
+              setSelectedRecordIds={setSelectedRecordIds}
+              onOpenBatchEdit={handleOpenBatchEdit}
+              onBatchDelete={handleBatchDelete}
+              onPrint={handlePrint}
+              onExportPDF={handleExportPDF}
+              onExportExcel={handleExportExcel}
+              onImportClick={handleImportClick}
+              isImporting={isImporting}
+              fileInputRef={fileInputRef}
+              handleFileSelect={handleFileSelect}
+              onEditRecord={handleEditRecord}
+              onCopyRecord={handleCopyRecord}
+              onDeleteRecord={handleDeleteRecord}
+              getDisplayShiftName={getDisplayShiftName}
+              calculatePay={calculatePay}
+              calculateHours={calculateHours}
+              showEditModal={showEditModal}
+              editingRecord={editingRecord}
+              editingWorkHours={editingWorkHours}
+              onEditWorkHoursChange={setEditingWorkHours}
+              onEditStartTimeChange={(t) => editingRecord && setEditingRecord({ ...editingRecord, startTime: t })}
+              onEditEndTimeChange={(t) => editingRecord && setEditingRecord({ ...editingRecord, endTime: t })}
+              onSaveEdit={handleSaveEdit}
+              onCancelEdit={handleCancelEdit}
+              setEditingRecord={setEditingRecord}
+              showBatchEditModal={showBatchEditModal}
+              batchNewHourlyRate={batchNewHourlyRate}
+              setBatchNewHourlyRate={setBatchNewHourlyRate}
+              batchEditData={batchEditData}
+              setBatchEditData={setBatchEditData}
+              shiftCategoryOptions={shiftCategoryOptions}
+              onBatchEditHourlyRate={handleBatchEditHourlyRate}
+              onCancelBatchEdit={handleCancelBatchEdit}
             />
-          </div>
+          </>
+        )}
 
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
-              結束時間
-            </label>
-            <input
-              type="time"
-              value={newTemplate.endTime}
-              onChange={(e) => setNewTemplate({ ...newTemplate, endTime: e.target.value })}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '8px',
-                border: '2px dashed rgba(220, 208, 194, 0.8)',
-                background: 'rgba(220, 208, 194, 0.35)',
-                color: 'var(--foreground)',
-              }}
-            />
-          </div>
+        {activeTab === 'analytics' && (
+          <SalaryAnalytics
+            statsFilter={statsFilter}
+            setStatsFilter={setStatsFilter}
+            statsQuickFilters={statsQuickFilters}
+            showStats={showStats}
+            setShowStats={setShowStats}
+            statsTotalPay={statsTotalPay}
+            statsTotalHours={statsTotalHours}
+            statsAvgHourlyRate={statsAvgHourlyRate}
+            statsWorkDays={statsWorkDays}
+            monthlyStats={monthlyStats}
+            maxMonthlyPay={maxMonthlyPay}
+          />
+        )}
 
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
-              時薪 (元)
-            </label>
-            <input
-              type="number"
-              value={newTemplate.hourlyRate}
-              onChange={(e) => setNewTemplate({ ...newTemplate, hourlyRate: Number(e.target.value) })}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '8px',
-                border: '2px dashed rgba(220, 208, 194, 0.8)',
-                background: 'rgba(220, 208, 194, 0.35)',
-                color: 'var(--foreground)',
-              }}
-            />
-          </div>
+        {activeTab === 'templates' && (
+          <ShiftTemplateManager
+            templates={templates}
+            templatesLoading={templatesLoading}
+            canEditTemplates={canEditTemplates}
+            newTemplate={newTemplate}
+            setNewTemplate={setNewTemplate}
+            editingTemplateId={editingTemplateId}
+            onSaveTemplate={handleSaveTemplate}
+            onStartEditTemplate={handleStartEditTemplate}
+            onSetDefaultTemplate={handleSetDefaultTemplate}
+            onDeleteTemplate={handleDeleteTemplate}
+            onResetTemplateForm={resetTemplateForm}
+          />
+        )}
 
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
-              工作時數 (小時)
-            </label>
-            <input
-              type="number"
-              step="0.5"
-              min="0"
-              value={newTemplate.workHours ?? 0}
-              onChange={(e) => setNewTemplate({ ...newTemplate, workHours: Number(e.target.value) })}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '8px',
-                border: '2px dashed rgba(220, 208, 194, 0.8)',
-                background: 'rgba(220, 208, 194, 0.35)',
-                color: 'var(--foreground)',
-              }}
-            />
-          </div>
-
-          <label style={{
+        {/* Excel 匯入預覽 Modal */}
+        {showImportModal && importValidation && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.7)',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem',
-            fontSize: '0.9rem',
-            fontWeight: 600,
-            color: 'var(--foreground)',
+            justifyContent: 'center',
+            zIndex: 1000,
           }}>
-            <input
-              type="checkbox"
-              checked={newTemplate.isDefault}
-              onChange={(e) => setNewTemplate({ ...newTemplate, isDefault: e.target.checked })}
-            />
-            設為預設
-          </label>
-        </div>
+            <div className="glass" style={{
+              width: '90%',
+              maxWidth: '800px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              padding: 'var(--spacing-lg)',
+              background: '#f0ece1',
+            }}>
+              <h3 style={{ fontSize: '1.3rem', fontWeight: 'bold', marginBottom: 'var(--spacing-md)' }}>
+                Excel 匯入預覽
+              </h3>
 
-        <button
-          onClick={handleSaveTemplate}
-          disabled={!canEditTemplates}
-          style={{
-            padding: '0.6rem 1.4rem',
-            borderRadius: '8px',
-            border: 'none',
-            background: 'var(--color-primary)',
-            color: '#f0ece1',
-            fontWeight: '600',
-            cursor: canEditTemplates ? 'pointer' : 'not-allowed',
-            transition: 'all 0.2s',
-            boxShadow: '0 4px 12px rgba(139, 121, 101, 0.15)',
-          }}
-        >
-          {editingTemplateId ? '更新班別' : '新增班別'}
-        </button>
+              {importValidation.errors.length > 0 && (
+                <div style={{
+                  padding: '1rem',
+                  marginBottom: 'var(--spacing-md)',
+                  borderRadius: '8px',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  color: '#dc2626',
+                }}>
+                  <strong>驗證錯誤：</strong>
+                  <ul style={{ margin: '0.5rem 0 0 1.5rem', padding: 0 }}>
+                    {importValidation.errors.map((error, index) => (
+                      <li key={index}>{error}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
-        <div style={{ marginTop: 'var(--spacing-lg)' }}>
-          {templates.length === 0 ? (
-            <div style={{ color: 'var(--muted)' }}>尚未建立班別</div>
-          ) : (
-            <div style={{ display: 'grid', gap: 'var(--spacing-sm)' }}>
-              {templates.map(template => (
-                <div
-                  key={template.id}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1.5fr 1fr 1.5fr 1fr auto',
-                    gap: 'var(--spacing-sm)',
-                    alignItems: 'center',
-                    padding: '0.75rem 1rem',
-                    borderRadius: '10px',
-                    border: '2px dashed rgba(220, 208, 194, 0.7)',
-                    background: '#f0ece1',
-                  }}
-                >
-                  <div style={{ fontWeight: 600 }}>{template.name}</div>
-                  <div style={{ color: 'var(--muted)' }}>{`星期${WEEKDAY_LABELS[template.weekday]}`}</div>
-                  <div>{template.startTime} - {template.endTime}</div>
-                  <div>{template.workHours ?? '-'}h / ${template.hourlyRate}</div>
-                  <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                    <button
-                      onClick={() => handleStartEditTemplate(template)}
-                      disabled={!canEditTemplates}
-                      style={{
-                        padding: '0.4rem 0.8rem',
-                        borderRadius: '8px',
-                        border: '1px dashed rgba(95, 113, 134, 0.4)',
-                        background: 'rgba(95, 113, 134, 0.12)',
-                        color: 'var(--color-secondary)',
-                        fontWeight: '600',
-                        cursor: canEditTemplates ? 'pointer' : 'not-allowed',
-                      }}
-                    >
-                      編輯
-                    </button>
-                    <button
-                      onClick={() => handleSetDefaultTemplate(template)}
-                      disabled={!canEditTemplates}
-                      style={{
-                        padding: '0.4rem 0.8rem',
-                        borderRadius: '8px',
-                        border: '1px dashed rgba(184, 126, 107, 0.4)',
-                        background: template.isDefault ? 'var(--color-primary)' : 'rgba(184, 126, 107, 0.15)',
-                        color: template.isDefault ? '#f0ece1' : 'var(--color-primary)',
-                        fontWeight: '600',
-                        cursor: canEditTemplates ? 'pointer' : 'not-allowed',
-                      }}
-                    >
-                      {template.isDefault ? '預設中' : '設為預設'}
-                    </button>
-                    <button
-                      onClick={() => handleDeleteTemplate(template)}
-                      disabled={!canEditTemplates}
-                      style={{
-                        padding: '0.4rem 0.8rem',
-                        borderRadius: '8px',
-                        border: '1px dashed rgba(239, 68, 68, 0.3)',
-                        background: 'rgba(239, 68, 68, 0.1)',
-                        color: '#dc2626',
-                        fontWeight: '600',
-                        cursor: canEditTemplates ? 'pointer' : 'not-allowed',
-                      }}
-                    >
-                      刪除
-                    </button>
+              {importValidation.success && (
+                <div>
+                  <div style={{
+                    padding: '1rem',
+                    marginBottom: 'var(--spacing-md)',
+                    borderRadius: '8px',
+                    background: 'rgba(34, 197, 94, 0.1)',
+                    border: '1px solid rgba(34, 197, 94, 0.3)',
+                    color: '#16a34a',
+                  }}>
+                    成功解析 <strong>{importValidation.records.length}</strong> 筆記錄！
+                  </div>
+
+                  <div style={{ maxHeight: '300px', overflowY: 'auto', marginBottom: 'var(--spacing-md)' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '2px solid rgba(0,0,0,0.1)', background: 'rgba(0,0,0,0.05)' }}>
+                          <th style={{ padding: '0.5rem', textAlign: 'left' }}>日期</th>
+                          <th style={{ padding: '0.5rem', textAlign: 'left' }}>班別</th>
+                          <th style={{ padding: '0.5rem', textAlign: 'center' }}>工時</th>
+                          <th style={{ padding: '0.5rem', textAlign: 'right' }}>時薪</th>
+                          <th style={{ padding: '0.5rem', textAlign: 'right' }}>薪資</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(showAllImportRecords 
+                          ? importValidation.records 
+                          : importValidation.records.slice(0, 5)
+                        ).map((record, index) => (
+                          <tr key={index} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                            <td style={{ padding: '0.5rem' }}>{record.date}</td>
+                            <td style={{ padding: '0.5rem' }}>{record.shiftCategory || '-'}</td>
+                            <td style={{ padding: '0.5rem', textAlign: 'center' }}>{record.workHours}h</td>
+                            <td style={{ padding: '0.5rem', textAlign: 'right' }}>${record.hourlyRate}</td>
+                            <td style={{ padding: '0.5rem', textAlign: 'right' }}>${calculatePay(record).toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {!showAllImportRecords && importValidation.records.length > 5 && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAllImportRecords(true)}
+                        style={{
+                          width: '100%',
+                          padding: '0.5rem',
+                          marginTop: '0.5rem',
+                          background: 'transparent',
+                          border: '1px dashed rgba(0,0,0,0.2)',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          color: 'var(--text-secondary)',
+                        }}
+                      >
+                        顯示全部 ({importValidation.records.length} 筆)
+                      </button>
+                    )}
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </details>
-
-      {/* 新增記錄表單 */}
-      <div id="add-record-form" className="glass no-print" style={{ padding: 'var(--spacing-lg)', marginBottom: 'var(--spacing-lg)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)', flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
-          <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>
-            新增工作記錄
-          </h3>
-          <div style={{ display: 'flex', gap: 'var(--spacing-sm)', alignItems: 'center' }}>
-            <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-              匯入月份：
-            </label>
-            <input 
-              type="month"
-              value={importMonth}
-              onChange={(e) => setImportMonth(e.target.value)}
-              style={{
-                padding: '0.4rem 0.6rem',
-                borderRadius: '6px',
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(255,255,255,0.05)',
-                color: 'var(--text-primary)',
-                fontSize: '0.9rem',
-              }}
-            />
-            <button
-              onClick={handleImportFromWorkShifts}
-              style={{
-                padding: '0.5rem 1rem',
-                borderRadius: '8px',
-                border: 'none',
-                background: 'rgba(168, 85, 247, 0.2)',
-                color: '#a855f7',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                fontSize: '0.9rem',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(168, 85, 247, 0.3)';
-                e.currentTarget.style.transform = 'scale(1.05)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(168, 85, 247, 0.2)';
-                e.currentTarget.style.transform = 'scale(1)';
-              }}
-            >
-              從打工月曆匯入
-            </button>
-          </div>
-        </div>
-        
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-          gap: 'var(--spacing-md)',
-          marginBottom: 'var(--spacing-md)'
-        }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
-              日期
-            </label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <input 
-                type="date"
-                value={currentRecord.date}
-                onChange={(e) => {
-                  setCurrentRecord({ ...currentRecord, date: e.target.value });
-                  setLastAppliedTemplateInfo(null);
-                }}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem 0.75rem',
-                  borderRadius: '8px',
-                  border: '2px dashed rgba(220, 208, 194, 0.8)',
-                  background: 'rgba(220, 208, 194, 0.35)',
-                  color: 'var(--foreground)',
-                }}
-              />
-              <span style={{
-                fontSize: '0.9rem',
-                color: 'var(--muted)',
-                whiteSpace: 'nowrap',
-                fontWeight: 600,
-              }}>
-                {getWeekdayLabel(currentRecord.date)}
-              </span>
-            </div>
-          </div>
-
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
-              身份
-            </label>
-            <select
-              value={currentRecord.role}
-              onChange={(e) => {
-                const newRole = e.target.value as RoleType;
-                setCurrentRecord({ 
-                  ...currentRecord, 
-                  role: newRole,
-                  hourlyRate: ROLE_HOURLY_RATES[newRole],
-                });
-              }}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '8px',
-                border: '2px dashed rgba(220, 208, 194, 0.8)',
-                background: 'rgba(220, 208, 194, 0.35)',
-                color: 'var(--foreground)',
-                cursor: 'pointer',
-              }}
-            >
-              <option value="assistant" style={{ background: '#f0ece1', color: '#3d3a36' }}>助教 ($200/hr)</option>
-              <option value="instructor" style={{ background: '#f0ece1', color: '#3d3a36' }}>講師 ($500/hr)</option>
-            </select>
-          </div>
-
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
-              開始時間
-            </label>
-            <input 
-              type="time"
-              value={currentRecord.startTime}
-              onChange={(e) => handleStartTimeChange(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '8px',
-                border: '2px dashed rgba(220, 208, 194, 0.8)',
-                background: 'rgba(220, 208, 194, 0.35)',
-                color: 'var(--foreground)',
-              }}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
-              結束時間
-            </label>
-            <input 
-              type="time"
-              value={currentRecord.endTime}
-              onChange={(e) => handleEndTimeChange(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '8px',
-                border: '2px dashed rgba(220, 208, 194, 0.8)',
-                background: 'rgba(220, 208, 194, 0.35)',
-                color: 'var(--foreground)',
-              }}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
-              工作時數 (小時)
-            </label>
-            <input 
-              type="number"
-              step="0.5"
-              min="0"
-              value={workHours}
-              onChange={(e) => handleWorkHoursChange(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '8px',
-                border: '2px dashed rgba(220, 208, 194, 0.8)',
-                background: 'rgba(220, 208, 194, 0.35)',
-                color: 'var(--foreground)',
-              }}
-              placeholder="例：8"
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
-              時薪 (元)
-            </label>
-            <input 
-              type="number"
-              value={currentRecord.hourlyRate}
-              onChange={(e) => setCurrentRecord({ ...currentRecord, hourlyRate: Number(e.target.value) })}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '8px',
-                border: '2px dashed rgba(220, 208, 194, 0.8)',
-                background: 'rgba(220, 208, 194, 0.35)',
-                color: 'var(--foreground)',
-              }}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
-              班別 (選填)
-            </label>
-            <select
-              value={currentRecord.shiftCategory || ''}
-              onChange={(e) => {
-                const value = e.target.value;
-                setCurrentRecord({ ...currentRecord, shiftCategory: value });
-
-                const template = findTemplateByName(value);
-                if (template) {
-                  const hours = template.workHours ?? calculateWorkHoursFromTimes(template.startTime, template.endTime);
-                  const normalizedHours = Number.isFinite(hours) ? hours : 0;
-                  setCurrentRecord((prev) => ({
-                    ...prev,
-                    startTime: template.startTime,
-                    endTime: template.endTime,
-                    hourlyRate: template.hourlyRate,
-                    shiftCategory: value,
-                  }));
-                  setWorkHours(normalizedHours.toString());
-                }
-              }}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '8px',
-                border: '2px dashed rgba(220, 208, 194, 0.8)',
-                background: 'rgba(220, 208, 194, 0.35)',
-                color: 'var(--foreground)',
-                cursor: 'pointer',
-              }}
-            >
-              <option value="" style={{ background: '#f0ece1', color: '#3d3a36' }}>-- 無班別 --</option>
-              {shiftCategoryOptions.map((category) => (
-                <option key={category} value={category} style={{ background: '#f0ece1', color: '#3d3a36' }}>{category}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <button
-          onClick={handleAddRecord}
-          style={{
-            padding: '0.75rem 1.5rem',
-            borderRadius: '8px',
-            border: 'none',
-            background: 'var(--color-primary)',
-            color: '#f0ece1',
-            fontWeight: '600',
-            boxShadow: '0 4px 12px rgba(139, 121, 101, 0.15)',
-            cursor: 'pointer',
-            transition: 'transform 0.2s, background 0.2s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'scale(1.03)';
-            e.currentTarget.style.background = 'var(--color-primary-hover)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.background = 'var(--color-primary)';
-          }}
-        >
-          新增記錄
-        </button>
-      </div>
-
-      {/* 跨月份提示（當篩選月份沒有記錄，但總共有記錄時） */}
-      {records.length > 0 && filteredRecords.length === 0 && Boolean(filterMonth) && (
-        <div
-          className="no-print"
-          style={{
-            padding: '1rem 1.25rem',
-            marginBottom: 'var(--spacing-lg)',
-            borderRadius: '12px',
-            background: 'rgba(234, 179, 8, 0.12)',
-            border: '1px solid rgba(234, 179, 8, 0.3)',
-            color: '#fbbf24',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '0.75rem',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '1.2rem' }}>💡</span>
-            <span>
-              當前選擇的月份 (<strong>{filterMonth}</strong>) 尚無記錄，但共有 <strong>{records.length}</strong> 筆打工記錄在其他月份。
-            </span>
-          </div>
-          <button
-            onClick={() => updateFilterMonth('')}
-            style={{
-              padding: '0.4rem 0.9rem',
-              borderRadius: '8px',
-              border: '1px solid #d4c8bc',
-              background: '#e4dcd2',
-              color: '#5e5650',
-              fontWeight: '600',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-            }}
-          >
-            切換至「全部」顯示所有記錄
-          </button>
-        </div>
-      )}
-
-      {/* 記錄列表 */}
-      {records.length > 0 && (
-        <div className="glass" style={{ 
-          padding: 'var(--spacing-lg)', 
-          marginBottom: 'var(--spacing-lg)',
-          background: isPrintMode ? 'white' : undefined,
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)' }}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>
-              工作記錄
-            </h3>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {selectedRecordIds.size > 0 && (
-                <>
-                  <button
-                    onClick={handleOpenBatchEdit}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      borderRadius: '8px',
-                      border: '1px dashed rgba(200, 141, 85, 0.4)',
-                      background: 'rgba(200, 141, 85, 0.12)',
-                      color: '#c88d55',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(200, 141, 85, 0.22)';
-                      e.currentTarget.style.transform = 'translateY(-1px)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(200, 141, 85, 0.12)';
-                      e.currentTarget.style.transform = 'translateY(0)';
-                    }}
-                  >
-                    批次編輯 ({selectedRecordIds.size})
-                  </button>
-                  <button
-                    onClick={handleBatchDelete}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      borderRadius: '8px',
-                      border: '1px dashed rgba(184, 107, 107, 0.4)',
-                      background: 'rgba(184, 107, 107, 0.12)',
-                      color: '#b86b6b',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(184, 107, 107, 0.22)';
-                      e.currentTarget.style.transform = 'translateY(-1px)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(184, 107, 107, 0.12)';
-                      e.currentTarget.style.transform = 'translateY(0)';
-                    }}
-                  >
-                    批量刪除 ({selectedRecordIds.size})
-                  </button>
-                  <button
-                    onClick={() => setSelectedRecordIds(new Set())}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      borderRadius: '8px',
-                      border: '1px dashed rgba(120, 120, 120, 0.4)',
-                      background: 'rgba(120, 120, 120, 0.12)',
-                      color: '#787878',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(120, 120, 120, 0.22)';
-                      e.currentTarget.style.transform = 'translateY(-1px)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(120, 120, 120, 0.12)';
-                      e.currentTarget.style.transform = 'translateY(0)';
-                    }}
-                  >
-                    取消選擇
-                  </button>
-                </>
               )}
-              <button
-                onClick={handlePrint}
-                className="no-print"
-                style={{
-                  padding: '0.5rem 1rem',
-                  borderRadius: '8px',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(139, 92, 246, 0.3)';
-                  e.currentTarget.style.transform = 'scale(1.05)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)';
-                  e.currentTarget.style.transform = 'scale(1)';
-                }}
-              >
-                列印
-              </button>
-              <button
-                onClick={handleExportPDF}
-                className="no-print"
-                style={{
-                  padding: '0.5rem 1rem',
-                  borderRadius: '8px',
-                  border: '1px dashed rgba(184, 126, 107, 0.4)',
-                  background: 'rgba(184, 126, 107, 0.12)',
-                  color: 'var(--color-primary)',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(184, 126, 107, 0.22)';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(184, 126, 107, 0.12)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                匯出 PDF
-              </button>
-              <button
-                onClick={handleExportExcel}
-                className="no-print"
-                style={{
-                  padding: '0.5rem 1rem',
-                  borderRadius: '8px',
-                  border: '1px dashed rgba(200, 141, 85, 0.4)',
-                  background: 'rgba(200, 141, 85, 0.12)',
-                  color: '#c88d55',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(200, 141, 85, 0.22)';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(200, 141, 85, 0.12)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                匯出 Excel
-              </button>
-              
-              {/* 匯入 Excel 按鈕 */}
-              <button
-                onClick={handleImportClick}
-                className="no-print"
-                disabled={isImporting}
-                style={{
-                  padding: '0.5rem 1rem',
-                  borderRadius: '8px',
-                  border: '1px dashed rgba(95, 113, 134, 0.4)',
-                  background: 'rgba(95, 113, 134, 0.12)',
-                  color: 'var(--color-secondary)',
-                  fontWeight: '600',
-                  cursor: isImporting ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isImporting) {
-                    e.currentTarget.style.background = 'rgba(95, 113, 134, 0.22)';
-                    e.currentTarget.style.transform = 'translateY(-1px)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isImporting) {
-                    e.currentTarget.style.background = 'rgba(95, 113, 134, 0.12)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }
-                }}
-              >
-                {isImporting ? '解析中...' : '匯入 Excel'}
-              </button>
-              
-              {/* 隱藏的檔案輸入 */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={handleFileSelect}
-                style={{ display: 'none' }}
-              />
-            </div>
-          </div>
 
-          {/* 月份篩選器 */}
-          <div className="no-print" style={{ 
-            display: 'flex', 
-            gap: 'var(--spacing-md)', 
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            marginBottom: 'var(--spacing-md)',
-            padding: 'var(--spacing-md)',
-            background: 'rgba(220, 208, 194, 0.25)',
-            borderRadius: '12px',
-            border: '2px dashed rgba(220, 208, 194, 0.7)',
-          }}>
-            {/* 快速選項按鈕 */}
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {quickFilters.map(filter => (
+              <div style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'flex-end' }}>
                 <button
-                  key={filter.value}
-                  onClick={() => updateFilterMonth(filter.value)}
+                  type="button"
+                  onClick={handleCancelImport}
                   style={{
-                    padding: '0.5rem 1rem',
+                    padding: '0.5rem 1.25rem',
                     borderRadius: '8px',
-                    border: filterMonth === filter.value 
-                      ? '2px solid var(--color-primary)' 
-                      : '2px dashed rgba(220, 208, 194, 0.7)',
-                    background: filterMonth === filter.value 
-                      ? 'var(--color-primary)' 
-                      : '#f0ece1',
-                    color: filterMonth === filter.value 
-                      ? '#f0ece1' 
-                      : 'var(--foreground)',
-                    fontWeight: filterMonth === filter.value ? '600' : '500',
+                    border: '1px solid rgba(0,0,0,0.2)',
+                    background: 'transparent',
                     cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    fontSize: '0.9rem',
-                    boxShadow: filterMonth === filter.value ? '0 4px 12px rgba(139, 121, 101, 0.2)' : 'none',
                   }}
-                  onMouseEnter={(e) => {
-                    if (filterMonth !== filter.value) {
-                      e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (filterMonth !== filter.value) {
-                      e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                    }
-                  }}
-                  title={filter.description}
                 >
-                  {filter.label}
+                  取消
                 </button>
-              ))}
-            </div>
-
-            {/* 月份選擇器 */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                自訂月份：
-              </label>
-              <input 
-                type="month"
-                value={filterMonth || ''}
-                onChange={(e) => updateFilterMonth(e.target.value)}
-                style={{
-                  padding: '0.5rem',
-                  borderRadius: '6px',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  background: 'rgba(255,255,255,0.05)',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.9rem',
-                }}
-              />
-            </div>
-
-            {/* 計數顯示 */}
-            <div style={{ 
-              marginLeft: 'auto',
-              fontSize: '0.9rem',
-              color: 'var(--text-secondary)',
-              fontWeight: '600',
-            }}>
-              顯示：
-              <span style={{ color: 'var(--color-primary)', marginLeft: '0.25rem', fontSize: '1.1rem' }}>
-                {filteredRecords.length}
-              </span>
-              {filterMonth && (
-                <span style={{ opacity: 0.6 }}>
-                  {' '} / {records.length} 筆
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ 
-              width: '100%', 
-              borderCollapse: 'collapse',
-              fontSize: '0.95rem',
-              border: isPrintMode ? '1px solid #333' : 'none',
-            }}>
-              <thead>
-                <tr style={{ 
-                  borderBottom: isPrintMode ? '2px solid #333' : '2px solid rgba(255,255,255,0.1)',
-                  background: isPrintMode ? '#f0f0f0' : 'rgba(255,255,255,0.05)',
-                }}>
-                  {!isPrintMode && (
-                    <th style={{ 
-                      padding: '0.75rem', 
-                      textAlign: 'center', 
-                      width: '50px',
-                      border: isPrintMode ? '1px solid #333' : 'none',
-                    }}>
-                      <input
-                        type="checkbox"
-                        checked={selectedRecordIds.size === filteredRecords.length && filteredRecords.length > 0}
-                        onChange={toggleSelectAll}
-                        style={{
-                          width: '18px',
-                          height: '18px',
-                          cursor: 'pointer',
-                          accentColor: 'var(--color-primary)',
-                        }}
-                        title="全選/取消全選"
-                      />
-                    </th>
-                  )}
-                  <th style={{ 
-                    padding: '0.75rem', 
-                    textAlign: 'left',
-                    border: isPrintMode ? '1px solid #333' : 'none',
-                    color: isPrintMode ? 'black' : 'inherit',
-                  }}>日期</th>
-                  <th style={{ 
-                    padding: '0.75rem', 
-                    textAlign: 'left',
-                    border: isPrintMode ? '1px solid #333' : 'none',
-                    color: isPrintMode ? 'black' : 'inherit',
-                  }}>身份</th>
-                  <th style={{ 
-                    padding: '0.75rem', 
-                    textAlign: 'left',
-                    border: isPrintMode ? '1px solid #333' : 'none',
-                    color: isPrintMode ? 'black' : 'inherit',
-                  }}>班別</th>
-                  <th style={{ 
-                    padding: '0.75rem', 
-                    textAlign: 'left',
-                    border: isPrintMode ? '1px solid #333' : 'none',
-                    color: isPrintMode ? 'black' : 'inherit',
-                  }}>時間</th>
-                  <th style={{ 
-                    padding: '0.75rem', 
-                    textAlign: 'center',
-                    border: isPrintMode ? '1px solid #333' : 'none',
-                    color: isPrintMode ? 'black' : 'inherit',
-                  }}>工時</th>
-                  <th style={{ 
-                    padding: '0.75rem', 
-                    textAlign: 'right',
-                    border: isPrintMode ? '1px solid #333' : 'none',
-                    color: isPrintMode ? 'black' : 'inherit',
-                  }}>時薪</th>
-                  <th style={{ 
-                    padding: '0.75rem', 
-                    textAlign: 'right',
-                    border: isPrintMode ? '1px solid #333' : 'none',
-                    color: isPrintMode ? 'black' : 'inherit',
-                  }}>薪資</th>
-                  {!isPrintMode && (
-                    <th style={{ 
-                      padding: '0.75rem', 
-                      textAlign: 'center',
-                      border: isPrintMode ? '1px solid #333' : 'none',
-                      color: isPrintMode ? 'black' : 'inherit',
-                    }}>操作</th>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {[...filteredRecords]
-                  .sort((a, b) => {
-                    // 先按日期排序（舊到新）
-                    const dateCompare = a.date.localeCompare(b.date);
-                    if (dateCompare !== 0) return dateCompare;
-                    // 日期相同則按開始時間排序（早到晚）
-                    return a.startTime.localeCompare(b.startTime);
-                  })
-                  .map((record) => {
-                  const displayShiftName = getDisplayShiftName(record);
-                  const isSelected = selectedRecordIds.has(record.id);
-                  return (
-                    <tr 
-                      key={record.id} 
-                      style={{ 
-                        borderBottom: isPrintMode ? '1px solid #ddd' : '1px solid rgba(255,255,255,0.05)',
-                        background: isPrintMode ? 'white' : (isSelected ? 'rgba(139, 92, 246, 0.1)' : 'transparent'),
-                        transition: 'background 0.2s',
-                      }}
-                    >
-                      {!isPrintMode && (
-                        <td style={{ 
-                          padding: '0.75rem', 
-                          textAlign: 'center',
-                          border: isPrintMode ? '1px solid #ddd' : 'none',
-                        }}>
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleRecordSelection(record.id)}
-                            style={{
-                              width: '18px',
-                              height: '18px',
-                              cursor: 'pointer',
-                              accentColor: 'var(--color-primary)',
-                            }}
-                          />
-                        </td>
-                      )}
-                      <td style={{ 
-                        padding: '0.75rem',
-                        border: isPrintMode ? '1px solid #ddd' : 'none',
-                        color: isPrintMode ? 'black' : 'inherit',
-                      }}>{record.date}</td>
-                      <td style={{ 
-                        padding: '0.75rem',
-                        border: isPrintMode ? '1px solid #ddd' : 'none',
-                        color: isPrintMode ? 'black' : 'inherit',
-                      }}>
-                        <span style={{
-                          padding: '0.25rem 0.5rem',
-                          borderRadius: '4px',
-                          background: isPrintMode ? 'transparent' : (record.role === 'instructor' ? 'rgba(200, 141, 85, 0.18)' : 'rgba(95, 113, 134, 0.18)'),
-                          color: isPrintMode ? 'black' : (record.role === 'instructor' ? '#c88d55' : 'var(--color-secondary)'),
-                          fontSize: '0.85rem',
-                          fontWeight: '600',
-                        }}>
-                          {record.role === 'instructor' ? '講師' : '助教'}
-                        </span>
-                      </td>
-                      <td style={{ 
-                        padding: '0.75rem',
-                        border: isPrintMode ? '1px solid #ddd' : 'none',
-                        color: isPrintMode ? 'black' : 'inherit',
-                      }}>
-                        {displayShiftName !== '-' && !isPrintMode && (
-                          <span style={{
-                            padding: '0.25rem 0.5rem',
-                            borderRadius: '4px',
-                            background: 'rgba(184, 126, 107, 0.15)',
-                            color: 'var(--color-primary)',
-                            fontSize: '0.85rem',
-                            fontWeight: '600',
-                          }}>
-                            {displayShiftName}
-                          </span>
-                        )}
-                        {displayShiftName !== '-' && isPrintMode && (
-                          <span>{displayShiftName}</span>
-                        )}
-                        {displayShiftName === '-' && <span style={{ color: isPrintMode ? 'black' : 'var(--muted)' }}>-</span>}
-                      </td>
-                      <td style={{ 
-                        padding: '0.75rem',
-                        border: isPrintMode ? '1px solid #ddd' : 'none',
-                        color: isPrintMode ? 'black' : 'inherit',
-                      }}>{record.startTime} - {record.endTime}</td>
-                      <td style={{ 
-                        padding: '0.75rem', 
-                        textAlign: 'center',
-                        border: isPrintMode ? '1px solid #ddd' : 'none',
-                        color: isPrintMode ? 'black' : 'inherit',
-                      }}>
-                        {calculateHours(record).toFixed(2)}h
-                      </td>
-                      <td style={{ 
-                        padding: '0.75rem', 
-                        textAlign: 'right',
-                        border: isPrintMode ? '1px solid #ddd' : 'none',
-                        color: isPrintMode ? 'black' : 'inherit',
-                      }}>${record.hourlyRate}</td>
-                      <td style={{ 
-                        padding: '0.75rem', 
-                        textAlign: 'right',
-                        fontWeight: '600',
-                        color: isPrintMode ? 'black' : 'var(--color-primary)',
-                        border: isPrintMode ? '1px solid #ddd' : 'none',
-                      }}>
-                        ${calculatePay(record)}
-                      </td>
-                      {!isPrintMode && (
-                        <td style={{ padding: '0.75rem', textAlign: 'center' }}>
-                          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                            <button
-                              onClick={() => handleEditRecord(record)}
-                              style={{
-                                padding: '0.25rem 0.65rem',
-                                borderRadius: '6px',
-                                border: '1px dashed rgba(200, 141, 85, 0.4)',
-                                background: 'rgba(200, 141, 85, 0.12)',
-                                color: '#c88d55',
-                                fontSize: '0.85rem',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                              }}
-                              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(200, 141, 85, 0.22)'}
-                              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(200, 141, 85, 0.12)'}
-                              title="編輯此記錄"
-                            >
-                              編輯
-                            </button>
-                            <button
-                              onClick={() => handleCopyRecord(record)}
-                              style={{
-                                padding: '0.25rem 0.65rem',
-                                borderRadius: '6px',
-                                border: '1px dashed rgba(95, 113, 134, 0.4)',
-                                background: 'rgba(95, 113, 134, 0.12)',
-                                color: 'var(--color-secondary)',
-                                fontSize: '0.85rem',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                              }}
-                              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(95, 113, 134, 0.22)'}
-                              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(95, 113, 134, 0.12)'}
-                              title="複製此記錄"
-                            >
-                              複製
-                            </button>
-                            <button
-                              onClick={() => handleDeleteRecord(record.id)}
-                              style={{
-                                padding: '0.25rem 0.65rem',
-                                borderRadius: '6px',
-                                border: '1px dashed rgba(220, 38, 38, 0.3)',
-                                background: 'rgba(220, 38, 38, 0.1)',
-                                color: '#dc2626',
-                                fontSize: '0.85rem',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                              }}
-                              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(220, 38, 38, 0.2)'}
-                              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(220, 38, 38, 0.1)'}
-                              title="刪除此記錄"
-                            >
-                              刪除
-                            </button>
-                          </div>
-                        </td>
-                      )}
-                    </tr>
-                  );
-                })}
-              </tbody>
-              <tfoot>
-                <tr style={{ 
-                  borderTop: isPrintMode ? '2px solid #333' : '2px solid rgba(255,255,255,0.2)',
-                  background: isPrintMode ? '#f9f9f9' : 'rgba(255,255,255,0.05)',
-                  fontWeight: '700'
-                }}>
-                  {!isPrintMode && <td></td>}
-                  <td colSpan={isPrintMode ? 7 : 7} style={{ 
-                    padding: '1rem', 
-                    textAlign: 'right', 
-                    fontSize: '1.1rem',
-                    border: isPrintMode ? '1px solid #333' : 'none',
-                    color: isPrintMode ? 'black' : 'inherit',
-                  }}>
-                    總計薪資
-                  </td>
-                  <td style={{ 
-                    padding: '1rem', 
-                    textAlign: 'right',
-                    fontSize: '1.2rem',
-                    color: isPrintMode ? 'black' : 'var(--color-primary)',
-                    border: isPrintMode ? '1px solid #333' : 'none',
-                  }}>
-                    ${totalPay}
-                  </td>
-                  {!isPrintMode && <td></td>}
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {records.length === 0 && (
-        <div className="glass" style={{ 
-          padding: '3rem', 
-          textAlign: 'center',
-          color: 'var(--text-secondary)'
-        }}>
-          尚無工作記錄，請新增第一筆記錄
-        </div>
-      )}
-
-      {/* 篩選結果為空的提示 */}
-      {records.length > 0 && filteredRecords.length === 0 && (
-        <div className="glass" style={{ 
-          padding: '3rem', 
-          textAlign: 'center',
-          color: 'var(--text-secondary)'
-        }}>
-          <p style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>該月份尚無工作記錄</p>
-          <button 
-            onClick={() => updateFilterMonth('')}
-            style={{
-              padding: '0.75rem 1.5rem',
-              borderRadius: '8px',
-              border: 'none',
-              background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))',
-              color: 'white',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'transform 0.2s',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          >
-            顯示全部記錄
-          </button>
-        </div>
-      )}
-
-      {/* 隱藏的 PDF 內容區域 */}
-      <div 
-        ref={pdfContentRef} 
-        style={{
-          position: 'absolute',
-          left: '-9999px',
-          top: 0,
-          width: '800px',
-          padding: '40px',
-          background: '#f0ece1',
-          color: '#3d3a36',
-        }}
-      >
-        <h1 style={{ 
-          fontSize: '32px', 
-          marginBottom: '20px',
-          textAlign: 'center',
-          background: 'linear-gradient(135deg, #8b5cf6, #06b6d4)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-        }}>
-          薪資報表
-        </h1>
-        <div style={{ fontSize: '14px', marginBottom: '30px', color: '#aaa' }}>
-          <div>生成日期：{new Date().toLocaleDateString('zh-TW')}</div>
-          <div>記錄總數：{filteredRecords.length} 筆</div>
-          <div>總計薪資：${totalPay}</div>
-        </div>
-        
-        <table style={{ 
-          width: '100%', 
-          borderCollapse: 'collapse',
-          marginTop: '20px',
-        }}>
-          <thead>
-            <tr style={{ 
-              background: 'rgba(139, 92, 246, 0.3)',
-              borderBottom: '2px solid #8b5cf6'
-            }}>
-              <th style={{ padding: '12px', textAlign: 'left', fontSize: '14px' }}>日期</th>
-              <th style={{ padding: '12px', textAlign: 'left', fontSize: '14px' }}>班別</th>
-              <th style={{ padding: '12px', textAlign: 'center', fontSize: '14px' }}>時間</th>
-              <th style={{ padding: '12px', textAlign: 'right', fontSize: '14px' }}>工時</th>
-              <th style={{ padding: '12px', textAlign: 'right', fontSize: '14px' }}>時薪</th>
-              <th style={{ padding: '12px', textAlign: 'right', fontSize: '14px' }}>薪資</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredRecords.map((record, index) => (
-              <tr 
-                key={record.id} 
-                style={{ 
-                  borderBottom: '1px solid rgba(255,255,255,0.1)',
-                  background: index % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent'
-                }}
-              >
-                <td style={{ padding: '10px', fontSize: '13px' }}>{record.date}</td>
-                <td style={{ padding: '10px', fontSize: '13px' }}>{getDisplayShiftName(record)}</td>
-                <td style={{ padding: '10px', textAlign: 'center', fontSize: '13px' }}>
-                  {record.startTime} - {record.endTime}
-                </td>
-                <td style={{ padding: '10px', textAlign: 'right', fontSize: '13px' }}>
-                  {calculateHours(record).toFixed(2)}h
-                </td>
-                <td style={{ padding: '10px', textAlign: 'right', fontSize: '13px' }}>
-                  ${record.hourlyRate}
-                </td>
-                <td style={{ padding: '10px', textAlign: 'right', fontSize: '13px', fontWeight: 'bold' }}>
-                  ${calculatePay(record)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr style={{ 
-              borderTop: '2px solid #8b5cf6',
-              background: 'rgba(139, 92, 246, 0.2)',
-              fontWeight: 'bold'
-            }}>
-              <td colSpan={5} style={{ padding: '14px', textAlign: 'right', fontSize: '16px' }}>
-                總計薪資
-              </td>
-              <td style={{ 
-                padding: '14px', 
-                textAlign: 'right', 
-                fontSize: '18px',
-                color: '#8b5cf6'
-              }}>
-                ${totalPay}
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-
-      {/* 編輯記錄彈窗 */}
-      {showEditModal && editingRecord && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.85)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '1rem',
-          }}
-          onClick={handleCancelEdit}
-        >
-          <div 
-            className="glass" 
-            style={{
-              padding: '2rem',
-              maxWidth: '650px',
-              width: '100%',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              background: '#f0ece1',
-              backdropFilter: 'blur(20px)',
-              border: '2px dashed rgba(220, 208, 194, 0.8)',
-              boxShadow: '0 12px 36px rgba(139, 121, 101, 0.2)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between',
-              marginBottom: '1.5rem',
-              paddingBottom: '1rem',
-              borderBottom: '2px dashed rgba(220, 208, 194, 0.8)'
-            }}>
-              <h3 style={{ 
-                fontSize: '1.5rem', 
-                fontWeight: '700',
-                color: 'var(--foreground)',
-                margin: 0
-              }}>
-                編輯工作記錄
-              </h3>
-              <button
-                onClick={handleCancelEdit}
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  border: 'none',
-                  background: 'rgba(239, 68, 68, 0.15)',
-                  color: '#ef4444',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.2rem',
-                  fontWeight: 'bold',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)';
-                  e.currentTarget.style.transform = 'rotate(90deg)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)';
-                  e.currentTarget.style.transform = 'rotate(0deg)';
-                }}
-                title="關閉"
-              >
-                ×
-              </button>
-            </div>
-
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '1.25rem',
-              marginBottom: '2rem'
-            }}>
-              <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '0.5rem', 
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                  color: 'var(--foreground)'
-                }}>
-                  日期
-                </label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <input 
-                    type="date"
-                    value={editingRecord.date}
-                    onChange={(e) => setEditingRecord({ ...editingRecord, date: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      borderRadius: '8px',
-                      border: '2px dashed rgba(220, 208, 194, 0.8)',
-                      background: 'rgba(220, 208, 194, 0.35)',
-                      color: 'var(--foreground)',
-                      fontSize: '0.95rem',
-                      transition: 'all 0.2s',
-                    }}
-                  />
-                  <span style={{
-                    fontSize: '0.9rem',
-                    color: 'var(--muted)',
-                    whiteSpace: 'nowrap',
-                    fontWeight: 600,
-                  }}>
-                    {getWeekdayLabel(editingRecord.date)}
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '0.5rem', 
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                  color: 'var(--foreground)'
-                }}>
-                  身份
-                </label>
-                <select
-                  value={editingRecord.role}
-                  onChange={(e) => {
-                    const newRole = e.target.value as RoleType;
-                    setEditingRecord({ 
-                      ...editingRecord, 
-                      role: newRole,
-                      hourlyRate: ROLE_HOURLY_RATES[newRole],
-                    });
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    border: '2px dashed rgba(220, 208, 194, 0.8)',
-                    background: 'rgba(220, 208, 194, 0.35)',
-                    color: 'var(--foreground)',
-                    fontSize: '0.95rem',
-                    transition: 'all 0.2s',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <option value="assistant" style={{ background: '#f0ece1', color: '#3d3a36' }}>助教 ($200/hr)</option>
-                  <option value="instructor" style={{ background: '#f0ece1', color: '#3d3a36' }}>講師 ($500/hr)</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '0.5rem', 
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                  color: 'var(--foreground)'
-                }}>
-                  開始時間
-                </label>
-                <input 
-                  type="time"
-                  value={editingRecord.startTime}
-                  onChange={(e) => handleEditStartTimeChange(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    border: '2px dashed rgba(220, 208, 194, 0.8)',
-                    background: 'rgba(220, 208, 194, 0.35)',
-                    color: 'var(--foreground)',
-                    fontSize: '0.95rem',
-                    transition: 'all 0.2s',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '0.5rem', 
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                  color: 'var(--foreground)'
-                }}>
-                  結束時間
-                </label>
-                <input 
-                  type="time"
-                  value={editingRecord.endTime}
-                  onChange={(e) => handleEditEndTimeChange(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    border: '2px dashed rgba(220, 208, 194, 0.8)',
-                    background: 'rgba(220, 208, 194, 0.35)',
-                    color: 'var(--foreground)',
-                    fontSize: '0.95rem',
-                    transition: 'all 0.2s',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '0.5rem', 
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                  color: 'var(--foreground)'
-                }}>
-                  工作時數 (小時)
-                </label>
-                <input 
-                  type="number"
-                  value={editingWorkHours}
-                  onChange={(e) => handleEditWorkHoursChange(e.target.value)}
-                  step="0.5"
-                  min="0"
-                  placeholder="例如：8 或 8.5"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    border: '2px dashed rgba(220, 208, 194, 0.8)',
-                    background: 'rgba(220, 208, 194, 0.35)',
-                    color: 'var(--foreground)',
-                    fontSize: '0.95rem',
-                    transition: 'all 0.2s',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '0.5rem', 
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                  color: 'var(--foreground)'
-                }}>
-                  時薪 (元)
-                </label>
-                <input 
-                  type="number"
-                  value={editingRecord.hourlyRate}
-                  onChange={(e) => setEditingRecord({ ...editingRecord, hourlyRate: Number(e.target.value) })}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    border: '2px dashed rgba(220, 208, 194, 0.8)',
-                    background: 'rgba(220, 208, 194, 0.35)',
-                    color: 'var(--foreground)',
-                    fontSize: '0.95rem',
-                    transition: 'all 0.2s',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '0.5rem', 
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                  color: 'var(--foreground)'
-                }}>
-                  班別 (選填)
-                </label>
-                  <select
-                    value={editingRecord.shiftCategory || ''}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setEditingRecord({ ...editingRecord, shiftCategory: value });
-
-                      const template = findTemplateByName(value);
-                      if (template) {
-                        const hours = template.workHours ?? calculateWorkHoursFromTimes(template.startTime, template.endTime);
-                        const normalizedHours = Number.isFinite(hours) ? hours : 0;
-                        setEditingRecord((prev) => {
-                          if (!prev) return prev;
-                          return {
-                            ...prev,
-                            startTime: template.startTime,
-                            endTime: template.endTime,
-                            hourlyRate: template.hourlyRate,
-                            workHours: normalizedHours,
-                            shiftCategory: value,
-                          };
-                        });
-                        setEditingWorkHours(normalizedHours.toString());
-                      }
-                    }}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    border: '2px dashed rgba(220, 208, 194, 0.8)',
-                    background: 'rgba(220, 208, 194, 0.35)',
-                    color: 'var(--foreground)',
-                    fontSize: '0.95rem',
-                    transition: 'all 0.2s',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <option value="" style={{ background: '#f0ece1', color: '#3d3a36' }}>-- 無班別 --</option>
-                  {shiftCategoryOptions.map((category) => (
-                    <option key={category} value={category} style={{ background: '#f0ece1', color: '#3d3a36' }}>{category}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* 預覽區 */}
-            <div style={{
-              padding: '1.25rem',
-              borderRadius: '10px',
-              background: 'rgba(184, 126, 107, 0.12)',
-              border: '2px dashed rgba(220, 208, 194, 0.8)',
-              marginBottom: '2rem'
-            }}>
-              <div style={{ 
-                fontSize: '0.85rem', 
-                color: 'var(--muted)',
-                marginBottom: '0.75rem',
-                fontWeight: '600',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                預覽計算結果
-              </div>
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between',
-                fontSize: '1rem',
-                color: 'var(--foreground)'
-              }}>
-                <span>工作時數：</span>
-                <span style={{ fontWeight: '700', color: 'var(--color-secondary)' }}>
-                  {calculateHours(editingRecord).toFixed(2)} 小時
-                </span>
-              </div>
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between',
-                fontSize: '1rem',
-                marginTop: '0.75rem',
-                paddingTop: '0.75rem',
-                borderTop: '1px dashed rgba(220, 208, 194, 0.8)',
-                color: 'var(--foreground)'
-              }}>
-                <span>預計薪資：</span>
-                <span style={{ fontWeight: '700', color: 'var(--color-primary)', fontSize: '1.25rem' }}>
-                  ${calculatePay(editingRecord)}
-                </span>
-              </div>
-            </div>
-
-            <div style={{ 
-              display: 'flex', 
-              gap: '1rem', 
-              justifyContent: 'flex-end' 
-            }}>
-              <button
-                onClick={handleCancelEdit}
-                style={{
-                  padding: '0.875rem 2rem',
-                  borderRadius: '10px',
-                  border: '2px dashed rgba(220, 208, 194, 0.8)',
-                  background: '#f0ece1',
-                  color: 'var(--foreground)',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  fontSize: '0.95rem',
-                }}
-              >
-                取消
-              </button>
-              <button
-                onClick={handleSaveEdit}
-                style={{
-                  padding: '0.875rem 2rem',
-                  borderRadius: '10px',
-                  border: 'none',
-                  background: 'var(--color-primary)',
-                  color: '#f0ece1',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  fontSize: '0.95rem',
-                  boxShadow: '0 4px 12px rgba(139, 121, 101, 0.15)',
-                }}
-              >
-                儲存變更
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 批次編輯彈窗 */}
-      {showBatchEditModal && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.85)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '1rem',
-          }}
-          onClick={handleCancelBatchEdit}
-        >
-          <div 
-            className="glass" 
-            style={{
-              padding: '2rem',
-              maxWidth: '500px',
-              width: '100%',
-              maxHeight: '85vh',
-              overflowY: 'auto',
-              background: 'rgba(30, 30, 45, 0.95)',
-              backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(139, 92, 246, 0.3)',
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.2)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between',
-              marginBottom: '1.5rem',
-              paddingBottom: '1rem',
-              borderBottom: '2px solid rgba(139, 92, 246, 0.3)'
-            }}>
-              <h3 style={{ 
-                fontSize: '1.5rem', 
-                fontWeight: '700',
-                background: 'linear-gradient(to right, var(--color-primary), var(--color-secondary))',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                margin: 0
-              }}>
-                批次編輯工作紀錄
-              </h3>
-              <button
-                onClick={handleCancelBatchEdit}
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  border: 'none',
-                  background: 'rgba(239, 68, 68, 0.15)',
-                  color: '#ef4444',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.2rem',
-                  fontWeight: 'bold',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)';
-                  e.currentTarget.style.transform = 'rotate(90deg)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)';
-                  e.currentTarget.style.transform = 'rotate(0deg)';
-                }}
-                title="關閉"
-              >
-                ×
-              </button>
-            </div>
-
-            <div style={{ marginBottom: '1.5rem' }}>
-              <div style={{
-                padding: '1rem',
-                borderRadius: '8px',
-                background: 'rgba(139, 92, 246, 0.1)',
-                border: '1px solid rgba(139, 92, 246, 0.3)',
-                marginBottom: '1.5rem',
-              }}>
-                <div style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.7)' }}>
-                  已選擇 <span style={{ color: 'var(--color-primary)', fontWeight: '700', fontSize: '1.1rem' }}>{selectedRecordIds.size}</span> 筆記錄
-                </div>
-              </div>
-
-              {/* 身份選擇 */}
-              <div style={{ marginBottom: '1.25rem' }}>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '0.5rem', 
-                  fontSize: '0.95rem',
-                  fontWeight: '600',
-                  color: 'rgba(255, 255, 255, 0.9)'
-                }}>
-                  身份 <span style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.5)' }}>(選填)</span>
-                </label>
-                <select
-                  value={batchEditData.role}
-                  onChange={(e) => {
-                    const newRole = e.target.value as '' | RoleType;
-                    setBatchEditData({ ...batchEditData, role: newRole });
-                    // 自動更新時薪預設值
-                    if (newRole === 'assistant') {
-                      setBatchNewHourlyRate(200);
-                    } else if (newRole === 'instructor') {
-                      setBatchNewHourlyRate(350);
-                    }
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '0.875rem',
-                    borderRadius: '8px',
-                    border: '2px dashed rgba(220, 208, 194, 0.8)',
-                    background: 'rgba(220, 208, 194, 0.35)',
-                    color: 'var(--foreground)',
-                    fontSize: '1rem',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <option value="" style={{ background: '#f0ece1', color: '#3d3a36' }}>-- 不修改 --</option>
-                  <option value="assistant" style={{ background: '#f0ece1', color: '#3d3a36' }}>助教</option>
-                  <option value="instructor" style={{ background: '#f0ece1', color: '#3d3a36' }}>講師</option>
-                </select>
-              </div>
-
-              {/* 班別輸入 */}
-              <div style={{ marginBottom: '1.25rem' }}>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '0.5rem', 
-                  fontSize: '0.95rem',
-                  fontWeight: '600',
-                  color: 'rgba(255, 255, 255, 0.9)'
-                }}>
-                  班別 <span style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.5)' }}>(選填)</span>
-                </label>
-                <input
-                  type="text"
-                  value={batchEditData.shiftCategory}
-                  onChange={(e) => setBatchEditData({ ...batchEditData, shiftCategory: e.target.value })}
-                  placeholder="例如：秋季班、冬令營"
-                  style={{
-                    width: '100%',
-                    padding: '0.875rem',
-                    borderRadius: '8px',
-                    border: '2px solid rgba(139, 92, 246, 0.3)',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    color: '#ffffff',
-                    fontSize: '1rem',
-                    fontWeight: '500',
-                  }}
-                />
-              </div>
-
-              {/* 時段區塊 */}
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: '1fr 1fr', 
-                gap: '1rem',
-                marginBottom: '1.25rem'
-              }}>
-                <div>
-                  <label style={{ 
-                    display: 'block', 
-                    marginBottom: '0.5rem', 
-                    fontSize: '0.95rem',
-                    fontWeight: '600',
-                    color: 'rgba(255, 255, 255, 0.9)'
-                  }}>
-                    開始時間 <span style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.5)' }}>(選填)</span>
-                  </label>
-                  <input
-                    type="time"
-                    value={batchEditData.startTime}
-                    onChange={(e) => setBatchEditData({ ...batchEditData, startTime: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '0.875rem',
-                      borderRadius: '8px',
-                      border: '2px solid rgba(139, 92, 246, 0.3)',
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      color: '#ffffff',
-                      fontSize: '1rem',
-                      fontWeight: '500',
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ 
-                    display: 'block', 
-                    marginBottom: '0.5rem', 
-                    fontSize: '0.95rem',
-                    fontWeight: '600',
-                    color: 'rgba(255, 255, 255, 0.9)'
-                  }}>
-                    結束時間 <span style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.5)' }}>(選填)</span>
-                  </label>
-                  <input
-                    type="time"
-                    value={batchEditData.endTime}
-                    onChange={(e) => setBatchEditData({ ...batchEditData, endTime: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '0.875rem',
-                      borderRadius: '8px',
-                      border: '2px solid rgba(139, 92, 246, 0.3)',
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      color: '#ffffff',
-                      fontSize: '1rem',
-                      fontWeight: '500',
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* 工作時數 */}
-              <div style={{ marginBottom: '1.25rem' }}>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '0.5rem', 
-                  fontSize: '0.95rem',
-                  fontWeight: '600',
-                  color: 'rgba(255, 255, 255, 0.9)'
-                }}>
-                  工作時數 (小時) <span style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.5)' }}>(選填)</span>
-                </label>
-                <input
-                  type="number"
-                  value={batchEditData.workHours}
-                  onChange={(e) => setBatchEditData({ ...batchEditData, workHours: e.target.value })}
-                  placeholder="例如：8 或 8.5"
-                  step="0.5"
-                  min="0"
-                  style={{
-                    width: '100%',
-                    padding: '0.875rem',
-                    borderRadius: '8px',
-                    border: '2px solid rgba(139, 92, 246, 0.3)',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    color: '#ffffff',
-                    fontSize: '1rem',
-                    fontWeight: '500',
-                  }}
-                />
-              </div>
-
-              {/* 休息時間已改為智慧推算，批次編輯時不提供修改 */}
-
-              {/* 時薪 */}
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '0.5rem', 
-                fontSize: '0.95rem',
-                fontWeight: '600',
-                color: 'rgba(255, 255, 255, 0.9)'
-              }}>
-                時薪 (元) <span style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.5)' }}>(選填，預設根據身份)</span>
-              </label>
-              <input 
-                type="number"
-                value={batchNewHourlyRate}
-                onChange={(e) => setBatchNewHourlyRate(Number(e.target.value))}
-                min="0"
-                step="10"
-                style={{
-                  width: '100%',
-                  padding: '1rem',
-                  borderRadius: '8px',
-                  border: '2px solid rgba(139, 92, 246, 0.3)',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  color: '#ffffff',
-                  fontSize: '1.2rem',
-                  fontWeight: '600',
-                  transition: 'all 0.2s',
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.6)';
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                }}
-              />
-            </div>
-
-            <div style={{
-              padding: '1rem',
-              borderRadius: '8px',
-              background: 'rgba(251, 191, 36, 0.1)',
-              border: '1px solid rgba(251, 191, 36, 0.3)',
-              marginBottom: '1.5rem',
-              fontSize: '0.85rem',
-              color: 'rgba(255, 255, 255, 0.8)',
-            }}>
-              ⚠️ 注意：<br />
-              • 只有填寫的欄位會被更新，未填寫的欄位保持原值<br />
-              • 此操作將會覆蓋所選記錄的對應欄位設定
-            </div>
-
-            <div style={{ 
-              display: 'flex', 
-              gap: '1rem', 
-              justifyContent: 'flex-end' 
-            }}>
-              <button
-                onClick={handleCancelBatchEdit}
-                style={{
-                  padding: '0.875rem 2rem',
-                  borderRadius: '10px',
-                  border: '2px solid rgba(255, 255, 255, 0.2)',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  color: 'rgba(255, 255, 255, 0.9)',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  fontSize: '0.95rem',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                取消
-              </button>
-              <button
-                onClick={handleBatchEditHourlyRate}
-                style={{
-                  padding: '0.875rem 2rem',
-                  borderRadius: '10px',
-                  border: 'none',
-                  background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))',
-                  color: 'white',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  fontSize: '0.95rem',
-                  boxShadow: '0 4px 12px rgba(139, 92, 246, 0.4)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 8px 20px rgba(139, 92, 246, 0.5)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.4)';
-                }}
-              >
-                確認更新
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Excel 匯入預覽彈窗 */}
-      {showImportModal && importValidation && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.85)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '1rem',
-          }}
-          onClick={handleCancelImport}
-        >
-          <div 
-            className="glass" 
-            style={{
-              padding: '2rem',
-              maxWidth: '800px',
-              width: '100%',
-              maxHeight: '90vh',
-              overflow: 'auto',
-              background: 'rgba(30, 30, 45, 0.95)',
-              backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(96, 165, 250, 0.3)',
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(96, 165, 250, 0.2)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between',
-              marginBottom: '1.5rem',
-              paddingBottom: '1rem',
-              borderBottom: '2px solid rgba(96, 165, 250, 0.3)'
-            }}>
-              <h3 style={{ 
-                fontSize: '1.5rem', 
-                fontWeight: '700',
-                background: 'linear-gradient(to right, #60a5fa, #34d399)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                margin: 0
-              }}>
-                匯入預覽
-              </h3>
-              <button
-                onClick={handleCancelImport}
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  border: 'none',
-                  background: 'rgba(239, 68, 68, 0.15)',
-                  color: '#ef4444',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.2rem',
-                  fontWeight: 'bold',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)';
-                  e.currentTarget.style.transform = 'rotate(90deg)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)';
-                  e.currentTarget.style.transform = 'rotate(0deg)';
-                }}
-                title="關閉"
-              >
-                ×
-              </button>
-            </div>
-
-            {/* 狀態摘要 */}
-            <div style={{
-              padding: '1rem',
-              borderRadius: '8px',
-              background: importValidation.success 
-                ? 'rgba(52, 211, 153, 0.1)' 
-                : 'rgba(239, 68, 68, 0.1)',
-              border: importValidation.success 
-                ? '1px solid rgba(52, 211, 153, 0.3)' 
-                : '1px solid rgba(239, 68, 68, 0.3)',
-              marginBottom: '1.5rem',
-            }}>
-              <div style={{ 
-                fontSize: '1rem', 
-                fontWeight: '600',
-                color: importValidation.success ? '#34d399' : '#ef4444',
-                marginBottom: '0.5rem'
-              }}>
-                {importValidation.success ? '✓ 解析成功' : '✗ 解析失敗'}
-              </div>
-              <div style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.7)' }}>
-                成功解析 <span style={{ color: '#60a5fa', fontWeight: '700' }}>{importValidation.records.length}</span> 筆有效記錄
-              </div>
-              {(() => {
-                // 計算重複日期
-                const existingDates = new Set(records.map(r => r.date));
-                const duplicates = importValidation.records.filter(r => existingDates.has(r.date));
-                const duplicateCount = duplicates.length;
-                const newRecordCount = importValidation.records.length - duplicateCount;
-                
-                return (
-                  <>
-                    {duplicateCount > 0 && (
-                      <div style={{ fontSize: '0.9rem', color: '#fbbf24', marginTop: '0.5rem' }}>
-                        其中 {duplicateCount} 筆為重複日期，將會跳過
-                      </div>
-                    )}
-                    {newRecordCount > 0 && (
-                      <div style={{ fontSize: '0.9rem', color: '#34d399', marginTop: '0.5rem', fontWeight: '600' }}>
-                        → 實際可匯入 {newRecordCount} 筆新記錄
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
-              {importValidation.errors.length > 0 && (
-                <div style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.5)', marginTop: '0.5rem' }}>
-                  已跳過 {importValidation.errors.length} 行（合計行/標題行）
-                </div>
-              )}
-              {importValidation.warnings.length > 0 && (
-                <div style={{ fontSize: '0.9rem', color: '#fbbf24', marginTop: '0.5rem' }}>
-                  {importValidation.warnings.length} 個警告
-                </div>
-              )}
-            </div>
-
-            {/* 警告訊息 */}
-            {importValidation.warnings.length > 0 && (
-              <div style={{ marginBottom: '1.5rem' }}>
-                <div style={{ 
-                  fontSize: '0.95rem', 
-                  fontWeight: '600',
-                  color: '#fbbf24',
-                  marginBottom: '0.5rem'
-                }}>
-                  警告訊息：
-                </div>
-                <div style={{
-                  padding: '1rem',
-                  borderRadius: '8px',
-                  background: 'rgba(251, 191, 36, 0.1)',
-                  border: '1px solid rgba(251, 191, 36, 0.3)',
-                  maxHeight: '150px',
-                  overflow: 'auto',
-                }}>
-                  {importValidation.warnings.map((warning, index) => (
-                    <div key={index} style={{ 
-                      fontSize: '0.85rem', 
-                      color: 'rgba(255, 255, 255, 0.8)',
-                      marginBottom: '0.25rem'
-                    }}>
-                      • {warning}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* 預覽前幾筆資料 */}
-            {importValidation.records.length > 0 && (
-              <div style={{ marginBottom: '1.5rem' }}>
-                <div style={{ 
-                  fontSize: '0.95rem', 
-                  fontWeight: '600',
-                  color: 'rgba(255, 255, 255, 0.9)',
-                  marginBottom: '0.5rem'
-                }}>
-                  預覽前 5 筆資料：
-                </div>
-                <div style={{
-                  borderRadius: '8px',
-                  overflow: 'hidden',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                }}>
-                  <table style={{ 
-                    width: '100%', 
-                    fontSize: '0.85rem',
-                    borderCollapse: 'collapse'
-                  }}>
-                    <thead>
-                      <tr style={{ background: 'rgba(96, 165, 250, 0.1)' }}>
-                        <th style={{ padding: '0.5rem', textAlign: 'left', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>日期</th>
-                        <th style={{ padding: '0.5rem', textAlign: 'left', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>工作內容</th>
-                        <th style={{ padding: '0.5rem', textAlign: 'left', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>時薪</th>
-                        <th style={{ padding: '0.5rem', textAlign: 'left', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>時段</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(showAllImportRecords 
-                        ? importValidation.records 
-                        : importValidation.records.slice(0, 5)
-                      ).map((record, index) => {
-                        // 檢查是否為重複日期
-                        const existingDates = new Set(records.map(r => r.date));
-                        const isDuplicate = existingDates.has(record.date);
-                        
-                        return (
-                          <tr key={index} style={{ 
-                            background: index % 2 === 0 ? 'rgba(255, 255, 255, 0.02)' : 'transparent',
-                            opacity: isDuplicate ? 0.5 : 1,
-                          }}>
-                            <td style={{ 
-                              padding: '0.5rem', 
-                              borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                              position: 'relative'
-                            }}>
-                              {record.date}
-                              {isDuplicate && (
-                                <span style={{ 
-                                  fontSize: '0.7rem', 
-                                  color: '#fbbf24',
-                                  marginLeft: '0.5rem',
-                                  fontWeight: '600'
-                                }}>
-                                  (重複)
-                                </span>
-                              )}
-                            </td>
-                            <td style={{ padding: '0.5rem', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                              {record.shiftCategory}
-                            </td>
-                            <td style={{ padding: '0.5rem', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                              ${record.hourlyRate}
-                            </td>
-                            <td style={{ padding: '0.5rem', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                              {record.startTime}-{record.endTime}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-                {importValidation.records.length > 5 && (
+                {importValidation.success && (
                   <button
-                    onClick={() => setShowAllImportRecords(!showAllImportRecords)}
-                    style={{ 
-                      fontSize: '0.85rem', 
-                      color: '#60a5fa',
-                      background: 'rgba(96, 165, 250, 0.1)',
-                      border: '1px solid rgba(96, 165, 250, 0.3)',
-                      borderRadius: '6px',
-                      padding: '0.5rem 1rem',
-                      marginTop: '0.75rem',
-                      width: '100%',
-                      cursor: 'pointer',
+                    type="button"
+                    onClick={handleConfirmImport}
+                    style={{
+                      padding: '0.5rem 1.25rem',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: 'var(--color-primary)',
+                      color: '#fff',
                       fontWeight: '600',
-                      transition: 'all 0.2s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(96, 165, 250, 0.2)';
-                      e.currentTarget.style.borderColor = 'rgba(96, 165, 250, 0.5)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(96, 165, 250, 0.1)';
-                      e.currentTarget.style.borderColor = 'rgba(96, 165, 250, 0.3)';
+                      cursor: 'pointer',
                     }}
                   >
-                    {showAllImportRecords 
-                      ? '收起' 
-                      : `顯示全部 ${importValidation.records.length} 筆資料 (還有 ${importValidation.records.length - 5} 筆未顯示)`
-                    }
+                    確認匯入 ({importValidation.records.length} 筆)
                   </button>
                 )}
               </div>
-            )}
-
-            {/* 按鈕組 */}
-            <div style={{ 
-              display: 'flex', 
-              gap: '1rem', 
-              justifyContent: 'flex-end',
-              paddingTop: '1rem',
-              borderTop: '1px solid rgba(255, 255, 255, 0.1)'
-            }}>
-              <button
-                onClick={handleCancelImport}
-                style={{
-                  padding: '0.875rem 2rem',
-                  borderRadius: '10px',
-                  border: '2px solid rgba(255, 255, 255, 0.2)',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  color: 'rgba(255, 255, 255, 0.9)',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  fontSize: '0.95rem',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                取消
-              </button>
-              <button
-                onClick={handleConfirmImport}
-                disabled={!importValidation.success}
-                style={{
-                  padding: '0.875rem 2rem',
-                  borderRadius: '10px',
-                  border: 'none',
-                  background: importValidation.success 
-                    ? 'linear-gradient(135deg, #60a5fa, #34d399)' 
-                    : 'rgba(156, 163, 175, 0.2)',
-                  color: importValidation.success ? 'white' : 'rgba(156, 163, 175, 0.5)',
-                  fontWeight: '600',
-                  cursor: importValidation.success ? 'pointer' : 'not-allowed',
-                  transition: 'all 0.2s',
-                  fontSize: '0.95rem',
-                  boxShadow: importValidation.success ? '0 4px 12px rgba(96, 165, 250, 0.4)' : 'none',
-                }}
-                onMouseEnter={(e) => {
-                  if (importValidation.success) {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(96, 165, 250, 0.5)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (importValidation.success) {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(96, 165, 250, 0.4)';
-                  }
-                }}
-              >
-                確認匯入 {importValidation.records.length} 筆
-              </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
     </>
   );

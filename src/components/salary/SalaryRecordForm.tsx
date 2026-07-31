@@ -1,0 +1,367 @@
+'use client';
+
+import React from 'react';
+import type { SalaryRecord } from '@/hooks/useSalaryData';
+import type { ShiftTemplate } from '@/data/shiftTemplates';
+
+/** 身份類型 */
+type RoleType = 'assistant' | 'instructor';
+
+/** 身份時薪對應 */
+const ROLE_HOURLY_RATES: Record<RoleType, number> = {
+  assistant: 200,    // 助教
+  instructor: 500,   // 講師
+};
+
+const WEEKDAY_SHORT_LABELS = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'] as const;
+
+interface SalaryRecordFormProps {
+  currentRecord: Omit<SalaryRecord, 'id'>;
+  setCurrentRecord: React.Dispatch<React.SetStateAction<Omit<SalaryRecord, 'id'>>>;
+  workHours: string;
+  setWorkHours: (val: string) => void;
+  shiftCategoryOptions: string[];
+  templates: ShiftTemplate[];
+  importMonth: string;
+  setImportMonth: (val: string) => void;
+  onAddRecord: () => void;
+  onImportFromWorkShifts: () => void;
+  onApplyTemplate: (template: ShiftTemplate) => void;
+}
+
+/**
+ * 新增打工記錄與快速帶入表單組件
+ */
+export default function SalaryRecordForm({
+  currentRecord,
+  setCurrentRecord,
+  workHours,
+  setWorkHours,
+  shiftCategoryOptions,
+  templates,
+  importMonth,
+  setImportMonth,
+  onAddRecord,
+  onImportFromWorkShifts,
+  onApplyTemplate,
+}: SalaryRecordFormProps) {
+  const getWeekdayLabel = (dateStr: string): string => {
+    if (!dateStr) return '--';
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return '--';
+    return WEEKDAY_SHORT_LABELS[date.getDay()] ?? '--';
+  };
+
+  return (
+    <div id="add-record-form" className="glass no-print" style={{ padding: 'var(--spacing-lg)', marginBottom: 'var(--spacing-lg)' }}>
+      {/* 標頭與工具列 */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 'var(--spacing-md)',
+        flexWrap: 'wrap',
+        gap: 'var(--spacing-md)'
+      }}>
+        <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>
+          新增工作記錄
+        </h3>
+        
+        {/* 打工月曆同步按鈕區 */}
+        <div style={{ display: 'flex', gap: 'var(--spacing-sm)', alignItems: 'center', flexWrap: 'wrap' }}>
+          <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+            匯入月份：
+          </label>
+          <input 
+            type="month"
+            value={importMonth}
+            onChange={(e) => setImportMonth(e.target.value)}
+            style={{
+              padding: '0.4rem 0.6rem',
+              borderRadius: '6px',
+              border: '1px solid rgba(255,255,255,0.2)',
+              background: 'rgba(255,255,255,0.05)',
+              color: 'var(--text-primary)',
+              fontSize: '0.9rem',
+            }}
+          />
+          <button
+            onClick={onImportFromWorkShifts}
+            style={{
+              padding: '0.5rem 1rem',
+              borderRadius: '8px',
+              border: 'none',
+              background: 'rgba(168, 85, 247, 0.2)',
+              color: '#a855f7',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              fontSize: '0.9rem',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(168, 85, 247, 0.3)';
+              e.currentTarget.style.transform = 'scale(1.03)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(168, 85, 247, 0.2)';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            從打工月曆匯入
+          </button>
+        </div>
+      </div>
+
+      {/* 班別範本一鍵套用快捷標籤列 */}
+      {templates.length > 0 && (
+        <div style={{
+          marginBottom: 'var(--spacing-md)',
+          padding: '0.75rem 1rem',
+          background: 'rgba(220, 208, 194, 0.2)',
+          borderRadius: '10px',
+          border: '1px dashed rgba(220, 208, 194, 0.5)',
+        }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', fontWeight: 600 }}>
+            快捷套用班別範本：
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {templates.map((tpl) => (
+              <button
+                key={tpl.id}
+                type="button"
+                onClick={() => onApplyTemplate(tpl)}
+                style={{
+                  padding: '0.35rem 0.75rem',
+                  borderRadius: '6px',
+                  border: '1px solid var(--color-primary)',
+                  background: 'rgba(184, 126, 107, 0.15)',
+                  color: 'var(--color-primary)',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--color-primary)';
+                  e.currentTarget.style.color = '#f0ece1';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(184, 126, 107, 0.15)';
+                  e.currentTarget.style.color = 'var(--color-primary)';
+                }}
+              >
+                {tpl.name} ({tpl.startTime}-{tpl.endTime})
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* 主要輸入表單 Grid */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+        gap: 'var(--spacing-md)',
+        marginBottom: 'var(--spacing-md)'
+      }}>
+        {/* 日期 */}
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
+            日期
+          </label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <input 
+              type="date"
+              value={currentRecord.date}
+              onChange={(e) => {
+                setCurrentRecord(prev => ({ ...prev, date: e.target.value }));
+              }}
+              style={{
+                width: '100%',
+                padding: '0.5rem 0.75rem',
+                borderRadius: '8px',
+                border: '2px dashed rgba(220, 208, 194, 0.8)',
+                background: 'rgba(220, 208, 194, 0.35)',
+                color: 'var(--foreground)',
+              }}
+            />
+            <span style={{
+              fontSize: '0.9rem',
+              color: 'var(--muted)',
+              whiteSpace: 'nowrap',
+              fontWeight: 600,
+            }}>
+              {getWeekdayLabel(currentRecord.date)}
+            </span>
+          </div>
+        </div>
+
+        {/* 身份 */}
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
+            身份
+          </label>
+          <select
+            value={currentRecord.role}
+            onChange={(e) => {
+              const newRole = e.target.value as RoleType;
+              setCurrentRecord(prev => ({ 
+                ...prev, 
+                role: newRole,
+                hourlyRate: ROLE_HOURLY_RATES[newRole],
+              }));
+            }}
+            style={{
+              width: '100%',
+              padding: '0.5rem 0.75rem',
+              borderRadius: '8px',
+              border: '2px dashed rgba(220, 208, 194, 0.8)',
+              background: 'rgba(220, 208, 194, 0.35)',
+              color: 'var(--foreground)',
+              cursor: 'pointer',
+            }}
+          >
+            <option value="assistant" style={{ background: '#f0ece1', color: '#3d3a36' }}>助教 ($200/hr)</option>
+            <option value="instructor" style={{ background: '#f0ece1', color: '#3d3a36' }}>講師 ($500/hr)</option>
+          </select>
+        </div>
+
+        {/* 開始時間 */}
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
+            開始時間
+          </label>
+          <input 
+            type="time"
+            value={currentRecord.startTime}
+            onChange={(e) => setCurrentRecord(prev => ({ ...prev, startTime: e.target.value }))}
+            style={{
+              width: '100%',
+              padding: '0.5rem 0.75rem',
+              borderRadius: '8px',
+              border: '2px dashed rgba(220, 208, 194, 0.8)',
+              background: 'rgba(220, 208, 194, 0.35)',
+              color: 'var(--foreground)',
+            }}
+          />
+        </div>
+
+        {/* 結束時間 */}
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
+            結束時間
+          </label>
+          <input 
+            type="time"
+            value={currentRecord.endTime}
+            onChange={(e) => setCurrentRecord(prev => ({ ...prev, endTime: e.target.value }))}
+            style={{
+              width: '100%',
+              padding: '0.5rem 0.75rem',
+              borderRadius: '8px',
+              border: '2px dashed rgba(220, 208, 194, 0.8)',
+              background: 'rgba(220, 208, 194, 0.35)',
+              color: 'var(--foreground)',
+            }}
+          />
+        </div>
+
+        {/* 工作時數 */}
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
+            工作時數 (小時)
+          </label>
+          <input 
+            type="number"
+            step="0.5"
+            min="0"
+            value={workHours}
+            onChange={(e) => setWorkHours(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '0.5rem 0.75rem',
+              borderRadius: '8px',
+              border: '2px dashed rgba(220, 208, 194, 0.8)',
+              background: 'rgba(220, 208, 194, 0.35)',
+              color: 'var(--foreground)',
+            }}
+            placeholder="例：8"
+          />
+        </div>
+
+        {/* 時薪 */}
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
+            時薪 (元)
+          </label>
+          <input 
+            type="number"
+            value={currentRecord.hourlyRate}
+            onChange={(e) => setCurrentRecord(prev => ({ ...prev, hourlyRate: Number(e.target.value) }))}
+            style={{
+              width: '100%',
+              padding: '0.5rem 0.75rem',
+              borderRadius: '8px',
+              border: '2px dashed rgba(220, 208, 194, 0.8)',
+              background: 'rgba(220, 208, 194, 0.35)',
+              color: 'var(--foreground)',
+            }}
+          />
+        </div>
+
+        {/* 班別 */}
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
+            班別 (選填)
+          </label>
+          <select
+            value={currentRecord.shiftCategory || ''}
+            onChange={(e) => {
+              const value = e.target.value;
+              setCurrentRecord(prev => ({ ...prev, shiftCategory: value }));
+            }}
+            style={{
+              width: '100%',
+              padding: '0.5rem 0.75rem',
+              borderRadius: '8px',
+              border: '2px dashed rgba(220, 208, 194, 0.8)',
+              background: 'rgba(220, 208, 194, 0.35)',
+              color: 'var(--foreground)',
+              cursor: 'pointer',
+            }}
+          >
+            <option value="" style={{ background: '#f0ece1', color: '#3d3a36' }}>-- 無班別 --</option>
+            {shiftCategoryOptions.map((category) => (
+              <option key={category} value={category} style={{ background: '#f0ece1', color: '#3d3a36' }}>{category}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <button
+        onClick={onAddRecord}
+        style={{
+          padding: '0.75rem 1.5rem',
+          borderRadius: '8px',
+          border: 'none',
+          background: 'var(--color-primary)',
+          color: '#f0ece1',
+          fontWeight: '600',
+          boxShadow: '0 4px 12px rgba(139, 121, 101, 0.15)',
+          cursor: 'pointer',
+          transition: 'transform 0.2s, background 0.2s',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.03)';
+          e.currentTarget.style.background = 'var(--color-primary-hover)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.background = 'var(--color-primary)';
+        }}
+      >
+        新增記錄
+      </button>
+    </div>
+  );
+}
