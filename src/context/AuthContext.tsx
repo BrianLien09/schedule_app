@@ -110,10 +110,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       ];
       if (
         error instanceof Error &&
-        'code' in error &&
-        SILENT_AUTH_ERRORS.includes((error as { code: string }).code)
+        'code' in error
       ) {
-        return;
+        const code = (error as { code: string }).code;
+        if (SILENT_AUTH_ERRORS.includes(code)) {
+          return;
+        }
+        if (code === 'auth/unauthorized-domain') {
+          console.error(`[Firebase Auth Error] 當前網域 (${window.location.hostname}) 未在 Firebase Console 授權名單中。請前往 Firebase Console -> Authentication -> Settings -> Authorized domains 新增 ${window.location.hostname}`);
+        }
       }
       console.error('Google 登入失敗:', error);
       throw error;

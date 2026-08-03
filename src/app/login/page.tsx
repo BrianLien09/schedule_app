@@ -29,8 +29,17 @@ export default function LoginPage() {
     try {
       await signInWithGoogle();
       // 登入成功後會自動導向首頁（由上面的 useEffect 處理）
-    } catch (error) {
-      toast.error('登入失敗，請稍後再試');
+    } catch (error: unknown) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        (error as { code: string }).code === 'auth/unauthorized-domain'
+      ) {
+        toast.error(`網域 (${window.location.hostname}) 未在 Firebase 授權，請至 Firebase Console 新增此網域`);
+      } else {
+        toast.error('登入失敗，請稍後再試');
+      }
     }
   };
 

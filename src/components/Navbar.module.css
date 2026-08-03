@@ -50,37 +50,85 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: var(--spacing-sm) !important;
+  gap: 0.65rem !important;
   width: 100%;
   max-height: 0;
   overflow: hidden;
   opacity: 0;
-  transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+  transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1),
               opacity 0.3s ease,
               padding 0.3s ease;
   padding-top: 0;
   padding-bottom: 0;
+  list-style: none;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 .mobileMenuOpen {
-  max-height: 600px; /* 足夠容納所有項目 */
+  max-height: 650px; /* 足夠容納所有項目 */
   opacity: 1;
   padding-top: var(--spacing-md);
-  padding-bottom: var(--spacing-sm);
-  border-top: 1px solid var(--glass-border);
+  padding-bottom: var(--spacing-xs);
+  border-top: 1px dashed rgba(220, 208, 194, 0.8);
   margin-top: var(--spacing-md);
 }
 
-/* 行動選單中的連結樣式 */
-.mobileMenu :global(.nav-link) {
+.mobileMenuItem {
   width: 100%;
-  justify-content: flex-start;
-  padding: var(--spacing-sm) var(--spacing-md);
-  font-size: 1rem;
-  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
 }
 
-/* ===== 行動裝置 Dropdown（點擊展開） ===== */
+/* 行動選單中的連結樣式 (美化為滿寬一致的大地色系卡片) */
+.mobileMenuLink {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important; /* 左邊為圖示+文字群組，右邊為展開箭頭 */
+  padding: 11px 16px !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  color: #3d3a36 !important;
+  background: rgba(240, 236, 225, 0.7) !important;
+  border: 1.5px dashed rgba(220, 208, 194, 0.85) !important;
+  border-radius: 12px !important;
+  box-sizing: border-box !important;
+  transition: all 0.2s ease !important;
+  text-decoration: none !important;
+}
+
+.mobileMenuLink:hover,
+.mobileMenuLinkActive {
+  background: rgba(184, 126, 107, 0.14) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
+
+/* 左側圖示與文字組 */
+.linkContentGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+/* 右側展開箭頭 */
+.dropdownArrow {
+  font-size: 0.85rem;
+  color: var(--color-primary);
+  font-weight: bold;
+  opacity: 0.85;
+}
+
+/* 當 Dropdown 展開時的頂部觸發項樣式 */
+.dropdownOpen > .mobileMenuLink {
+  background: rgba(184, 126, 107, 0.15) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+  border-bottom-left-radius: 4px !important;
+  border-bottom-right-radius: 4px !important;
+}
+
 /* 行動裝置上覆蓋 :hover 行為，改由 JS 控制 */
 .mobileMenu :global(.dropdown-content) {
   position: static !important;
@@ -88,37 +136,58 @@
   left: auto !important;
   min-width: auto !important;
   width: 100%;
-  padding-left: var(--spacing-md);
+  padding: 0 !important;
   box-shadow: none !important;
   border: none !important;
   background: transparent !important;
   backdrop-filter: none !important;
 }
 
-/* 行動裝置上的 dropdown-item 樣式微調 */
-.mobileMenu :global(.dropdown-item) {
-  padding: 10px var(--spacing-md);
-  border-radius: 8px;
-  font-size: 0.95rem;
-}
-
-/* 行動裝置上 dropdown 預設隱藏（覆蓋 :hover） */
+/* 行動裝置上 dropdown 預設隱藏 */
 .mobileMenu :global(.dropdown) :global(.dropdown-content) {
   visibility: hidden;
   max-height: 0;
   opacity: 0;
   overflow: hidden;
-  padding: 0;
-  transition: max-height 0.3s ease, opacity 0.25s ease, padding 0.3s ease;
+  margin-top: 0;
+  border-left: 2px dashed rgba(184, 126, 107, 0.4);
+  margin-left: 0.75rem;
+  padding-left: 0.5rem !important;
+  transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.25s ease,
+              margin 0.3s ease;
 }
 
-/* JS 控制的展開狀態 */
+/* JS 控制的子選單展開狀態 */
 .dropdownOpen :global(.dropdown-content),
 .mobileMenu .dropdownContentOpen {
   visibility: visible !important;
   max-height: 300px !important;
   opacity: 1 !important;
-  padding: var(--spacing-xs) 0 !important;
+  margin-top: 0.4rem !important;
+  margin-bottom: 0.2rem !important;
+}
+
+/* 行動裝置上的 dropdown-item 樣式微調 */
+.mobileMenu :global(.dropdown-item) {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 9px 14px;
+  margin-bottom: 4px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #3d3a36;
+  background: rgba(240, 236, 225, 0.55);
+  border: 1px dashed rgba(220, 208, 194, 0.6);
+  transition: all 0.18s ease;
+}
+
+.mobileMenu :global(.dropdown-item):hover {
+  background: rgba(184, 126, 107, 0.15);
+  color: var(--color-primary);
+  border-color: rgba(184, 126, 107, 0.4);
 }
 
 /* ===== 背景遮罩 ===== */

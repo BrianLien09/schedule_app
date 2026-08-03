@@ -20,10 +20,16 @@ export default function Navbar() {
 
   const [isVisible, setIsVisible] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuOpenRef = useRef(menuOpen);
   // 追蹤哪個 dropdown 在行動裝置上被展開（用 key 標識）
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const lastScrollYRef = useRef(0);
   const navRef = useRef<HTMLElement>(null);
+
+  // 同步 menuOpen 至 ref，確保 scroll listener 取得最新狀態
+  useEffect(() => {
+    menuOpenRef.current = menuOpen;
+  }, [menuOpen]);
 
   const handleSignOut = async () => {
     try {
@@ -73,16 +79,25 @@ export default function Navbar() {
     return () => { document.body.style.overflow = ''; };
   }, [menuOpen]);
 
-  // 捲動時自動隱藏/顯示 Navbar
+  // 捲動時自動隱藏/顯示 Navbar（選單開啟時絕不隱藏）
   useEffect(() => {
     const handleScroll = () => {
+      // 若行動選單處於開啟狀態，維持顯示不處理捲動隱藏
+      if (menuOpenRef.current) {
+        setIsVisible(true);
+        return;
+      }
+
       const currentScrollY = window.scrollY;
+      const delta = currentScrollY - lastScrollYRef.current;
+
+      // 小於 5px 的微幅捲動不觸發狀態變更，避免手機橡皮筋回彈閃爍
+      if (Math.abs(delta) < 5) return;
 
       if (currentScrollY < lastScrollYRef.current || currentScrollY < 10) {
         setIsVisible(true);
       } else if (currentScrollY > lastScrollYRef.current && currentScrollY > 50) {
         setIsVisible(false);
-        // 捲動隱藏時也關閉行動選單
         setMenuOpen(false);
         setOpenDropdown(null);
       }
@@ -271,162 +286,177 @@ export default function Navbar() {
             <ul
               className={`navbar-links ${styles.mobileMenu} ${menuOpen ? styles.mobileMenuOpen : ''}`}
             >
-            <li>
-              <Link
-                href="/"
-                className={`nav-link ${pathname === '/' ? 'active' : ''}`}
-                onClick={closeMenu}
-              >
-                總覽
-              </Link>
-            </li>
+              <li className={styles.mobileMenuItem}>
+                <Link
+                  href="/"
+                  className={`${styles.mobileMenuLink} ${pathname === '/' ? styles.mobileMenuLinkActive : ''}`}
+                  onClick={closeMenu}
+                >
+                  <div className={styles.linkContentGroup}>
+                    <span>總覽</span>
+                  </div>
+                </Link>
+              </li>
 
-            {/* 日程表 Dropdown */}
-            <li className={`dropdown ${isMobile && openDropdown === 'schedule' ? styles.dropdownOpen : ''}`}>
-              <Link
-                href="/schedule/school"
-                className={`nav-link ${pathname.startsWith('/schedule') ? 'active' : ''}`}
-                onClick={(e) => {
-                  if (isMobile) {
-                    toggleDropdown('schedule', e);
-                  }
-                }}
-              >
-                日程表 ▾
-              </Link>
-              <div className={`dropdown-content ${isMobile && openDropdown === 'schedule' ? styles.dropdownContentOpen : ''}`}>
-                <Link href="/schedule/school" className="dropdown-item" onClick={closeMenu}>
-                  <SchoolIcon size={18} />
-                  <span>學校課表</span>
+              {/* 日程表 Dropdown */}
+              <li className={`${styles.mobileMenuItem} dropdown ${isMobile && openDropdown === 'schedule' ? styles.dropdownOpen : ''}`}>
+                <Link
+                  href="/schedule/school"
+                  className={`${styles.mobileMenuLink} ${pathname.startsWith('/schedule') ? styles.mobileMenuLinkActive : ''}`}
+                  onClick={(e) => {
+                    if (isMobile) {
+                      toggleDropdown('schedule', e);
+                    }
+                  }}
+                >
+                  <div className={styles.linkContentGroup}>
+                    <SchoolIcon size={18} />
+                    <span>日程表</span>
+                  </div>
+                  <span className={styles.dropdownArrow}>{openDropdown === 'schedule' ? '▴' : '▾'}</span>
                 </Link>
-                <Link href="/schedule/work" className="dropdown-item" onClick={closeMenu}>
-                  <BriefcaseIcon size={18} />
-                  <span>打工月曆</span>
-                </Link>
-                <Link href="/manage" className="dropdown-item" onClick={closeMenu}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                  </svg>
-                  <span>資料管理</span>
-                </Link>
-              </div>
-            </li>
+                <div className={`dropdown-content ${isMobile && openDropdown === 'schedule' ? styles.dropdownContentOpen : ''}`}>
+                  <Link href="/schedule/school" className="dropdown-item" onClick={closeMenu}>
+                    <SchoolIcon size={18} />
+                    <span>學校課表</span>
+                  </Link>
+                  <Link href="/schedule/work" className="dropdown-item" onClick={closeMenu}>
+                    <BriefcaseIcon size={18} />
+                    <span>打工月曆</span>
+                  </Link>
+                  <Link href="/manage" className="dropdown-item" onClick={closeMenu}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                    <span>資料管理</span>
+                  </Link>
+                </div>
+              </li>
 
-            {/* 工具箱 Dropdown */}
-            <li className={`dropdown ${isMobile && openDropdown === 'tools' ? styles.dropdownOpen : ''}`}>
-              <Link
-                href="/tools/salary"
-                className={`nav-link ${pathname.startsWith('/tools') ? 'active' : ''}`}
-                onClick={(e) => {
-                  if (isMobile) {
-                    toggleDropdown('tools', e);
-                  }
-                }}
-              >
-                <ToolboxIcon size={18} />
-                <span>工具箱 ▾</span>
-              </Link>
-              <div className={`dropdown-content ${isMobile && openDropdown === 'tools' ? styles.dropdownContentOpen : ''}`}>
-                <Link href="/tools/salary" className="dropdown-item" onClick={closeMenu}>
-                  <CalculatorIcon size={18} />
-                  <span>薪資計算</span>
+              {/* 工具箱 Dropdown */}
+              <li className={`${styles.mobileMenuItem} dropdown ${isMobile && openDropdown === 'tools' ? styles.dropdownOpen : ''}`}>
+                <Link
+                  href="/tools/salary"
+                  className={`${styles.mobileMenuLink} ${pathname.startsWith('/tools') ? styles.mobileMenuLinkActive : ''}`}
+                  onClick={(e) => {
+                    if (isMobile) {
+                      toggleDropdown('tools', e);
+                    }
+                  }}
+                >
+                  <div className={styles.linkContentGroup}>
+                    <ToolboxIcon size={18} />
+                    <span>工具箱</span>
+                  </div>
+                  <span className={styles.dropdownArrow}>{openDropdown === 'tools' ? '▴' : '▾'}</span>
                 </Link>
-                <Link href="/tools/allowance" className="dropdown-item" onClick={closeMenu}>
-                  <WalletIcon size={18} />
-                  <span>生活費記錄</span>
-                </Link>
-              </div>
-            </li>
+                <div className={`dropdown-content ${isMobile && openDropdown === 'tools' ? styles.dropdownContentOpen : ''}`}>
+                  <Link href="/tools/salary" className="dropdown-item" onClick={closeMenu}>
+                    <CalculatorIcon size={18} />
+                    <span>薪資計算</span>
+                  </Link>
+                  <Link href="/tools/allowance" className="dropdown-item" onClick={closeMenu}>
+                    <WalletIcon size={18} />
+                    <span>生活費記錄</span>
+                  </Link>
+                </div>
+              </li>
 
-            <li>
-              <Link
-                href="/games"
-                className={`nav-link ${pathname === '/games' ? 'active' : ''}`}
-                onClick={closeMenu}
-              >
-                <GamepadIcon size={18} />
-                <span>遊戲攻略</span>
-              </Link>
-            </li>
-            <li>
-              <a
-                href="https://brianlien09.github.io/Music_app"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="nav-link"
-                onClick={closeMenu}
-              >
-                <MusicIcon size={18} />
-                <span>DayMate 音樂</span>
-              </a>
-            </li>
-            {!loading && (
-              <li>
-                {user ? (
-                  <div className={`dropdown ${isMobile && openDropdown === 'user' ? styles.dropdownOpen : ''}`}>
-                    <button
-                      className="nav-link"
-                      style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-                      onClick={(e) => {
-                        if (isMobile) {
-                          toggleDropdown('user', e);
-                        }
-                      }}
-                    >
-                      <img
-                        src={user.photoURL || `${BASE_PATH}/avatar.jpg`}
-                        alt="User Avatar"
-                        style={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '50%',
-                          objectFit: 'cover',
-                          border: '2px solid var(--color-primary)'
-                        }}
-                      />
-                    </button>
-                    <div
-                      className={`dropdown-content ${isMobile && openDropdown === 'user' ? styles.dropdownContentOpen : ''}`}
-                      style={!isMobile ? { right: 0, left: 'auto' } : undefined}
-                    >
-                      <div className="dropdown-item" style={{ cursor: 'default', opacity: 0.7 }}>
-                        <span>{user.displayName || user.email}</span>
-                      </div>
+              <li className={styles.mobileMenuItem}>
+                <Link
+                  href="/games"
+                  className={`${styles.mobileMenuLink} ${pathname === '/games' ? styles.mobileMenuLinkActive : ''}`}
+                  onClick={closeMenu}
+                >
+                  <div className={styles.linkContentGroup}>
+                    <GamepadIcon size={18} />
+                    <span>遊戲攻略</span>
+                  </div>
+                </Link>
+              </li>
+              <li className={styles.mobileMenuItem}>
+                <a
+                  href="https://brianlien09.github.io/Music_app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.mobileMenuLink}
+                  onClick={closeMenu}
+                >
+                  <div className={styles.linkContentGroup}>
+                    <MusicIcon size={18} />
+                    <span>DayMate 音樂</span>
+                  </div>
+                </a>
+              </li>
+              {!loading && (
+                <li className={styles.mobileMenuItem}>
+                  {user ? (
+                    <div className={`dropdown ${isMobile && openDropdown === 'user' ? styles.dropdownOpen : ''}`}>
                       <button
-                        onClick={handleSignOut}
-                        className="dropdown-item"
-                        style={{
-                          width: '100%',
-                          textAlign: 'left',
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          color: 'var(--color-accent)'
+                        className={styles.mobileMenuLink}
+                        style={{ cursor: 'pointer' }}
+                        onClick={(e) => {
+                          if (isMobile) {
+                            toggleDropdown('user', e);
+                          }
                         }}
                       >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                          <polyline points="16 17 21 12 16 7" />
-                          <line x1="21" y1="12" x2="9" y2="12" />
-                        </svg>
-                        <span>登出</span>
+                        <div className={styles.linkContentGroup}>
+                          <img
+                            src={user.photoURL || `${BASE_PATH}/avatar.jpg`}
+                            alt="User Avatar"
+                            style={{
+                              width: '28px',
+                              height: '28px',
+                              borderRadius: '50%',
+                              objectFit: 'cover',
+                              border: '2px solid var(--color-primary)'
+                            }}
+                          />
+                          <span>{user.displayName || user.email}</span>
+                        </div>
+                        <span className={styles.dropdownArrow}>{openDropdown === 'user' ? '▴' : '▾'}</span>
                       </button>
+                      <div
+                        className={`dropdown-content ${isMobile && openDropdown === 'user' ? styles.dropdownContentOpen : ''}`}
+                      >
+                        <button
+                          onClick={handleSignOut}
+                          className="dropdown-item"
+                          style={{
+                            width: '100%',
+                            textAlign: 'left',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: 'var(--color-accent)'
+                          }}
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                            <polyline points="16 17 21 12 16 7" />
+                            <line x1="21" y1="12" x2="9" y2="12" />
+                          </svg>
+                          <span>登出</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <Link href="/login" className="nav-link" onClick={closeMenu}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                      <polyline points="10 17 15 12 10 7" />
-                      <line x1="15" y1="12" x2="3" y2="12" />
-                    </svg>
-                    <span>登入</span>
-                  </Link>
-                )}
-              </li>
-            )}
-          </ul>
+                  ) : (
+                    <Link href="/login" className={styles.mobileMenuLink} onClick={closeMenu}>
+                      <div className={styles.linkContentGroup}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                          <polyline points="10 17 15 12 10 7" />
+                          <line x1="15" y1="12" x2="3" y2="12" />
+                        </svg>
+                        <span>登入</span>
+                      </div>
+                    </Link>
+                  )}
+                </li>
+              )}
+            </ul>
           )}
         </div>
       </nav>
