@@ -1,7 +1,7 @@
 {
-  "name": "冥夜小助手 - 個人日程管理",
-  "short_name": "冥夜小助手",
-  "description": "整合課表、打工排班與遊戲攻略的個人助手",
+  "name": "DayMate - 個人日常與日程管理",
+  "short_name": "DayMate",
+  "description": "整合學校課表、打工班表與薪資計算的個人生活助手",
   "start_url": "/schedule_app/",
   "display": "standalone",
   "background_color": "#1e293b",
