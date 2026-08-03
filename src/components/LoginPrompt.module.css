@@ -1,71 +1,80 @@
-/* LoginPrompt.module.css */
+/* LoginPrompt.module.css - Woven & Weft 大地色系 */
 
 .container {
-  min-height: 80vh;
+  min-height: 70vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: var(--spacing-md);
 }
 
 .card {
-  background: #1a1d2e;
-  border-radius: 16px;
-  padding: 48px 40px;
-  max-width: 400px;
+  background: #f0ece1; /* 燕麥白 */
+  border: 2px dashed rgba(220, 208, 194, 0.85); /* 沙褐色虛線邊框 */
+  border-radius: 20px;
+  padding: 40px 32px;
+  max-width: 420px;
   width: 100%;
   text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 24px rgba(139, 121, 101, 0.12);
+  transition: all 0.25s ease;
 }
 
 .iconWrapper {
   display: flex;
   justify-content: center;
-  margin-bottom: 24px;
+  align-items: center;
+  margin: 0 auto 20px auto;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(184, 126, 107, 0.15); /* 鐵鏽紅淡底 */
+  border: 2px dashed rgba(184, 126, 107, 0.4);
 }
 
 .icon {
-  width: 64px;
-  height: 64px;
-  color: #6366f1;
+  width: 36px;
+  height: 36px;
+  color: var(--color-primary); /* 鐵鏽紅 #b87e6b */
 }
 
 .title {
-  font-size: 24px;
-  font-weight: bold;
-  color: #ffffff;
-  margin-bottom: 12px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #3d3a36; /* 深炭灰 */
+  margin-bottom: 10px;
+  letter-spacing: 0.02em;
 }
 
 .description {
-  font-size: 16px;
-  color: #9ca3af;
-  margin-bottom: 32px;
-  line-height: 1.5;
+  font-size: 0.95rem;
+  color: #5f6368; /* 中炭灰 */
+  margin-bottom: 28px;
+  line-height: 1.6;
 }
 
 .loginButton {
   width: 100%;
-  background: #ffffff;
-  color: #1f2937;
+  background: var(--color-primary); /* 鐵鏽紅 #b87e6b */
+  color: #f0ece1; /* 燕麥白 */
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 14px 24px;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  transition: all 0.2s;
+  gap: 10px;
+  box-shadow: 0 4px 14px rgba(184, 126, 107, 0.25);
+  transition: all 0.2s ease;
 }
 
 .loginButton:hover {
-  background: #f3f4f6;
+  background: var(--color-primary-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 18px rgba(184, 126, 107, 0.35);
 }
 
 .loginButton:active {
@@ -78,21 +87,23 @@
 }
 
 .footer {
-  margin-top: 24px;
-  font-size: 14px;
-  color: #6b7280;
+  margin-top: 20px;
+  font-size: 0.85rem;
+  color: #78716c;
+  font-weight: 500;
 }
 
 @media (max-width: 480px) {
   .card {
-    padding: 36px 24px;
+    padding: 32px 20px;
+    border-radius: 16px;
   }
   
   .title {
-    font-size: 20px;
+    font-size: 1.3rem;
   }
   
   .description {
-    font-size: 14px;
+    font-size: 0.9rem;
   }
 }

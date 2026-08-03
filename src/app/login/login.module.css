@@ -1,54 +1,57 @@
-/* 登入頁面樣式 */
+/* 登入頁面樣式 - Woven & Weft 大地色系 */
 
 .container {
-  min-height: 100vh;
+  min-height: 85vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--spacing-md);
-  background: linear-gradient(135deg, rgba(103, 58, 183, 0.1) 0%, rgba(33, 150, 243, 0.1) 100%);
+  background: transparent;
 }
 
 .card {
-  background: var(--card-bg);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-xl);
+  background: #f0ece1; /* 燕麥白 */
+  border: 2px dashed rgba(220, 208, 194, 0.85); /* 沙褐色虛線邊框 */
+  border-radius: 20px;
+  padding: 40px 32px;
   max-width: 450px;
   width: 100%;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 24px rgba(139, 121, 101, 0.12);
 }
 
 .header {
   text-align: center;
-  margin-bottom: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
 }
 
 .title {
-  font-size: 2rem;
-  margin-bottom: var(--spacing-sm);
+  font-size: 2.1rem;
+  font-weight: 800;
+  margin-bottom: var(--spacing-xs);
   background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  letter-spacing: 0.03em;
 }
 
 .subtitle {
-  color: var(--muted);
+  color: #5f6368;
   font-size: 0.95rem;
   line-height: 1.5;
+  font-weight: 500;
 }
 
 .content {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
+  gap: 1.5rem;
 }
 
 .description {
   text-align: center;
-  color: var(--muted);
-  font-size: 0.9rem;
+  color: #5f6368;
+  font-size: 0.925rem;
   line-height: 1.6;
 }
 
@@ -58,20 +61,21 @@
   justify-content: center;
   gap: var(--spacing-sm);
   width: 100%;
-  padding: var(--spacing-md) var(--spacing-lg);
-  background: white;
-  color: #1f1f1f;
+  padding: 14px 24px;
+  background: var(--color-primary);
+  color: #f0ece1;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: 12px;
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 14px rgba(184, 126, 107, 0.25);
 }
 
 .googleButton:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  background: var(--color-primary-hover);
+  box-shadow: 0 6px 18px rgba(184, 126, 107, 0.35);
   transform: translateY(-1px);
 }
 
@@ -87,8 +91,8 @@
 .features {
   display: flex;
   justify-content: space-around;
-  padding-top: var(--spacing-md);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 1.25rem;
+  border-top: 1px dashed rgba(220, 208, 194, 0.8);
 }
 
 .feature {
@@ -97,7 +101,8 @@
   align-items: center;
   gap: var(--spacing-xs);
   font-size: 0.85rem;
-  color: var(--muted);
+  color: #5f6368;
+  font-weight: 600;
 }
 
 .featureIcon {
@@ -107,18 +112,19 @@
 .loading {
   text-align: center;
   padding: var(--spacing-xl);
-  color: var(--muted);
+  color: #5f6368;
   font-size: 1.1rem;
 }
 
 /* 響應式設計 */
 @media (max-width: 480px) {
   .card {
-    padding: var(--spacing-lg);
+    padding: 28px 20px;
+    border-radius: 16px;
   }
 
   .title {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
   }
 
   .subtitle {
