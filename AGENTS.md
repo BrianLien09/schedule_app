@@ -292,6 +292,12 @@ if (!user) {
 4. **圖片優化**：因為 GitHub Pages 限制，已設定 `images.unoptimized: true`
 5. **Base Path**：生產環境自動加上 `/schedule_app`，開發環境不加
 
+### ⚠️ 跨專案 Firebase 寫入權限避坑指南 (Bug Archive)
+1. **跨專案 Auth 獨立性**：當在 `schedule-app` 使用 Secondary Firebase App 連線寫入其他 Firebase 專案（如 `family-web` 的 Firestore）時，主專案的 `auth` 憑證不會自動傳遞至 Secondary App。
+2. **Missing or insufficient permissions 解決**：
+   - 方案一 (Firebase Console)：調整目標專案 (`schedule-app-7a2c4`) 的 Firestore Rules，將 `schedules` 集合設定為允許寫入 (`allow write: if true;` 或開放指定欄位)。
+   - 方案二 (共用 Firebase 專案)：將兩個專案統一使用相同的 Firebase 專案 config，消除跨專案 Security Rules 權限隔閡。
+
 ---
 
 ## 🚫 禁止事項

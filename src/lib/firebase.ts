@@ -90,3 +90,37 @@ export const auth: Auth | null = app ? getAuth(app) : null;
  * 注意：如果 Firebase 未設定，此值為 null
  */
 export default app;
+
+/**
+ * ----------------------------------------------------
+ * 🏠 family-web 的 Firebase 二次實例 (Secondary Firebase App)
+ * ----------------------------------------------------
+ * 安全地從環境變數讀取 family-web 的 Firebase 設定，
+ * 用於從 schedule-app 將打工班表同步寫入 family-web 的 Firestore 中。
+ */
+const familyFirebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FAMILY_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FAMILY_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FAMILY_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FAMILY_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FAMILY_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FAMILY_FIREBASE_APP_ID,
+};
+
+export const isFamilyFirebaseConfigured = Boolean(
+  familyFirebaseConfig.apiKey &&
+  familyFirebaseConfig.authDomain &&
+  familyFirebaseConfig.projectId
+);
+
+let familyApp: FirebaseApp | null = null;
+if (isFamilyFirebaseConfigured) {
+  const familyApps = getApps().filter((a) => a.name === 'familyApp');
+  familyApp = familyApps.length
+    ? familyApps[0]
+    : initializeApp(familyFirebaseConfig, 'familyApp');
+}
+
+export const familyDb: Firestore | null = familyApp ? getFirestore(familyApp) : null;
+
+

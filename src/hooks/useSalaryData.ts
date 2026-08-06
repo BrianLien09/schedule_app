@@ -9,6 +9,12 @@ import {
 } from '@/services/firestoreService';
 import { hasWriteAccess } from '@/config/permissions';
 import type { SalaryRecord } from '@/data/workRecords';
+import {
+  syncWorkShiftToFamilyWeb,
+  updateWorkShiftInFamilyWeb,
+  deleteWorkShiftFromFamilyWeb,
+  batchSyncWorkShiftsToFamilyWeb,
+} from '@/services/familySyncService';
 
 export type { RoleType, SalaryRecord } from '@/data/workRecords';
 
@@ -53,6 +59,8 @@ export function useSalaryData() {
     }
 
     await setDocument(SHARED_DATA_PATH, 'salaryRecords', record.id, record);
+    // 🏠 同步至 family-web 家庭月曆
+    await syncWorkShiftToFamilyWeb(record);
   };
 
   const updateRecord = async (id: string, updatedRecord: Partial<SalaryRecord>) => {
@@ -62,6 +70,8 @@ export function useSalaryData() {
     }
 
     await updateDocument(SHARED_DATA_PATH, 'salaryRecords', id, updatedRecord);
+    // 🏠 同步更新至 family-web 家庭月曆
+    await updateWorkShiftInFamilyWeb(id, updatedRecord);
   };
 
   const deleteRecord = async (id: string) => {
@@ -77,6 +87,8 @@ export function useSalaryData() {
     if (targetRecord?.workShiftId) {
       await deleteDocument(SHARED_DATA_PATH, 'workShifts', targetRecord.workShiftId);
     }
+    // 🏠 同步從 family-web 家庭月曆刪除
+    await deleteWorkShiftFromFamilyWeb(id);
   };
 
   const batchAddRecords = async (newRecords: SalaryRecord[]) => {
@@ -86,6 +98,8 @@ export function useSalaryData() {
     }
 
     await batchSetDocuments(SHARED_DATA_PATH, 'salaryRecords', newRecords);
+    // 🏠 批次同步至 family-web 家庭月曆
+    await batchSyncWorkShiftsToFamilyWeb(newRecords);
   };
 
   const batchUpdateRecords = async (
@@ -100,6 +114,12 @@ export function useSalaryData() {
       updateDocument(SHARED_DATA_PATH, 'salaryRecords', id, data)
     );
     await Promise.all(promises);
+
+    // 🏠 批次更新至 family-web
+    const familyUpdatePromises = updates.map(({ id, data }) =>
+      updateWorkShiftInFamilyWeb(id, data)
+    );
+    await Promise.all(familyUpdatePromises);
   };
 
   const batchDeleteRecords = async (ids: string[]) => {
@@ -118,6 +138,10 @@ export function useSalaryData() {
       .map((workShiftId) => deleteDocument(SHARED_DATA_PATH, 'workShifts', workShiftId));
 
     await Promise.all([...salaryDeletePromises, ...legacyShiftDeletePromises]);
+
+    // 🏠 批次從 family-web 刪除
+    const familyDeletePromises = ids.map((id) => deleteWorkShiftFromFamilyWeb(id));
+    await Promise.all(familyDeletePromises);
   };
 
   return {

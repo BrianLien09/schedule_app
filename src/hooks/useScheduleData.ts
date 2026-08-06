@@ -23,6 +23,11 @@ import {
   mapSalaryRecordToWorkShift,
   type SalaryRecord,
 } from '@/data/workRecords';
+import {
+  syncWorkShiftToFamilyWeb,
+  updateWorkShiftInFamilyWeb,
+  deleteWorkShiftFromFamilyWeb,
+} from '@/services/familySyncService';
 
 const SHARED_DATA_PATH = 'shared';
 
@@ -186,6 +191,8 @@ export function useScheduleData() {
     });
 
     await setDocument(SHARED_DATA_PATH, 'salaryRecords', record.id, record);
+    // 🏠 同步至 family-web 家庭月曆
+    await syncWorkShiftToFamilyWeb(record);
   };
 
   const updateWorkShift = async (id: string, updatedShift: Partial<WorkShift>) => {
@@ -213,6 +220,8 @@ export function useScheduleData() {
     const { id: _recordId, ...recordData } = record;
 
     await updateDocument(SHARED_DATA_PATH, 'salaryRecords', id, recordData);
+    // 🏠 同步更新至 family-web 家庭月曆
+    await updateWorkShiftInFamilyWeb(id, mergedShift);
   };
 
   const deleteWorkShift = async (id: string) => {
@@ -227,6 +236,8 @@ export function useScheduleData() {
     if (targetShift?.legacyWorkShiftId) {
       await deleteDocument(SHARED_DATA_PATH, 'workShifts', targetShift.legacyWorkShiftId);
     }
+    // 🏠 同步從 family-web 家庭月曆刪除
+    await deleteWorkShiftFromFamilyWeb(id);
   };
 
   const addEvent = async (event: Event) => {
@@ -271,5 +282,18 @@ export function useScheduleData() {
     addEvent,
     updateEvent,
     deleteEvent,
+    /**
+     * 一鍵將指定月份（如 "2026-08"）或全部打工班表同步至 family-web 家庭月曆
+     */
+    syncAllWorkShiftsToFamilyWeb: async (monthPrefix?: string) => {
+      const targetShifts = monthPrefix
+        ? shifts.filter((s) => s.date.startsWith(monthPrefix))
+        : shifts;
+      if (targetShifts.length === 0) return 0;
+
+      const { batchSyncWorkShiftsToFamilyWeb } = await import('@/services/familySyncService');
+      await batchSyncWorkShiftsToFamilyWeb(targetShifts);
+      return targetShifts.length;
+    },
   };
 }
