@@ -1,67 +1,56 @@
 // Service Worker for PWA offline support
-const CACHE_NAME = 'schedule-app-v1';
-const urlsToCache = [
-  '/schedule_app/',
-  '/schedule_app/schedule',
-  '/schedule_app/schedule/school',
-  '/schedule_app/schedule/work',
-  '/schedule_app/games',
-];
+const CACHE_NAME = 'daymate-cache-v2';
 
-// Install event - cache resources
+// Install event - 快取防錯處理
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('Opened cache');
-      return cache.addAll(urlsToCache);
-    })
-  );
-  // Force the waiting service worker to become the active service worker
   self.skipWaiting();
 });
 
-// Fetch event - serve from cache when offline
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      // Cache hit - return response
-      if (response) {
-        return response;
-      }
-
-      return fetch(event.request).then((response) => {
-        // Check if valid response
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
-        }
-
-        // Clone the response
-        const responseToCache = response.clone();
-
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-
-        return response;
-      });
-    })
-  );
-});
-
-// Activate event - clean up old caches
+// Activate event - 清理舊版本快取
 self.addEventListener('activate', (event) => {
-  const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
+          if (cacheName !== CACHE_NAME) {
             return caches.delete(cacheName);
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  // Claim clients immediately
-  return self.clients.claim();
 });
+
+// Fetch event - 網路優先、快取備援 (Network First)
+self.addEventListener('fetch', (event) => {
+  const request = event.request;
+
+  // 僅處理同源 GET 請求，忽略 Firebase、Google Auth 及非 HTTP/HTTPS 請求
+  if (request.method !== 'GET') return;
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin || url.pathname.includes('/api/')) return;
+
+  event.respondWith(
+    fetch(request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, responseToCache);
+          });
+        }
+        return networkResponse;
+      })
+      .catch(() => {
+        return caches.match(request).then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          if (request.mode === 'navigate') {
+            return caches.match('./') || caches.match('/schedule_app/');
+          }
+        });
+      })
+  );
+});
+
