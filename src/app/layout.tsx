@@ -5,13 +5,15 @@ import BackToTop from "@/components/BackToTop";
 import PWAHandler from "@/components/PWAHandler";
 import "./globals.css";
 
+const BASE_PATH = process.env.NODE_ENV === "production" ? "/schedule_app" : "";
+
 export const metadata: Metadata = {
   title: "DayMate - 個人日程與薪資管理",
   description: "課程表、打工班表、薪資計算與個人生活管理助手",
   icons: {
-    icon: './icon.png',
+    icon: `${BASE_PATH}/icon.png`,
   },
-  manifest: './manifest.json',
+  manifest: `${BASE_PATH}/manifest.json`,
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
