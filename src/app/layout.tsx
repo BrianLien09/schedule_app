@@ -9,9 +9,9 @@ export const metadata: Metadata = {
   title: "DayMate - 個人日程與薪資管理",
   description: "課程表、打工班表、薪資計算與個人生活管理助手",
   icons: {
-    icon: '/icon.png',
+    icon: './icon.png',
   },
-  manifest: '/manifest.json',
+  manifest: './manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
