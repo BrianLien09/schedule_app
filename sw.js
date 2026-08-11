@@ -1,9 +1,20 @@
 // Service Worker for PWA offline support
-const CACHE_NAME = 'daymate-cache-v2';
+const CACHE_NAME = 'daymate-cache-v3';
 
-// Install event - 快取防錯處理
+// Install event - 預先快取應用程式首頁，確保首次離線時仍有可載入的內容
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        const appShellUrl = new URL('./', self.registration.scope).toString();
+        return cache.add(appShellUrl);
+      })
+      .catch((error) => {
+        // 預快取失敗時仍允許 Service Worker 啟用，避免阻斷線上使用
+        console.warn('Service Worker 預快取失敗:', error);
+      })
+      .then(() => self.skipWaiting())
+  );
 });
 
 // Activate event - 清理舊版本快取
@@ -47,10 +58,12 @@ self.addEventListener('fetch', (event) => {
             return cachedResponse;
           }
           if (request.mode === 'navigate') {
-            return caches.match('./') || caches.match('/schedule_app/');
+            const appShellUrl = new URL('./', self.registration.scope).toString();
+            return caches.match(appShellUrl).then((appShell) => appShell || Response.error());
           }
+
+          return Response.error();
         });
       })
   );
 });
-
