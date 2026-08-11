@@ -107,3 +107,39 @@
     font-size: 0.9rem;
   }
 }
+
+/* ===== Mature access state refinement ===== */
+.container {
+  min-height: 68vh;
+  padding: 2rem var(--spacing-md);
+}
+
+.card {
+  background-color: var(--surface-elevated);
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--radius-lg);
+  padding: 3rem 2.25rem;
+  box-shadow: var(--shadow-lg);
+  animation: accessCardReveal 560ms var(--ease-standard) both;
+}
+
+.iconWrapper {
+  border: 1px solid rgba(184, 126, 107, 0.28);
+  box-shadow: var(--shadow-sm);
+}
+
+.loginButton {
+  border-radius: var(--radius-sm);
+  transition: transform 180ms var(--ease-standard), background-color 180ms ease, box-shadow 180ms ease;
+}
+
+@keyframes accessCardReveal {
+  from { opacity: 0; transform: translateY(12px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    animation: none;
+  }
+}

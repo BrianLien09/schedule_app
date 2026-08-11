@@ -317,8 +317,8 @@ export default function WorkSchedulePage() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-      <div className="glass" style={{ padding: '1.5rem', minHeight: '600px' }}>
+    <div className={styles.pageContainer}>
+      <div className={`glass ${styles.calendarContainer}`} style={{ padding: '1.5rem', minHeight: '600px' }}>
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
           {/* 月曆標題區 */}
           <div

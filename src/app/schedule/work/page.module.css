@@ -504,3 +504,91 @@
 .detailsContent {
   margin-top: 1.5rem;
 }
+
+/* ===== Mature calendar refinement ===== */
+.pageContainer {
+  gap: 1.25rem;
+}
+
+.calendarContainer {
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.dayCell {
+  border-radius: var(--radius-sm);
+  transition: transform 180ms var(--ease-standard), box-shadow 180ms var(--ease-standard), border-color 180ms ease, background-color 180ms ease;
+}
+
+.dayCellWithShift {
+  border: 1px solid rgba(184, 126, 107, 0.38);
+}
+
+.dayCellWithShift:hover {
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
+}
+
+.dayCellEmpty {
+  border: 1px solid var(--line-subtle);
+}
+
+.shiftBadge {
+  border-radius: 7px;
+  box-shadow: 0 3px 8px rgba(92, 74, 54, 0.12);
+  transition: transform 180ms var(--ease-standard), box-shadow 180ms ease, filter 180ms ease;
+}
+
+.shiftBadge:hover {
+  filter: saturate(1.06);
+  box-shadow: 0 6px 12px rgba(92, 74, 54, 0.16);
+}
+
+.shiftCard {
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: transform 220ms var(--ease-standard), border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.shiftCard:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.shiftDateBadge,
+.hintInline {
+  border: 1px solid var(--line-subtle);
+}
+
+.cardFooter {
+  border-top: 1px solid var(--line-subtle);
+}
+
+.actionBtn {
+  border: 1px solid transparent;
+  transition: transform 180ms var(--ease-standard), background-color 180ms ease, border-color 180ms ease;
+}
+
+.editBtn {
+  border-color: rgba(95, 113, 134, 0.26);
+}
+
+.deleteBtn {
+  border-color: rgba(220, 38, 38, 0.22);
+}
+
+.multiSelectBar {
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dayCell,
+  .shiftBadge,
+  .shiftCard,
+  .actionBtn {
+    transition: none;
+  }
+}

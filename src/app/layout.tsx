@@ -39,7 +39,7 @@ export default function RootLayout({
         <Providers>
           <PWAHandler />
           <Navbar />
-          <main className="container page-transition" style={{ paddingTop: '1rem' }}>
+          <main className="container page-transition site-main">
             {children}
           </main>
           <BackToTop />

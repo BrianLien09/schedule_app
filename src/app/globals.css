@@ -427,3 +427,103 @@ select option {
     animation: none;
   }
 }
+
+/* ===== Mature UI refinement layer ===== */
+:root {
+  --surface-elevated: #f4f0e7;
+  --surface-soft: #ebe6da;
+  --line-subtle: rgba(120, 104, 87, 0.16);
+  --line-strong: rgba(120, 104, 87, 0.26);
+  --shadow-sm: 0 2px 8px rgba(92, 74, 54, 0.06);
+  --shadow-md: 0 12px 28px rgba(92, 74, 54, 0.1);
+  --shadow-lg: 0 20px 48px rgba(92, 74, 54, 0.14);
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+body {
+  background-image:
+    radial-gradient(circle at 8% -10%, rgba(184, 126, 107, 0.14), transparent 32rem),
+    radial-gradient(circle at 92% 8%, rgba(95, 113, 134, 0.11), transparent 28rem),
+    var(--grid-paper, none);
+  background-attachment: fixed;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+select:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(184, 126, 107, 0.34);
+  outline-offset: 3px;
+}
+
+.glass {
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  transition: transform 240ms var(--ease-standard), box-shadow 240ms var(--ease-standard), border-color 240ms ease;
+}
+
+.glass:hover {
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.card {
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  transition: transform 240ms var(--ease-standard), box-shadow 240ms var(--ease-standard), background-color 240ms ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+.btn {
+  border-color: transparent;
+  border-radius: var(--radius-sm);
+  transition: transform 180ms var(--ease-standard), box-shadow 180ms var(--ease-standard), background-color 180ms ease;
+}
+
+.btn:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.nav-link {
+  transition: color 180ms ease, background-color 180ms ease, transform 180ms var(--ease-standard);
+}
+
+.site-main {
+  padding-top: 1.25rem;
+}
+
+.page-transition {
+  /* Modal 位於 main 內，祖先不能使用 transform，否則 fixed 會相對整個頁面定位 */
+  animation: pageOpacityIn 0.55s var(--ease-standard) both;
+}
+
+@keyframes pageOpacityIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes softPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.24); }
+  50% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-transition {
+    animation: none;
+  }
+}

@@ -127,16 +127,11 @@ export default function Navbar() {
     <>
       <nav
         ref={navRef}
-        className="glass"
+        className={`glass ${styles.navbar} ${isVisible ? styles.navbarVisible : styles.navbarHidden}`}
         style={{
-          margin: '0 var(--spacing-md) var(--spacing-md) var(--spacing-md)',
-          padding: 'var(--spacing-md)',
           position: 'sticky',
           top: '0',
           zIndex: 100,
-          transition: 'transform 0.5s ease-in-out, opacity 0.5s ease-in-out',
-          transform: isVisible ? 'translateY(0)' : 'translateY(-150%)',
-          opacity: isVisible ? 1 : 0
         }}
       >
         <div className="container navbar-content">

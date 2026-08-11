@@ -113,6 +113,18 @@
   }
 }
 
+@media (max-width: 1280px) and (min-width: 1025px) {
+  .glassRadioGroup label {
+    font-size: 13px;
+    padding: 0 0.32rem;
+  }
+
+  .glassRadioGroup label svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
 /* ===== 響應式：隱藏在行動版 ===== */
 @media (max-width: 767px) {
   .glassRadioGroup {
@@ -125,4 +137,24 @@
   .glassGlider {
     transition: none;
   }
+}
+
+/* ===== Mature navigation refinement ===== */
+.glassRadioGroup {
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-sm);
+  height: 50px;
+  padding: 4px;
+}
+
+.glassRadioGroup label {
+  transition: color 180ms ease, opacity 180ms ease;
+}
+
+.glassGlider {
+  top: 4px;
+  bottom: 4px;
+  height: auto;
+  border-radius: 0.75rem;
+  transition: transform 420ms var(--ease-standard), background-color 240ms ease, box-shadow 240ms ease;
 }
