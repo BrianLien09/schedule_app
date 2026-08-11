@@ -1,11 +1,11 @@
 1:"$Sreact.fragment"
 2:I[47257,["/schedule_app/_next/static/chunks/ff1a16fafef87110.js","/schedule_app/_next/static/chunks/7340adf74ff47ec0.js"],"ClientPageRoot"]
-3:I[38995,["/schedule_app/_next/static/chunks/b653f5fbf7712c89.js","/schedule_app/_next/static/chunks/b51e618eaf1e7344.js","/schedule_app/_next/static/chunks/0055e2039fc101c7.js"],"default"]
+3:I[38995,["/schedule_app/_next/static/chunks/7764e47ae2b43c80.js","/schedule_app/_next/static/chunks/b51e618eaf1e7344.js","/schedule_app/_next/static/chunks/94e6ee9e601be9e7.js"],"default"]
 6:I[97367,["/schedule_app/_next/static/chunks/ff1a16fafef87110.js","/schedule_app/_next/static/chunks/7340adf74ff47ec0.js"],"OutletBoundary"]
 7:"$Sreact.suspense"
-:HL["/schedule_app/_next/static/chunks/c7de1e0a3268a367.css","style"]
-:HL["/schedule_app/_next/static/chunks/3483f5a97e4a6e96.css","style"]
-0:{"buildId":"RvixPa96D9TMzu1FkEvb8","rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","link","0",{"rel":"stylesheet","href":"/schedule_app/_next/static/chunks/c7de1e0a3268a367.css","precedence":"next"}],["$","link","1",{"rel":"stylesheet","href":"/schedule_app/_next/static/chunks/3483f5a97e4a6e96.css","precedence":"next"}],["$","script","script-0",{"src":"/schedule_app/_next/static/chunks/0055e2039fc101c7.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"loading":null,"isPartial":false}
+:HL["/schedule_app/_next/static/chunks/02ac45364ed2fa9b.css","style"]
+:HL["/schedule_app/_next/static/chunks/48a847de645e639f.css","style"]
+0:{"buildId":"yhhdwSl_lgCK6MjEViF-W","rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","link","0",{"rel":"stylesheet","href":"/schedule_app/_next/static/chunks/02ac45364ed2fa9b.css","precedence":"next"}],["$","link","1",{"rel":"stylesheet","href":"/schedule_app/_next/static/chunks/48a847de645e639f.css","precedence":"next"}],["$","script","script-0",{"src":"/schedule_app/_next/static/chunks/94e6ee9e601be9e7.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"loading":null,"isPartial":false}
 4:{}
 5:"$0:rsc:props:children:0:props:serverProvidedParams:params"
 8:null
