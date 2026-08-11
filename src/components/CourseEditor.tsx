@@ -1,9 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Course } from '../data/schedule';
+import type { Course, WorkShift } from '../data/schedule';
 import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import Modal from './Modal';
 import styles from './CourseEditor.module.css';
+import { findCourseConflicts, formatConflictMessage } from '@/utils/scheduleConflicts';
 
 interface CourseEditorProps {
   isOpen: boolean;
@@ -11,14 +13,25 @@ interface CourseEditorProps {
   onSave: (course: Course) => void;
   course?: Course | null;
   mode: 'add' | 'edit';
+  existingCourses?: Course[];
+  existingShifts?: WorkShift[];
 }
 
 /**
  * Course Editor Dialog Component
  * 新增或編輯課程的對話框，使用統一 Modal 基礎元件
  */
-export default function CourseEditor({ isOpen, onClose, onSave, course, mode }: CourseEditorProps) {
+export default function CourseEditor({
+  isOpen,
+  onClose,
+  onSave,
+  course,
+  mode,
+  existingCourses = [],
+  existingShifts = [],
+}: CourseEditorProps) {
   const { toast } = useToast();
+  const { confirm } = useConfirm();
   const [formData, setFormData] = useState<Partial<Course>>({
     name: '',
     day: 1,
@@ -43,7 +56,7 @@ export default function CourseEditor({ isOpen, onClose, onSave, course, mode }: 
     }
   }, [course, mode]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.name || !formData.startTime || !formData.endTime) {
@@ -66,6 +79,18 @@ export default function CourseEditor({ isOpen, onClose, onSave, course, mode }: 
       location: formData.location,
       color: formData.color,
     };
+
+    const conflicts = findCourseConflicts(newCourse, existingCourses, existingShifts, course?.id);
+    if (conflicts.length > 0) {
+      const confirmed = await confirm({
+        title: '發現行程衝突',
+        message: formatConflictMessage(conflicts),
+        confirmText: '仍要儲存',
+      });
+      if (!confirmed) {
+        return;
+      }
+    }
 
     onSave(newCourse);
     onClose();

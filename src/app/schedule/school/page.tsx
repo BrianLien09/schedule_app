@@ -19,7 +19,7 @@ export default function SchoolSchedulePage() {
   const { user, loading: authLoading } = useAuth();
   
   // 使用新的資料管理 hook
-  const { courses, addCourse, deleteCourse, updateCourse, canEdit } = useScheduleData();
+  const { courses, shifts, addCourse, deleteCourse, updateCourse, canEdit } = useScheduleData();
   const { toast } = useToast();
   const { confirm } = useConfirm();
   
@@ -511,6 +511,8 @@ export default function SchoolSchedulePage() {
         onSave={handleSaveCourse}
         course={editingCourse}
         mode={editorMode}
+        existingCourses={courses}
+        existingShifts={shifts}
       />
 
       {/* 筆記編輯器 */}

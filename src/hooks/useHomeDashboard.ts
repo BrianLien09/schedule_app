@@ -1,6 +1,13 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Course, WorkShift, Event } from '../data/schedule';
 
+function formatLocalDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 // 行程事件類型定義
 export interface ScheduleEvent {
   type: 'class' | 'work';
@@ -12,6 +19,16 @@ export interface ScheduleEvent {
 
 export interface CurrentEvent extends ScheduleEvent {
   time: string; // 格式: "HH:MM - HH:MM"
+}
+
+export interface TodayTimelineItem {
+  type: 'class' | 'work' | 'event';
+  id: string;
+  title: string;
+  startTime?: string;
+  endTime?: string;
+  location?: string;
+  isAllDay?: boolean;
 }
 
 /**
@@ -35,9 +52,10 @@ export function useHomeDashboard(
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
   const currentMonthStr = `${currentYear}-${currentMonth.toString().padStart(2, '0')}`;
-  const todayDateStr = now.toISOString().split('T')[0];
+  const todayDateStr = formatLocalDate(now);
   const currentTimeStr = now.toTimeString().slice(0, 5); // "HH:MM"
   const currentDayOfWeek = now.getDay(); // 0 (Sun) - 6 (Sat)
+  const currentCourseDay = currentDayOfWeek === 0 ? 7 : currentDayOfWeek;
 
   // 1. 計算本週課程數量
   const thisWeekClasses = useMemo(() => {
@@ -52,7 +70,7 @@ export function useHomeDashboard(
   // 3. 篩選即將到來的課程與打工
   const upcomingEvents = useMemo((): ScheduleEvent[] => {
     const upcomingClasses = schoolSchedule
-      .filter(c => c.day === currentDayOfWeek && c.startTime > currentTimeStr)
+      .filter(c => c.day === currentCourseDay && c.startTime > currentTimeStr)
       .map(c => ({
         type: 'class' as const,
         time: c.startTime,
@@ -72,7 +90,7 @@ export function useHomeDashboard(
       }));
 
     return [...upcomingClasses, ...upcomingWork].sort((a, b) => a.time.localeCompare(b.time));
-  }, [currentDayOfWeek, currentTimeStr, todayDateStr, schoolSchedule, workShifts]);
+  }, [currentCourseDay, currentTimeStr, todayDateStr, schoolSchedule, workShifts]);
 
   // 4. 取得下一個行程
   const nextEvent = upcomingEvents[0] || null;
@@ -84,7 +102,7 @@ export function useHomeDashboard(
     const currentClasses = schoolSchedule
       .filter(
         c =>
-          c.day === currentDayOfWeek &&
+          c.day === currentCourseDay &&
           c.startTime <= currentTimeStr &&
           (c.endTime || DEFAULT_END_TIME) > currentTimeStr
       )
@@ -107,28 +125,68 @@ export function useHomeDashboard(
       }));
 
     return [...currentClasses, ...currentWork][0] || null;
-  }, [currentDayOfWeek, currentTimeStr, todayDateStr, schoolSchedule, workShifts]);
+  }, [currentCourseDay, currentTimeStr, todayDateStr, schoolSchedule, workShifts]);
 
   // 6. 今日課程列表 (最多顯示 5 筆)
   const todaySchedule = useMemo(() => {
     return schoolSchedule
-      .filter(course => course.day === currentDayOfWeek)
+      .filter(course => course.day === currentCourseDay)
       .sort((a, b) => a.startTime.localeCompare(b.startTime))
       .slice(0, 5);
-  }, [currentDayOfWeek, schoolSchedule]);
+  }, [currentCourseDay, schoolSchedule]);
 
-  // 7. 本月打工班表
+  // 7. 整合今天的課程、打工與重要事件
+  const todayTimeline = useMemo((): TodayTimelineItem[] => {
+    const classes: TodayTimelineItem[] = schoolSchedule
+      .filter((course) => course.day === currentCourseDay)
+      .map((course) => ({
+        type: 'class',
+        id: `class-${course.id}`,
+        title: course.name,
+        startTime: course.startTime,
+        endTime: course.endTime,
+        location: course.location,
+      }));
+
+    const work: TodayTimelineItem[] = workShifts
+      .filter((shift) => shift.date === todayDateStr)
+      .map((shift) => ({
+        type: 'work',
+        id: `work-${shift.id}`,
+        title: shift.shiftCategory || shift.note || '打工',
+        startTime: shift.startTime,
+        endTime: shift.endTime,
+        location: shift.location || '工作地點',
+      }));
+
+    const events: TodayTimelineItem[] = importantEvents
+      .filter((event) => event.date === todayDateStr)
+      .map((event) => ({
+        type: 'event',
+        id: `event-${event.id}`,
+        title: event.title,
+        location: event.description,
+        isAllDay: true,
+      }));
+
+    return [...classes, ...work, ...events].sort((a, b) => {
+      if (a.isAllDay) return -1;
+      if (b.isAllDay) return 1;
+      return (a.startTime || '').localeCompare(b.startTime || '');
+    });
+  }, [currentCourseDay, todayDateStr, schoolSchedule, workShifts, importantEvents]);
+
+  // 8. 本月打工班表
   const monthlyWorkShifts = useMemo(() => {
     return workShifts
       .filter(s => s.date.startsWith(currentMonthStr))
       .sort((a, b) => a.date.localeCompare(b.date));
   }, [currentMonthStr, workShifts]);
 
-  // 8. 即將到來的重要事件
+  // 9. 即將到來的重要事件
   const upcomingImportantEvents = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
-    return importantEvents.filter(event => event.date >= today);
-  }, [importantEvents]);
+    return importantEvents.filter(event => event.date >= todayDateStr);
+  }, [importantEvents, todayDateStr]);
 
   return {
     // 時間資訊
@@ -144,6 +202,7 @@ export function useHomeDashboard(
     nextEvent,
     currentEvent,
     todaySchedule,
+    todayTimeline,
     monthlyWorkShifts,
     upcomingImportantEvents,
   };

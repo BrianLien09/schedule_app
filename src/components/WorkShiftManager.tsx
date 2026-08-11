@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useScheduleData } from '../hooks/useScheduleData';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
-import { WorkShift } from '../data/schedule';
+import { generateWorkShiftId, type WorkShift } from '../data/schedule';
 import WorkShiftEditor from './WorkShiftEditor';
 import styles from './WorkShiftManager.module.css';
 
@@ -12,7 +12,7 @@ import styles from './WorkShiftManager.module.css';
  * 管理打工班表的新增、編輯、刪除和快速複製
  */
 export default function WorkShiftManager() {
-  const { shifts, addWorkShift, updateWorkShift, deleteWorkShift } = useScheduleData();
+  const { courses, shifts, addWorkShift, updateWorkShift, deleteWorkShift } = useScheduleData();
   const { toast } = useToast();
   const { confirm } = useConfirm();
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -43,12 +43,13 @@ export default function WorkShiftManager() {
     }
   };
 
-  const handleSaveShift = (shift: WorkShift) => {
+  const handleSaveShift = async (shift: WorkShift): Promise<boolean> => {
     if (editorMode === 'add') {
-      addWorkShift(shift);
+      await addWorkShift(shift);
     } else {
-      updateWorkShift(shift.id, shift);
+      await updateWorkShift(shift.id, shift);
     }
+    return true;
   };
 
   // 快速複製上週班表
@@ -244,6 +245,8 @@ export default function WorkShiftManager() {
         onSave={handleSaveShift}
         shift={editingShift}
         mode={editorMode}
+        existingCourses={courses}
+        existingShifts={shifts}
       />
     </div>
   );

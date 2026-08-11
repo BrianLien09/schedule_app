@@ -11,7 +11,7 @@ import styles from './CourseManager.module.css';
  * 管理課程的新增、編輯、刪除
  */
 export default function CourseManager() {
-  const { courses, addCourse, updateCourse, deleteCourse } = useScheduleData();
+  const { courses, shifts, addCourse, updateCourse, deleteCourse } = useScheduleData();
   const { confirm } = useConfirm();
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
@@ -124,6 +124,8 @@ export default function CourseManager() {
         onSave={handleSaveCourse}
         course={editingCourse}
         mode={editorMode}
+        existingCourses={courses}
+        existingShifts={shifts}
       />
     </div>
   );

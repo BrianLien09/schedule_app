@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './Modal.module.css';
 
 interface ModalProps {
@@ -62,26 +63,27 @@ export default function Modal({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className={styles.overlay} onClick={onClose}>
       <div
-        ref={dialogRef}
-        className={`glass ${styles.dialog} ${className || ''}`}
-        style={{ maxWidth }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className={styles.header}>
-          <h2 className={styles.title}>{title}</h2>
-          <button
-            className={styles.closeButton}
-            onClick={onClose}
-            aria-label="關閉"
-          >
-            ✕
-          </button>
-        </div>
-        {children}
+          ref={dialogRef}
+          className={`glass ${styles.dialog} ${className || ''}`}
+          style={{ maxWidth }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className={styles.header}>
+            <h2 className={styles.title}>{title}</h2>
+            <button
+              className={styles.closeButton}
+              onClick={onClose}
+              aria-label="關閉"
+            >
+              ✕
+            </button>
+          </div>
+          {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

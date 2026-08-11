@@ -1,19 +1,23 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/context/ToastContext';
-import { WorkShift } from '../data/schedule';
+import { useConfirm } from '@/context/ConfirmContext';
+import type { Course, WorkShift } from '../data/schedule';
 import Modal from './Modal';
 import styles from './WorkShiftEditor.module.css';
 
 import { useShiftTemplates } from '@/hooks/useShiftTemplates';
+import { findWorkShiftConflicts, formatConflictMessage } from '@/utils/scheduleConflicts';
 
 interface WorkShiftEditorProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (shift: WorkShift) => void;
+  onSave: (shift: WorkShift) => void | Promise<boolean | void>;
   onDelete?: (shiftId: string) => void;
   shift?: WorkShift | null;
   mode: 'add' | 'edit';
+  existingCourses?: Course[];
+  existingShifts?: WorkShift[];
 }
 
 const ROLE_RATES = {
@@ -43,11 +47,13 @@ export default function WorkShiftEditor({
   onDelete,
   shift,
   mode,
+  existingCourses = [],
+  existingShifts = [],
 }: WorkShiftEditorProps) {
   const { toast } = useToast();
+  const { confirm } = useConfirm();
   const { templates } = useShiftTemplates();
   const [isCustomCategory, setIsCustomCategory] = useState(false);
-
   const [formData, setFormData] = useState<Partial<WorkShift>>({
     date: new Date().toISOString().split('T')[0],
     startTime: '09:00',
@@ -131,7 +137,7 @@ export default function WorkShiftEditor({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.date || !formData.startTime || !formData.endTime) {
@@ -164,8 +170,23 @@ export default function WorkShiftEditor({
       legacyWorkShiftId: shift?.legacyWorkShiftId,
     };
 
-    onSave(newShift);
-    onClose();
+    const conflicts = findWorkShiftConflicts(
+      newShift,
+      existingCourses,
+      existingShifts,
+      shift?.id
+    );
+    if (conflicts.length > 0) {
+      const confirmed = await confirm({
+        title: '發現行程衝突',
+        message: formatConflictMessage(conflicts),
+        confirmText: '仍要儲存',
+      });
+      if (!confirmed) return;
+    }
+
+    const saved = await onSave(newShift);
+    if (saved !== false) onClose();
   };
 
   const handleRoleChange = (newRole: 'assistant' | 'instructor') => {

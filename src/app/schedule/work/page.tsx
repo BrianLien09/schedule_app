@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { type WorkShift } from '../../../data/schedule';
+import { generateWorkShiftId, type WorkShift } from '../../../data/schedule';
 import { useWorkCalendar } from '../../../hooks/useWorkCalendar';
 import { useScheduleData } from '../../../hooks/useScheduleData';
 import { useAuth } from '../../../context/AuthContext';
@@ -9,17 +9,13 @@ import { useConfirm } from '@/context/ConfirmContext';
 import LoginPrompt from '../../../components/LoginPrompt';
 import WorkShiftEditor from '../../../components/WorkShiftEditor';
 import { LoadingSpinner } from '../../../components/Loading';
+import { useShiftTemplates } from '@/hooks/useShiftTemplates';
+import type { ShiftTemplate } from '@/data/shiftTemplates';
+import {
+  findWorkShiftConflicts,
+  formatConflictMessage,
+} from '@/utils/scheduleConflicts';
 import styles from './page.module.css';
-
-/**
- * 班次模板定義
- */
-const SHIFT_TEMPLATES = [
-  { name: '秋季班', startTime: '09:00', endTime: '18:00', note: '秋季班' },
-  { name: '冬令營助教', startTime: '09:00', endTime: '18:00', note: '冬令營助教' },
-  { name: '半天班 (上午)', startTime: '09:00', endTime: '13:00', note: '半天班' },
-  { name: '半天班 (下午)', startTime: '13:00', endTime: '18:00', note: '半天班' },
-];
 
 /**
  * 依據打工角色 (role) 與內容名稱 (title) 動態計算 Woven & Weft 大地色系標籤樣式
@@ -61,7 +57,15 @@ export default function WorkSchedulePage() {
   const { confirm } = useConfirm();
 
   // 使用共享資料 Hook（包含 CRUD 操作與同步）
-  const { shifts, addWorkShift, updateWorkShift, deleteWorkShift, syncAllWorkShiftsToFamilyWeb } = useScheduleData();
+  const {
+    courses,
+    shifts,
+    addWorkShift,
+    updateWorkShift,
+    deleteWorkShift,
+    syncAllWorkShiftsToFamilyWeb,
+  } = useScheduleData();
+  const { templates, loading: templatesLoading } = useShiftTemplates();
   const [isSyncing, setIsSyncing] = useState(false);
 
   const {
@@ -107,6 +111,19 @@ export default function WorkSchedulePage() {
     return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
   };
 
+  const confirmShiftConflicts = async (candidates: WorkShift[]): Promise<boolean> => {
+    const conflicts = candidates.flatMap((candidate) =>
+      findWorkShiftConflicts(candidate, courses, [...shifts, ...candidates], candidate.id)
+    );
+    if (conflicts.length === 0) return true;
+
+    return confirm({
+      title: '發現重複班表衝突',
+      message: formatConflictMessage(conflicts),
+      confirmText: '仍要建立',
+    });
+  };
+
   // ========== 拖曳功能 ==========
   const handleDragStart = (shift: WorkShift, e: React.DragEvent) => {
     setDraggedShift(shift);
@@ -123,7 +140,7 @@ export default function WorkSchedulePage() {
     setDragOverDay(null);
   };
 
-  const handleDrop = (day: number, e: React.DragEvent) => {
+  const handleDrop = async (day: number, e: React.DragEvent) => {
     e.preventDefault();
     setDragOverDay(null);
 
@@ -144,7 +161,9 @@ export default function WorkSchedulePage() {
       workHours: draggedShift.workHours,
     };
 
-    addWorkShift(newShift);
+    if (!(await confirmShiftConflicts([newShift]))) return;
+
+    await addWorkShift(newShift);
     toast.success(`已將班次複製到 ${targetDate}`);
     setDraggedShift(null);
   };
@@ -153,13 +172,9 @@ export default function WorkSchedulePage() {
   const handleDayClick = (day: number, e: React.MouseEvent) => {
     const dayShifts = getShiftsForDate(day);
 
-    // Ctrl/Cmd 點擊：多選模式
-    if (e.ctrlKey || e.metaKey) {
+    // 進入多選模式後，直接點擊日期即可加入或移除選取，不需要按住 Ctrl。
+    if (isMultiSelectMode || e.ctrlKey || e.metaKey) {
       e.preventDefault();
-
-      if (dayShifts.length > 0) {
-        return;
-      }
 
       setIsMultiSelectMode(true);
 
@@ -188,6 +203,11 @@ export default function WorkSchedulePage() {
       setEditorMode('add');
       setIsEditorOpen(true);
     }
+  };
+
+  const handleStartMultiSelect = () => {
+    setSelectedDays([]);
+    setIsMultiSelectMode(true);
   };
 
   // 開啟編輯指定班表
@@ -222,7 +242,7 @@ export default function WorkSchedulePage() {
   // 批次新增班次
   const handleBatchAdd = () => {
     if (selectedDays.length === 0) {
-      toast.info('請先選擇日期（按住 Ctrl 點擊多個空白日期）');
+      toast.info('請先點擊選取多個日期');
       return;
     }
     setEditingShift(null);
@@ -231,26 +251,46 @@ export default function WorkSchedulePage() {
   };
 
   // 儲存班次 (新增 / 編輯 / 批次)
-  const handleSaveShift = async (shift: WorkShift) => {
+  const handleSaveShift = async (shift: WorkShift): Promise<boolean> => {
+    const candidates: WorkShift[] =
+      editorMode === 'edit'
+        ? [shift]
+        : editorMode === 'batch'
+          ? selectedDays.map((day) => ({
+              ...shift,
+              id: generateWorkShiftId(),
+              date: formatDate(day),
+            }))
+          : [shift];
+
+    // 編輯器已檢查單筆新增；這裡補檢查批次日期，避免一次建立多筆後才發現衝突。
+    const candidatesToCheck = editorMode === 'batch' ? candidates : [];
+    if (candidatesToCheck.length > 0) {
+      if (!(await confirmShiftConflicts(candidatesToCheck))) return false;
+    }
+
     if (editorMode === 'edit') {
       await updateWorkShift(shift.id, shift);
       toast.success('已成功更新打工班表');
+      return true;
     } else if (editorMode === 'add') {
-      await addWorkShift(shift);
-      toast.success('已成功新增打工班表');
-    } else if (editorMode === 'batch') {
-      for (const day of selectedDays) {
-        const newShift: WorkShift = {
-          ...shift,
-          id: `shift-${Date.now()}-${Math.random().toString(36).substring(2, 7)}-${day}`,
-          date: formatDate(day),
-        };
-        await addWorkShift(newShift);
+      for (const candidate of candidates) {
+        await addWorkShift(candidate);
       }
+      toast.success('已成功新增打工班表');
+      return true;
+    } else if (editorMode === 'batch') {
+      for (const candidate of candidates) {
+        await addWorkShift(candidate);
+      }
+      const selectedCount = candidates.length;
       setSelectedDays([]);
       setIsMultiSelectMode(false);
-      toast.success(`已成功新增 ${selectedDays.length} 天班表`);
+      toast.success(`已成功新增 ${selectedCount} 天班表`);
+      return true;
     }
+
+    return false;
   };
 
   // 取消多選模式
@@ -260,9 +300,9 @@ export default function WorkSchedulePage() {
   };
 
   // 快速套用模板
-  const handleApplyTemplate = async (template: (typeof SHIFT_TEMPLATES)[0]) => {
+  const handleApplyTemplate = async (template: ShiftTemplate) => {
     if (selectedDays.length === 0) {
-      toast.info('請先選擇日期（按住 Ctrl 點擊多個空白日期）');
+      toast.info('請先點擊選取多個日期');
       return;
     }
 
@@ -275,23 +315,27 @@ export default function WorkSchedulePage() {
       return;
     }
 
-    for (const day of selectedDays) {
-      const newShift: WorkShift = {
-        id: `shift-${Date.now()}-${Math.random().toString(36).substring(2, 7)}-${day}`,
-        date: formatDate(day),
-        startTime: template.startTime,
-        endTime: template.endTime,
-        note: template.note,
-        shiftCategory: template.note,
-        role: 'assistant',
-        hourlyRate: 200,
-      };
-      await addWorkShift(newShift);
+    const candidates: WorkShift[] = selectedDays.map((day) => ({
+      id: generateWorkShiftId(),
+      date: formatDate(day),
+      startTime: template.startTime,
+      endTime: template.endTime,
+      note: template.name,
+      shiftCategory: template.name,
+      role: template.role || 'assistant',
+      hourlyRate: template.hourlyRate,
+      workHours: template.workHours,
+    }));
+
+    if (!(await confirmShiftConflicts(candidates))) return;
+
+    for (const candidate of candidates) {
+      await addWorkShift(candidate);
     }
 
     setSelectedDays([]);
     setIsMultiSelectMode(false);
-    toast.success(`已成功為 ${selectedDays.length} 個日期套用模板`);
+    toast.success(`已成功為 ${candidates.length} 個日期套用「${template.name}」`);
   };
 
   // 處理一鍵同步本月排班至家庭月曆
@@ -368,7 +412,19 @@ export default function WorkSchedulePage() {
                 }}
                 title="將本月打工班表同步至 family-web 家庭月曆"
               >
-                {isSyncing ? '⌛ 同步中...' : '🏠 同步至家庭月曆'}
+                {isSyncing ? '同步中...' : '同步至家庭月曆'}
+              </button>
+              <button
+                onClick={isMultiSelectMode ? handleCancelMultiSelect : handleStartMultiSelect}
+                className="btn"
+                style={{
+                  fontSize: '0.85rem',
+                  padding: '4px 12px',
+                  borderRadius: '9999px',
+                  flexShrink: 0,
+                }}
+              >
+                {isMultiSelectMode ? '取消多選' : '多選日期'}
               </button>
             </div>
             <button
@@ -383,24 +439,34 @@ export default function WorkSchedulePage() {
           {/* 多選提示與操作區 */}
           {isMultiSelectMode && (
             <div className={styles.multiSelectBar}>
-              <div className={styles.multiSelectInfo}>已選擇 {selectedDays.length} 個日期</div>
+              <div className={styles.multiSelectInfo}>
+                <span className={styles.multiSelectLabel}>批次套用班表</span>
+                <strong>已選擇 {selectedDays.length} 個日期</strong>
+                <span className={styles.multiSelectHint}>直接點擊日期即可加入或取消</span>
+              </div>
               <div className={styles.multiSelectActions}>
                 <button className={`btn ${styles.templateButton}`} onClick={handleBatchAdd}>
-                  📝 批次新增
+                  自訂班表
                 </button>
-                {SHIFT_TEMPLATES.map((template, idx) => (
-                  <button
-                    key={idx}
-                    className={`btn ${styles.templateButton}`}
-                    onClick={() => handleApplyTemplate(template)}
-                  >
-                    ⚡ {template.name}
-                  </button>
-                ))}
-                <button className={`btn ${styles.cancelButton}`} onClick={handleCancelMultiSelect}>
-                  取消
-                </button>
+                {templatesLoading ? (
+                  <span className={styles.templateLoading}>班表範本載入中...</span>
+                ) : templates.length > 0 ? (
+                  templates.map((template) => (
+                    <button
+                      key={template.id}
+                      className={`btn ${styles.templateButton}`}
+                      onClick={() => handleApplyTemplate(template)}
+                    >
+                      {template.name}
+                    </button>
+                  ))
+                ) : (
+                  <span className={styles.templateLoading}>尚未建立班表範本，請先到薪資計算設定</span>
+                )}
               </div>
+              <button className={`btn ${styles.cancelButton}`} onClick={handleCancelMultiSelect}>
+                取消選取
+              </button>
             </div>
           )}
 
@@ -484,7 +550,7 @@ export default function WorkSchedulePage() {
                 <span className={styles.hintDivider}>/</span>
                 <span className={styles.hintInline}>拖曳複製</span>
                 <span className={styles.hintDivider}>/</span>
-                <span className={styles.hintInline}>Ctrl多選</span>
+                <span className={styles.hintInline}>多選日期</span>
               </span>
               <span className={styles.detailsToggle}>
                 <span className={styles.detailsChevron} aria-hidden="true" />
@@ -583,6 +649,8 @@ export default function WorkSchedulePage() {
         onDelete={handleDeleteShift}
         shift={editingShift}
         mode={editorMode === 'edit' ? 'edit' : 'add'}
+        existingCourses={editorMode === 'batch' ? [] : courses}
+        existingShifts={editorMode === 'batch' ? [] : shifts}
       />
     </div>
   );

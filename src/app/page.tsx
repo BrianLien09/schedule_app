@@ -38,7 +38,7 @@ export default function Home() {
     thisMonthWorkDays,
     nextEvent,
     currentEvent,
-    todaySchedule,
+    todayTimeline,
     monthlyWorkShifts,
     upcomingImportantEvents,
   } = useHomeDashboard(courses, shifts, events);
@@ -352,7 +352,7 @@ export default function Home() {
         {/* 左欄：今日課程時間軸 */}
         <div className={styles.contentCard}>
           <div className={styles.sectionHeader}>
-            <span>📅 今日課程行程</span>
+            <span>📅 今日整合行程</span>
             <Link
               href="/schedule/school"
               style={{ fontSize: '0.85rem', color: 'var(--color-primary)', textDecoration: 'none' }}
@@ -362,16 +362,20 @@ export default function Home() {
           </div>
 
           <div className={styles.timelineList}>
-            {todaySchedule.length > 0 ? (
-              todaySchedule.map((item) => {
-                const isPast = item.endTime < currentTimeStr;
-                const isActive = item.startTime <= currentTimeStr && item.endTime > currentTimeStr;
+            {todayTimeline.length > 0 ? (
+              todayTimeline.map((item) => {
+                const isPast = !item.isAllDay && Boolean(item.endTime && item.endTime < currentTimeStr);
+                const isActive = !item.isAllDay && Boolean(
+                  item.startTime && item.endTime &&
+                  item.startTime <= currentTimeStr && item.endTime > currentTimeStr
+                );
+                const typeIcon = item.type === 'class' ? '📚' : item.type === 'work' ? '💼' : '📌';
 
                 return (
                   <TimelineItem
                     key={item.id}
-                    time={item.startTime}
-                    title={item.name}
+                    time={item.isAllDay ? '全天' : `${item.startTime} - ${item.endTime}`}
+                    title={`${typeIcon} ${item.title}`}
                     location={item.location}
                     isActive={isActive}
                     isPast={isPast}
@@ -386,7 +390,7 @@ export default function Home() {
                 <span>
                   {currentDayOfWeek === 0 || currentDayOfWeek === 6
                     ? '週末美好假期，好好休息吧！'
-                    : '今日沒有課程安排'}
+                    : '今日沒有課程、打工或重要事件'}
                 </span>
               </div>
             )}
