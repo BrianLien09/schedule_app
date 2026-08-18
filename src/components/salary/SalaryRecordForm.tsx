@@ -3,6 +3,7 @@
 import React from 'react';
 import type { SalaryRecord } from '@/hooks/useSalaryData';
 import type { ShiftTemplate } from '@/data/shiftTemplates';
+import styles from './SalaryRecordForm.module.css';
 
 /** 身份類型 */
 type RoleType = 'assistant' | 'instructor';
@@ -158,18 +159,18 @@ export default function SalaryRecordForm({
       )}
       
       {/* 主要輸入表單 Grid */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-        gap: 'var(--spacing-md)',
-        marginBottom: 'var(--spacing-md)'
-      }}>
+      <div className={styles.formGrid}>
         {/* 日期 */}
         <div>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
             日期
           </label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr) auto',
+            alignItems: 'center',
+            gap: '0.75rem',
+          }}>
             <input 
               type="date"
               value={currentRecord.date}
@@ -178,6 +179,7 @@ export default function SalaryRecordForm({
               }}
               style={{
                 width: '100%',
+                minWidth: 0,
                 padding: '0.5rem 0.75rem',
                 borderRadius: '8px',
                 border: '2px dashed rgba(220, 208, 194, 0.8)',
@@ -186,8 +188,15 @@ export default function SalaryRecordForm({
               }}
             />
             <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              minHeight: '2.5rem',
+              padding: '0.5rem 0.75rem',
+              borderRadius: '8px',
+              border: '1px solid rgba(95, 113, 134, 0.24)',
+              background: 'rgba(95, 113, 134, 0.1)',
               fontSize: '0.9rem',
-              color: 'var(--muted)',
+              color: 'var(--color-secondary)',
               whiteSpace: 'nowrap',
               fontWeight: 600,
             }}>
