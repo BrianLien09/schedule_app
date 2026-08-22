@@ -3,6 +3,7 @@ import Providers from "@/components/Providers";
 import Navbar from "@/components/Navbar";
 import BackToTop from "@/components/BackToTop";
 import PWAHandler from "@/components/PWAHandler";
+import PageTransition from "@/components/PageTransition";
 import "./globals.css";
 
 const BASE_PATH = process.env.NODE_ENV === "production" ? "/schedule_app" : "";
@@ -39,8 +40,8 @@ export default function RootLayout({
         <Providers>
           <PWAHandler />
           <Navbar />
-          <main className="container page-transition site-main">
-            {children}
+          <main className="container site-main">
+            <PageTransition>{children}</PageTransition>
           </main>
           <BackToTop />
         </Providers>

@@ -508,7 +508,7 @@ textarea:focus-visible {
 }
 
 .page-transition {
-  /* Modal 位於 main 內，祖先不能使用 transform，否則 fixed 會相對整個頁面定位 */
+  /* 只使用透明度，避免含有 Modal 時改變 fixed 定位的參考座標 */
   animation: pageOpacityIn 0.55s var(--ease-standard) both;
 }
 
