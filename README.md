@@ -1,154 +1,104 @@
-# 📅 DayMate - 個人日常與排班管理助手
+<p align="center">
+  <img src="./assets/readme/hero.svg" width="100%" alt="DayMate：將課程、班表與薪資整合成個人日常節奏的管理工具。">
+</p>
 
-**DayMate** 是一個專為學生與打工作族設計的個人助理網頁應用程式，整合了 **學校課表**、**打工排班**、**薪資計算與統計**、**重要事件提醒** 以及 **遊戲攻略整理** 功能。
+<p align="center">
+  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-16.1.1-3d3a36?logo=nextdotjs&logoColor=white" alt="Next.js 16.1.1"></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5-5f7186?logo=typescript&logoColor=white" alt="TypeScript 5"></a>
+  <a href="https://firebase.google.com/"><img src="https://img.shields.io/badge/Firebase-Firestore_%2B_Auth-b87e6b?logo=firebase&logoColor=white" alt="Firebase Firestore 與 Authentication"></a>
+</p>
 
-使用 Next.js 構建，介面採用現代化的毛玻璃 (Glassmorphism) 與大地色系質感設計，美觀且實用，並支援部署至 GitHub Pages 及 PWA 離線瀏覽。
+DayMate 是為學生與兼職工作者設計的日常管理工具。它將學校課表、打工月曆、薪資記錄、生活費與課程筆記集中在一個 App 中，讓每天要做什麼、何時上班、這個月賺了多少，都能在同一條工作流完成。
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Next.js](https://img.shields.io/badge/Next.js-16.1.1-black)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org/)
+## 為什麼是 DayMate？
 
----
+日程與薪資不是兩套互不相干的資料：班表會直接帶入薪資記錄，而首頁則把今日安排、事件與當月概況放在一起。登入後，資料透過 Firestore 即時訂閱保存到共用資料集合；未設定 Firebase 時，專案仍可正常建置。
 
-## ✨ 主要功能
+```text
+課表與班表 ──→ 今日儀表板 ──→ 薪資記錄與分析 ──→ Excel / PDF 報表
+       │                  │
+       └──→ Firestore 共用資料 ──→ 課程筆記、生活費與遊戲攻略
+```
 
-### 🏠 首頁儀表板
-- **今日概況**：即時顯示正在進行和稍後的課程或打工
-- **統計卡片**：本週課程數量、本月打工天數與當月薪資估算
-- **本月打工一覽**：直接在首頁顯示當月份的所有打工班表
-- **即將到來的事件**：倒數計時顯示重要的作業死線或學校日程
-- **今日課程時間軸**：依據目前時間動態顯示課程狀態（已結束/進行中/未開始）
+## 主要功能
 
-### 🗓️ 日程管理
-#### 學校課表
-- 節次網格呈現（第 1-11 節）
-- 雙層置頂表頭，滾動時不迷路
-- 彩色課程標示，一目瞭然
-- 支援跨節次課程顯示
+### 規劃每天的節奏
 
-#### 打工月曆
-- 月曆介面清楚標示排班日期
-- 支援月份切換與即時檢視
-- 點擊日期快速滾動到詳細資訊
-- 按月分組顯示班表列表
+- **學校課表**：以節次網格管理課程，支援跨節次呈現。
+- **打工月曆**：按月查看、建立與編輯班別，並可同步到設定好的 family-web 行事曆。
+- **首頁儀表板**：整合今天的課程與班別、近期事件、每月班表與統計概況。
+- **課程筆記**：依課程整理筆記、作業與考試，追蹤截止日與完成狀態。
 
-### 💰 薪資計算與統計助手 (DayMate Salary Toolkit)
-- **三標籤頁架構 (Tabbed Interface)**：
-  - **薪資明細與記帳**：當月四大 KPI 卡片速覽、快速記帳表單（支援範本快捷一鍵帶入）與工作記錄清單。
-  - **統計與趨勢分析**：專注於 6 個月收入趨勢圖表、工時分佈與平均時薪分析。
-  - **班別範本管理**：獨立設定常規班別（如週六班、冬令營講師等），自動計算時數與預設時薪。
-- **打工班表同步**：從打工月曆按月份一鍵匯入班表
-- **全介面純淨視覺**：去除硬中括號，搭配經典色彩身份 Badge（助教 / 講師標籤）與表格 Footer 總計列。
-- **批次編輯與刪除**：多選紀錄批次修改時薪/班別/時數
-- **匯出功能**：支援 Excel 匯出/匯入、PDF 報表與列印友善版面
+### 把班表轉成可用的薪資資料
 
-### 📝 課程筆記系統
-- **三大筆記類型**：課堂筆記、作業、考試
-- **Markdown 支援**：支援 Markdown 格式撰寫筆記
-- **多課程管理**：依課程分類整理筆記
-- **待辦事項追蹤**：作業/考試截止日期提醒與完成狀態勾選
-- **雲端同步**：Firestore 即時同步，多裝置存取
+- 以班別範本預填時段、時數與時薪；可從當月打工班表帶入薪資記錄。
+- 提供明細、趨勢、工時與平均時薪分析，以及批次編輯與刪除。
+- 支援 Excel 匯入與匯出、PDF 報表和列印。
 
-### 🎮 遊戲攻略中心
-- **多遊戲支援**：《重返未來：1999》、《崩壞：星穹鐵道》
-- **動態攻略管理**：新增、編輯、刪除攻略（Firestore 雲端同步）
-- **版本智慧篩選**：自動選擇最新版本與五大分類系統
-- **視覺化資訊層次**：星級評分、完成進度追蹤與彩色標籤
+### 補足生活與興趣記錄
 
----
+- **生活費記錄**：管理支出資料與類別。
+- **遊戲攻略中心**：建立、編輯並以版本與類型篩選攻略內容。
+- **PWA**：提供可安裝的 Web App 設定與 Service Worker 快取。
 
-## 🎯 進階功能
+## 技術與資料流
 
-### 💾 資料持久化與雲端同步
-#### 🔥 Firebase 雲端同步（已登入）
-- **Google 登入**：一鍵使用 Google 帳號登入
-- **即時同步**：所有資料自動儲存至 Firestore 雲端資料庫
-- **多裝置支援**：手機、平板、電腦自動同步，隨時隨地存取
+| 層次 | 使用方式 |
+| --- | --- |
+| 介面 | Next.js App Router、React 19、CSS Modules 與 CSS Variables |
+| 資料 | Firebase Authentication（Google 登入）與 Firestore 即時訂閱 |
+| 結構 | 頁面 → Custom Hooks → Firestore Service → `/shared/data/{collection}` |
+| 匯出 | `xlsx`、`jspdf`、`html2canvas` |
+| 部署 | GitHub Pages 靜態匯出（production base path：`/schedule_app`） |
 
-#### 💿 LocalStorage 本地儲存（未登入）
-- 未登入時所有資料自動儲存在瀏覽器，關閉瀏覽器後仍完整保留
+## 快速開始
 
-### 📱 PWA 支援
-- 支援「安裝到主畫面」功能，提供類原生 App 體驗與離線快取
-
-### 🌓 主題系統
-- 深色/淺色模式切換，使用 CSS 變數動態平滑過渡
-
----
-
-## 🛠️ 技術架構
-
-### 核心技術
-- **框架**: [Next.js 16.1.1](https://nextjs.org/) (App Router)
-- **語言**: TypeScript 5 (Strict Mode)
-- **樣式**: Vanilla CSS (CSS Modules & CSS Variables)
-- **後端服務**: [Firebase](https://firebase.google.com/) (Firestore + Authentication)
-- **部署**: GitHub Pages (Static Export)
-- **圖表/匯出**: xlsx, jspdf, html2canvas
-
----
-
-## 🚀 快速開始
-
-### 安裝依賴
+### 1. 安裝並啟動
 
 ```bash
 npm install
-```
-
-### 啟動開發伺服器
-
-```bash
 npm run dev
 ```
 
-前往 [http://localhost:3000](http://localhost:3000)
+開啟 [http://localhost:3000](http://localhost:3000)。
 
-### 建置與部署
+### 2. 設定 Firebase（選用）
+
+若要使用 Google 登入與雲端資料，建立 `.env.local`：
 
 ```bash
-# 靜態網站建置
-npm run build
+NEXT_PUBLIC_FIREBASE_API_KEY=...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
+NEXT_PUBLIC_FIREBASE_APP_ID=...
+```
 
-# 部署至 GitHub Pages
+`src/lib/firebase.ts` 會先檢查設定是否完整；未設定時不會初始化 Firebase，因此仍可執行靜態建置。
+
+### 3. 檢查、建置或部署
+
+```bash
+npm run lint
+npm run build
 npm run deploy
 ```
 
----
+## 專案結構
 
-## 📂 專案結構
-
-```
-schedule/
-├── public/                      # 靜態資源（logo.jpg, icon.jpg, manifest.json）
-├── src/
-│   ├── app/                    # Next.js App Router 頁面
-│   │   ├── layout.tsx         # 根佈局（含 DayMate Metadata）
-│   │   ├── page.tsx           # 首頁儀表板
-│   │   ├── login/             # 登入頁面
-│   │   ├── tools/             # 工具箱（薪資計算器、生活費）
-│   │   └── schedule/          # 學校課表、打工月曆
-│   ├── components/            # React 元件
-│   │   ├── Navbar.tsx         # 品牌導航列
-│   │   ├── salary/            # 薪資助手模組化元件
-│   │   │   ├── SalaryHeaderStats.tsx    # KPI 卡片
-│   │   │   ├── SalaryRecordForm.tsx     # 記帳與範本快捷表單
-│   │   │   ├── SalaryRecordList.tsx     # 明細表格與總計
-│   │   │   ├── SalaryAnalytics.tsx      # 趨勢分析
-│   │   │   └── ShiftTemplateManager.tsx # 班別範本管理
-│   │   └── SalaryCalculator.tsx        # 主 Coordinator 組件
+```text
+src/
+├── app/              # App Router 路由：首頁、日程、工具、資料管理與遊戲攻略
+├── components/       # 可重用介面與薪資工具元件
+├── context/          # Auth、Toast 與確認對話框狀態
+├── data/             # 預設資料與 TypeScript 型別
+├── hooks/            # 日程、薪資、筆記、生活費與攻略資料流程
+├── lib/              # Firebase 初始化
+├── services/         # Firestore 與 family-web 同步服務
+└── utils/            # Excel 解析、ICS 匯出與衝突檢查
 ```
 
----
+## 作者
 
-## 📄 授權
-
-本專案採用 MIT 授權 - 詳見 [LICENSE](LICENSE) 檔案
-
----
-
-## 👤 作者
-
-**Brian Lien**
-- GitHub: [@Brianlien09](https://github.com/Brianlien09)
-- Email: brianlien09@gmail.com
+由 [Brian Lien](https://github.com/BrianLien09) 維護。
