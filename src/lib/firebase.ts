@@ -92,11 +92,10 @@ export const auth: Auth | null = app ? getAuth(app) : null;
 export default app;
 
 /**
- * ----------------------------------------------------
- * 🏠 family-web 的 Firebase 二次實例 (Secondary Firebase App)
- * ----------------------------------------------------
- * 安全地從環境變數讀取 family-web 的 Firebase 設定，
- * 用於從 schedule-app 將打工班表同步寫入 family-web 的 Firestore 中。
+ * family-web 的 Firebase 二次實例。
+ *
+ * 這個資料庫只接收指定家庭帳號的打工月曆同步副本；主資料仍留在
+ * schedule-app 的 /users/{uid}/salaryRecords 個人路徑。
  */
 const familyFirebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FAMILY_FIREBASE_API_KEY,
@@ -107,7 +106,7 @@ const familyFirebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FAMILY_FIREBASE_APP_ID,
 };
 
-export const isFamilyFirebaseConfigured = Boolean(
+const isFamilyFirebaseConfigured = Boolean(
   familyFirebaseConfig.apiKey &&
   familyFirebaseConfig.authDomain &&
   familyFirebaseConfig.projectId
@@ -115,12 +114,10 @@ export const isFamilyFirebaseConfigured = Boolean(
 
 let familyApp: FirebaseApp | null = null;
 if (isFamilyFirebaseConfigured) {
-  const familyApps = getApps().filter((a) => a.name === 'familyApp');
+  const familyApps = getApps().filter((firebaseApp) => firebaseApp.name === 'familyApp');
   familyApp = familyApps.length
     ? familyApps[0]
     : initializeApp(familyFirebaseConfig, 'familyApp');
 }
 
 export const familyDb: Firestore | null = familyApp ? getFirestore(familyApp) : null;
-
-

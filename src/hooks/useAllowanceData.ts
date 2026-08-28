@@ -10,12 +10,11 @@ import { hasWriteAccess } from '@/config/permissions';
 import { AllowanceRecord, DEFAULT_SOURCE_TYPES } from '@/data/allowance';
 
 /**
- * 共用資料路徑
- * 
- * 所有家人共用同一份資料，儲存在 Firestore 的 /shared/data/ 路徑下。
- * 權限控制由 Firestore Security Rules 處理（白名單機制）。
+ * 個人資料路徑
+ *
+ * 每位登入者的生活費資料儲存在自己的 /users/{uid}/ 路徑下，避免家庭帳號互相看到財務資料。
+ * 權限控制由 Firestore Security Rules 再次確認使用者只能存取自己的 UID。
  */
-const SHARED_DATA_PATH = 'shared';
 const ALLOWANCE_COLLECTION = 'allowanceRecords';
 const SOURCE_TYPES_COLLECTION = 'allowanceSourceTypes';
 
@@ -25,7 +24,7 @@ const SOURCE_TYPES_COLLECTION = 'allowanceSourceTypes';
  * 管理生活費記錄的資料，支援：
  * - Firestore 雲端同步（必須登入）
  * - 即時監聽資料變更
- * - 共用資料（所有白名單成員共用同一份資料）
+ * - 個人資料（每個 Google 帳號各自一份）
  * - 來源類型自定義管理
  */
 export function useAllowanceData() {
@@ -54,7 +53,7 @@ export function useAllowanceData() {
 
     // 訂閱即時資料變更（生活費記錄）
     const unsubscribeRecords = subscribeToCollection<AllowanceRecord>(
-      SHARED_DATA_PATH,
+      user.uid,
       ALLOWANCE_COLLECTION,
       (data) => {
         // 按時間戳記排序（最新在前）
@@ -66,7 +65,7 @@ export function useAllowanceData() {
 
     // 訂閱即時資料變更（來源類型）
     const unsubscribeSourceTypes = subscribeToCollection<{ id: string; types: string[] }>(
-      SHARED_DATA_PATH,
+      user.uid,
       SOURCE_TYPES_COLLECTION,
       (data) => {
         if (data.length > 0 && data[0].types) {
@@ -95,7 +94,7 @@ export function useAllowanceData() {
       return;
     }
 
-    await setDocument(SHARED_DATA_PATH, ALLOWANCE_COLLECTION, record.id, record);
+    await setDocument(user.uid, ALLOWANCE_COLLECTION, record.id, record);
   };
 
   /**
@@ -110,7 +109,7 @@ export function useAllowanceData() {
       return;
     }
 
-    await updateDocument(SHARED_DATA_PATH, ALLOWANCE_COLLECTION, id, updatedRecord);
+    await updateDocument(user.uid, ALLOWANCE_COLLECTION, id, updatedRecord);
   };
 
   /**
@@ -124,7 +123,7 @@ export function useAllowanceData() {
       return;
     }
 
-    await deleteDocument(SHARED_DATA_PATH, ALLOWANCE_COLLECTION, id);
+    await deleteDocument(user.uid, ALLOWANCE_COLLECTION, id);
   };
 
   // ========== 來源類型管理 ==========
@@ -150,7 +149,7 @@ export function useAllowanceData() {
     setSourceTypes(newTypes);
 
     // 儲存到 Firestore（使用固定 ID 'config'）
-    await setDocument(SHARED_DATA_PATH, SOURCE_TYPES_COLLECTION, 'config', {
+    await setDocument(user.uid, SOURCE_TYPES_COLLECTION, 'config', {
       id: 'config',
       types: newTypes,
     });
@@ -177,7 +176,7 @@ export function useAllowanceData() {
     setSourceTypes(newTypes);
 
     // 更新 Firestore
-    await setDocument(SHARED_DATA_PATH, SOURCE_TYPES_COLLECTION, 'config', {
+    await setDocument(user.uid, SOURCE_TYPES_COLLECTION, 'config', {
       id: 'config',
       types: newTypes,
     });

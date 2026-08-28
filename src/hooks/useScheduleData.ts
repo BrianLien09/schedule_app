@@ -16,7 +16,7 @@ import {
   subscribeToCollection,
   batchSetDocuments,
 } from '@/services/firestoreService';
-import { hasWriteAccess } from '@/config/permissions';
+import { hasFamilyWebSyncAccess, hasWriteAccess } from '@/config/permissions';
 import {
   createSalaryRecordFromWorkShift,
   isSalaryRecordLinkedToShift,
@@ -24,12 +24,11 @@ import {
   type SalaryRecord,
 } from '@/data/workRecords';
 import {
+  batchSyncWorkShiftsToFamilyWeb,
+  deleteWorkShiftFromFamilyWeb,
   syncWorkShiftToFamilyWeb,
   updateWorkShiftInFamilyWeb,
-  deleteWorkShiftFromFamilyWeb,
 } from '@/services/familySyncService';
-
-const SHARED_DATA_PATH = 'shared';
 
 export function useScheduleData() {
   const { user } = useAuth();
@@ -39,11 +38,13 @@ export function useScheduleData() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [canEdit, setCanEdit] = useState(false);
+  const canSyncToFamilyWeb = hasFamilyWebSyncAccess(user?.email);
 
   /**
    * 舊版 workShifts 仍可能留在資料庫，這裡先補成薪資格式，避免切換來源後資料消失。
    */
   const migrateLegacyWorkShifts = async (
+    userId: string,
     existingSalaryRecords: SalaryRecord[],
     legacyShifts: WorkShift[]
   ) => {
@@ -60,25 +61,25 @@ export function useScheduleData() {
       );
 
     if (recordsToCreate.length > 0) {
-      await batchSetDocuments(SHARED_DATA_PATH, 'salaryRecords', recordsToCreate);
+      await batchSetDocuments(userId, 'salaryRecords', recordsToCreate);
     }
   };
 
-  const initializeDefaultData = async () => {
+  const initializeDefaultData = async (userId: string) => {
     try {
-      const existingCourses = await getDocuments<Course>(SHARED_DATA_PATH, 'courses');
+      const existingCourses = await getDocuments<Course>(userId, 'courses');
       const existingLegacyShifts = await getDocuments<WorkShift>(
-        SHARED_DATA_PATH,
+        userId,
         'workShifts'
       );
       const existingSalaryRecords = await getDocuments<SalaryRecord>(
-        SHARED_DATA_PATH,
+        userId,
         'salaryRecords'
       );
-      const existingEvents = await getDocuments<Event>(SHARED_DATA_PATH, 'events');
+      const existingEvents = await getDocuments<Event>(userId, 'events');
 
       if (existingCourses.length === 0) {
-        await batchSetDocuments(SHARED_DATA_PATH, 'courses', schoolSchedule);
+        await batchSetDocuments(userId, 'courses', schoolSchedule);
       }
 
       if (existingSalaryRecords.length === 0 && existingLegacyShifts.length === 0) {
@@ -88,16 +89,16 @@ export function useScheduleData() {
             legacyWorkShiftId: shift.id,
           })
         );
-        await batchSetDocuments(SHARED_DATA_PATH, 'salaryRecords', seededSalaryRecords);
+        await batchSetDocuments(userId, 'salaryRecords', seededSalaryRecords);
       } else if (existingLegacyShifts.length > 0) {
-        await migrateLegacyWorkShifts(existingSalaryRecords, existingLegacyShifts);
+        await migrateLegacyWorkShifts(userId, existingSalaryRecords, existingLegacyShifts);
       }
 
       if (existingEvents.length === 0) {
-        await batchSetDocuments(SHARED_DATA_PATH, 'events', importantEvents);
+        await batchSetDocuments(userId, 'events', importantEvents);
       }
     } catch (error) {
-      console.error('初始化共享資料失敗', error);
+      console.error('初始化個人資料失敗', error);
     }
   };
 
@@ -114,18 +115,18 @@ export function useScheduleData() {
     setLoading(true);
     setCanEdit(hasWriteAccess(user.email));
 
-    initializeDefaultData().then(() => {
+    initializeDefaultData(user.uid).then(() => {
       setLoading(false);
     });
 
     const unsubscribeCourses = subscribeToCollection<Course>(
-      SHARED_DATA_PATH,
+      user.uid,
       'courses',
       (data) => setCourses(data)
     );
 
     const unsubscribeShifts = subscribeToCollection<SalaryRecord>(
-      SHARED_DATA_PATH,
+      user.uid,
       'salaryRecords',
       (data) =>
         setShifts(
@@ -139,7 +140,7 @@ export function useScheduleData() {
     );
 
     const unsubscribeEvents = subscribeToCollection<Event>(
-      SHARED_DATA_PATH,
+      user.uid,
       'events',
       (data) => setEvents(data)
     );
@@ -157,7 +158,7 @@ export function useScheduleData() {
       return;
     }
 
-    await setDocument(SHARED_DATA_PATH, 'courses', course.id, course);
+    await setDocument(user.uid, 'courses', course.id, course);
   };
 
   const updateCourse = async (id: string, updatedCourse: Partial<Course>) => {
@@ -166,7 +167,7 @@ export function useScheduleData() {
       return;
     }
 
-    await updateDocument(SHARED_DATA_PATH, 'courses', id, updatedCourse);
+    await updateDocument(user.uid, 'courses', id, updatedCourse);
   };
 
   const deleteCourse = async (id: string) => {
@@ -175,7 +176,7 @@ export function useScheduleData() {
       return;
     }
 
-    await deleteDocument(SHARED_DATA_PATH, 'courses', id);
+    await deleteDocument(user.uid, 'courses', id);
   };
 
   const addWorkShift = async (shift: WorkShift) => {
@@ -190,9 +191,8 @@ export function useScheduleData() {
       legacyWorkShiftId: shift.legacyWorkShiftId,
     });
 
-    await setDocument(SHARED_DATA_PATH, 'salaryRecords', record.id, record);
-    // 🏠 同步至 family-web 家庭月曆
-    await syncWorkShiftToFamilyWeb(record);
+    await setDocument(user.uid, 'salaryRecords', record.id, record);
+    await syncWorkShiftToFamilyWeb(shift, user.email);
   };
 
   const updateWorkShift = async (id: string, updatedShift: Partial<WorkShift>) => {
@@ -219,9 +219,8 @@ export function useScheduleData() {
     });
     const { id: _recordId, ...recordData } = record;
 
-    await updateDocument(SHARED_DATA_PATH, 'salaryRecords', id, recordData);
-    // 🏠 同步更新至 family-web 家庭月曆
-    await updateWorkShiftInFamilyWeb(id, mergedShift);
+    await updateDocument(user.uid, 'salaryRecords', id, recordData);
+    await updateWorkShiftInFamilyWeb(id, mergedShift, user.email);
   };
 
   const deleteWorkShift = async (id: string) => {
@@ -231,13 +230,12 @@ export function useScheduleData() {
     }
 
     const targetShift = shifts.find((shift) => shift.id === id);
-    await deleteDocument(SHARED_DATA_PATH, 'salaryRecords', id);
+    await deleteDocument(user.uid, 'salaryRecords', id);
 
     if (targetShift?.legacyWorkShiftId) {
-      await deleteDocument(SHARED_DATA_PATH, 'workShifts', targetShift.legacyWorkShiftId);
+      await deleteDocument(user.uid, 'workShifts', targetShift.legacyWorkShiftId);
     }
-    // 🏠 同步從 family-web 家庭月曆刪除
-    await deleteWorkShiftFromFamilyWeb(id);
+    await deleteWorkShiftFromFamilyWeb(id, user.email);
   };
 
   const addEvent = async (event: Event) => {
@@ -246,7 +244,7 @@ export function useScheduleData() {
       return;
     }
 
-    await setDocument(SHARED_DATA_PATH, 'events', event.id, event);
+    await setDocument(user.uid, 'events', event.id, event);
   };
 
   const updateEvent = async (id: string, updatedEvent: Partial<Event>) => {
@@ -255,7 +253,7 @@ export function useScheduleData() {
       return;
     }
 
-    await updateDocument(SHARED_DATA_PATH, 'events', id, updatedEvent);
+    await updateDocument(user.uid, 'events', id, updatedEvent);
   };
 
   const deleteEvent = async (id: string) => {
@@ -264,7 +262,7 @@ export function useScheduleData() {
       return;
     }
 
-    await deleteDocument(SHARED_DATA_PATH, 'events', id);
+    await deleteDocument(user.uid, 'events', id);
   };
 
   return {
@@ -282,18 +280,19 @@ export function useScheduleData() {
     addEvent,
     updateEvent,
     deleteEvent,
+    canSyncToFamilyWeb,
     /**
-     * 一鍵將指定月份（如 "2026-08"）或全部打工班表同步至 family-web 家庭月曆
+     * 一鍵將指定月份（如 "2026-08"）或全部個人打工班表同步至 family-web。
      */
     syncAllWorkShiftsToFamilyWeb: async (monthPrefix?: string) => {
+      if (!user || !canSyncToFamilyWeb) return 0;
+
       const targetShifts = monthPrefix
-        ? shifts.filter((s) => s.date.startsWith(monthPrefix))
+        ? shifts.filter((shift) => shift.date.startsWith(monthPrefix))
         : shifts;
       if (targetShifts.length === 0) return 0;
 
-      const { batchSyncWorkShiftsToFamilyWeb } = await import('@/services/familySyncService');
-      await batchSyncWorkShiftsToFamilyWeb(targetShifts);
-      return targetShifts.length;
+      return batchSyncWorkShiftsToFamilyWeb(targetShifts, user.email);
     },
   };
 }

@@ -2,7 +2,7 @@
  * 生活費匯入記錄相關型別定義
  * 
  * 用途：記錄從爸爸帳戶匯入的生活費，區分打工收入與生活費來源
- * Firestore 路徑：/shared/data/allowanceRecords/{recordId}
+ * Firestore 路徑：/users/{userId}/allowanceRecords/{recordId}
  */
 
 /**

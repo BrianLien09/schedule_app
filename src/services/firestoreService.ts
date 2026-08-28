@@ -6,12 +6,15 @@
  * - 即時監聽資料變更
  * - 批次操作
  * 
- * 資料結構：
- * /shared/data/courses/{courseId}
- * /shared/data/workShifts/{shiftId}
- * /shared/data/salaryRecords/{recordId}
- * /shared/data/allowanceRecords/{recordId}  🆕
- * /shared/data/events/{eventId}
+ * 個人資料結構：
+ * /users/{userId}/courses/{courseId}
+ * /users/{userId}/workShifts/{shiftId}
+ * /users/{userId}/salaryRecords/{recordId}
+ * /users/{userId}/allowanceRecords/{recordId}
+ * /users/{userId}/events/{eventId}
+ * /users/{userId}/courseNotes/{noteId}
+ *
+ * 共用資料結構：
  * /shared/data/gameGuides/{guideId}
  */
 
@@ -49,17 +52,31 @@ function cleanUndefined<T extends DocumentData>(data: T): DocumentData {
 }
 
 /**
- * 取得共用資料的 Collection 參考
- * 
- * @param userId - 保留參數以兼容舊 API（實際上不使用，因為改用共用路徑）
- * @param collectionName - Collection 名稱（courses, workShifts, salaryRecords, events）
+ * 取得指定使用者的個人 Collection 參考
+ *
+ * @param userId - Firebase Authentication 的使用者 UID
+ * @param collectionName - Collection 名稱
  * @throws 如果 Firebase 未設定
  */
 export function getUserCollection(userId: string, collectionName: string) {
   if (!isFirebaseConfigured || !db) {
     throw new Error('Firebase 未設定，請檢查環境變數');
   }
-  // 新路徑：/shared/data/{collectionName}
+  if (!userId.trim()) {
+    throw new Error('缺少使用者 UID，無法取得個人資料');
+  }
+  return collection(db, 'users', userId, collectionName);
+}
+
+/**
+ * 取得遊戲攻略的共用 Collection 參考
+ *
+ * 只有遊戲攻略使用 shared 路徑，避免一般個人資料意外共用。
+ */
+function getSharedCollection(collectionName: string) {
+  if (!isFirebaseConfigured || !db) {
+    throw new Error('Firebase 未設定，請檢查環境變數');
+  }
   return collection(db, 'shared', 'data', collectionName);
 }
 
@@ -106,8 +123,7 @@ export async function setDocument(
   if (!isFirebaseConfigured || !db) {
     throw new Error('Firebase 未設定，請檢查環境變數');
   }
-  // 新路徑：/shared/data/{collectionName}/{docId}
-  const docRef = doc(db, 'shared', 'data', collectionName, docId);
+  const docRef = doc(getUserCollection(userId, collectionName), docId);
   const cleanedData = cleanUndefined({
     ...data,
     updatedAt: new Date().toISOString(),
@@ -132,8 +148,7 @@ export async function getDocument<T>(
   if (!isFirebaseConfigured || !db) {
     throw new Error('Firebase 未設定，請檢查環境變數');
   }
-  // 新路徑：/shared/data/{collectionName}/{docId}
-  const docRef = doc(db, 'shared', 'data', collectionName, docId);
+  const docRef = doc(getUserCollection(userId, collectionName), docId);
   const docSnap = await getDoc(docRef);
   
   if (docSnap.exists()) {
@@ -183,8 +198,7 @@ export async function updateDocument(
   if (!isFirebaseConfigured || !db) {
     throw new Error('Firebase 未設定，請檢查環境變數');
   }
-  // 新路徑：/shared/data/{collectionName}/{docId}
-  const docRef = doc(db, 'shared', 'data', collectionName, docId);
+  const docRef = doc(getUserCollection(userId, collectionName), docId);
   const cleanedData = cleanUndefined({
     ...data,
     updatedAt: new Date().toISOString(),
@@ -208,8 +222,7 @@ export async function deleteDocument(
   if (!isFirebaseConfigured || !db) {
     throw new Error('Firebase 未設定，請檢查環境變數');
   }
-  // 新路徑：/shared/data/{collectionName}/{docId}
-  const docRef = doc(db, 'shared', 'data', collectionName, docId);
+  const docRef = doc(getUserCollection(userId, collectionName), docId);
   await deleteDoc(docRef);
 }
 
@@ -246,13 +259,20 @@ export function subscribeToCollection<T>(
   const colRef = getUserCollection(userId, collectionName);
   const q = constraints.length > 0 ? query(colRef, ...constraints) : colRef;
   
-  return onSnapshot(q, (querySnapshot) => {
-    const data = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as T[];
-    callback(data);
-  });
+  return onSnapshot(
+    q,
+    (querySnapshot) => {
+      const data = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as T[];
+      callback(data);
+    },
+    (error) => {
+      // 即時監聽被 rules 拒絕時，不能默默維持空陣列，否則會誤判成沒有資料。
+      console.error(`[Firestore] 讀取 ${collectionName} 失敗:`, error);
+    }
+  );
 }
 
 /**
@@ -267,7 +287,7 @@ export function subscribeToCollection<T>(
 export async function batchSetDocuments(
   userId: string,
   collectionName: string,
-  documents: Array<{ id: string; [key: string]: any }>
+  documents: Array<{ id: string } & DocumentData>
 ): Promise<void> {
   const promises = documents.map(doc => {
     const { id, ...data } = doc;
@@ -307,7 +327,13 @@ import type { GameGuide } from '@/data/gameGuides';
  * 取得所有遊戲攻略
  */
 export async function getAllGameGuides(): Promise<GameGuide[]> {
-  return getDocuments<GameGuide>('shared', 'gameGuides', orderBy('order', 'asc'));
+  const q = query(getSharedCollection('gameGuides'), orderBy('order', 'asc'));
+  const querySnapshot = await getDocs(q);
+
+  return querySnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as GameGuide[];
 }
 
 /**
@@ -316,11 +342,20 @@ export async function getAllGameGuides(): Promise<GameGuide[]> {
 export function subscribeToGameGuides(
   callback: (guides: GameGuide[]) => void
 ): Unsubscribe {
-  return subscribeToCollection<GameGuide>(
-    'shared',
-    'gameGuides',
-    callback,
-    orderBy('order', 'asc')
+  const q = query(getSharedCollection('gameGuides'), orderBy('order', 'asc'));
+
+  return onSnapshot(
+    q,
+    (querySnapshot) => {
+      const guides = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as GameGuide[];
+      callback(guides);
+    },
+    (error) => {
+      console.error('[Firestore] 讀取共用遊戲攻略失敗:', error);
+    }
   );
 }
 
@@ -328,7 +363,13 @@ export function subscribeToGameGuides(
  * 新增遊戲攻略
  */
 export async function addGameGuide(guide: Omit<GameGuide, 'id'>): Promise<string> {
-  return addDocument('shared', 'gameGuides', guide);
+  const cleanedData = cleanUndefined({
+    ...guide,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  const docRef = await addDoc(getSharedCollection('gameGuides'), cleanedData);
+  return docRef.id;
 }
 
 /**
@@ -338,14 +379,19 @@ export async function updateGameGuide(
   guideId: string,
   updates: Partial<GameGuide>
 ): Promise<void> {
-  return updateDocument('shared', 'gameGuides', guideId, updates);
+  const docRef = doc(getSharedCollection('gameGuides'), guideId);
+  const cleanedData = cleanUndefined({
+    ...updates,
+    updatedAt: new Date().toISOString(),
+  });
+  await updateDoc(docRef, cleanedData);
 }
 
 /**
  * 刪除遊戲攻略
  */
 export async function deleteGameGuide(guideId: string): Promise<void> {
-  return deleteDocument('shared', 'gameGuides', guideId);
+  await deleteDoc(doc(getSharedCollection('gameGuides'), guideId));
 }
 
 /**
@@ -366,19 +412,25 @@ import type { CourseNote } from '@/data/courseNotes';
 
 /**
  * 取得所有課程筆記
+ *
+ * @param userId - Firebase Authentication 的使用者 UID
  */
-export async function getAllCourseNotes(): Promise<CourseNote[]> {
-  return getDocuments<CourseNote>('shared', 'courseNotes');
+export async function getAllCourseNotes(userId: string): Promise<CourseNote[]> {
+  return getDocuments<CourseNote>(userId, 'courseNotes');
 }
 
 /**
  * 取得特定課程的所有筆記
  * 
+ * @param userId - Firebase Authentication 的使用者 UID
  * @param courseId - 課程 ID
  */
-export async function getCourseNotesByCourse(courseId: string): Promise<CourseNote[]> {
+export async function getCourseNotesByCourse(
+  userId: string,
+  courseId: string
+): Promise<CourseNote[]> {
   return getDocuments<CourseNote>(
-    'shared',
+    userId,
     'courseNotes',
     where('courseId', '==', courseId),
     orderBy('createdAt', 'desc')
@@ -388,13 +440,15 @@ export async function getCourseNotesByCourse(courseId: string): Promise<CourseNo
 /**
  * 訂閱課程筆記（即時同步）
  * 
+ * @param userId - Firebase Authentication 的使用者 UID
  * @param callback - 資料變更時的回調函數
  */
 export function subscribeToCourseNotes(
+  userId: string,
   callback: (notes: CourseNote[]) => void
 ): Unsubscribe {
   return subscribeToCollection<CourseNote>(
-    'shared',
+    userId,
     'courseNotes',
     callback,
     orderBy('createdAt', 'desc')
@@ -404,15 +458,17 @@ export function subscribeToCourseNotes(
 /**
  * 訂閱特定課程的筆記
  * 
+ * @param userId - Firebase Authentication 的使用者 UID
  * @param courseId - 課程 ID
  * @param callback - 資料變更時的回調函數
  */
 export function subscribeToCourseNotesByCourse(
+  userId: string,
   courseId: string,
   callback: (notes: CourseNote[]) => void
 ): Unsubscribe {
   return subscribeToCollection<CourseNote>(
-    'shared',
+    userId,
     'courseNotes',
     callback,
     where('courseId', '==', courseId),
@@ -423,53 +479,62 @@ export function subscribeToCourseNotesByCourse(
 /**
  * 新增課程筆記
  * 
+ * @param userId - Firebase Authentication 的使用者 UID
  * @param note - 筆記資料（不含 id）
  */
-export async function addCourseNote(note: Omit<CourseNote, 'id'>): Promise<string> {
-  return addDocument('shared', 'courseNotes', note);
+export async function addCourseNote(
+  userId: string,
+  note: Omit<CourseNote, 'id'>
+): Promise<string> {
+  return addDocument(userId, 'courseNotes', note);
 }
 
 /**
  * 更新課程筆記
  * 
+ * @param userId - Firebase Authentication 的使用者 UID
  * @param noteId - 筆記 ID
  * @param updates - 要更新的欄位
  */
 export async function updateCourseNote(
+  userId: string,
   noteId: string,
   updates: Partial<CourseNote>
 ): Promise<void> {
-  return updateDocument('shared', 'courseNotes', noteId, updates);
+  return updateDocument(userId, 'courseNotes', noteId, updates);
 }
 
 /**
  * 刪除課程筆記
  * 
+ * @param userId - Firebase Authentication 的使用者 UID
  * @param noteId - 筆記 ID
  */
-export async function deleteCourseNote(noteId: string): Promise<void> {
-  return deleteDocument('shared', 'courseNotes', noteId);
+export async function deleteCourseNote(userId: string, noteId: string): Promise<void> {
+  return deleteDocument(userId, 'courseNotes', noteId);
 }
 
 /**
  * 切換筆記完成狀態
  * 
+ * @param userId - Firebase Authentication 的使用者 UID
  * @param noteId - 筆記 ID
  * @param completed - 完成狀態
  */
 export async function toggleCourseNoteCompletion(
+  userId: string,
   noteId: string,
   completed: boolean
 ): Promise<void> {
-  return updateCourseNote(noteId, { completed });
+  return updateCourseNote(userId, noteId, { completed });
 }
 
 /**
  * 取得未完成的作業/考試（用於提醒功能）
  */
-export async function getIncompleteTasks(): Promise<CourseNote[]> {
+export async function getIncompleteTasks(userId: string): Promise<CourseNote[]> {
   const notes = await getDocuments<CourseNote>(
-    'shared',
+    userId,
     'courseNotes',
     where('completed', '==', false),
     where('type', 'in', ['homework', 'exam'])
@@ -483,4 +548,3 @@ export async function getIncompleteTasks(): Promise<CourseNote[]> {
       return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
     });
 }
-

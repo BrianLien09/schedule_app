@@ -17,12 +17,14 @@ import {
   deleteGameGuide,
 } from '@/services/firestoreService';
 import { useAuth } from '@/context/AuthContext';
+import { hasGameGuideWriteAccess } from '@/config/permissions';
 
 export function useGameGuides() {
   const { user } = useAuth();
   const [guides, setGuides] = useState<GameGuide[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const canEdit = hasGameGuideWriteAccess(user?.email);
 
   // 訂閱 Firestore 資料變更
   useEffect(() => {
@@ -43,6 +45,10 @@ export function useGameGuides() {
 
   // 新增攻略
   const addGuide = useCallback(async (guide: Omit<GameGuide, 'id'>) => {
+    if (!canEdit) {
+      throw new Error('目前沒有遊戲攻略編輯權限');
+    }
+
     try {
       const id = await addGameGuide(guide);
       return id;
@@ -51,10 +57,14 @@ export function useGameGuides() {
       setError(message);
       throw err;
     }
-  }, []);
+  }, [canEdit]);
 
   // 更新攻略
   const updateGuide = useCallback(async (guideId: string, updates: Partial<GameGuide>) => {
+    if (!canEdit) {
+      throw new Error('目前沒有遊戲攻略編輯權限');
+    }
+
     try {
       await updateGameGuide(guideId, {
         ...updates,
@@ -65,10 +75,14 @@ export function useGameGuides() {
       setError(message);
       throw err;
     }
-  }, []);
+  }, [canEdit]);
 
   // 刪除攻略
   const removeGuide = useCallback(async (guideId: string) => {
+    if (!canEdit) {
+      throw new Error('目前沒有遊戲攻略編輯權限');
+    }
+
     try {
       await deleteGameGuide(guideId);
     } catch (err) {
@@ -76,7 +90,7 @@ export function useGameGuides() {
       setError(message);
       throw err;
     }
-  }, []);
+  }, [canEdit]);
 
   // 切換完成狀態
   const toggleCompleted = useCallback(
@@ -90,6 +104,7 @@ export function useGameGuides() {
     guides,
     loading,
     error,
+    canEdit,
     addGuide,
     updateGuide,
     removeGuide,

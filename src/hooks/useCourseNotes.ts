@@ -42,11 +42,11 @@ export function useCourseNotes(options: UseCourseNotesOptions = {}) {
 
     try {
       const unsubscribe = options.courseId
-        ? subscribeToCourseNotesByCourse(options.courseId, (data) => {
+        ? subscribeToCourseNotesByCourse(user.uid, options.courseId, (data) => {
             setNotes(data);
             setLoading(false);
           })
-        : subscribeToCourseNotes((data) => {
+        : subscribeToCourseNotes(user.uid, (data) => {
             setNotes(data);
             setLoading(false);
           });
@@ -84,7 +84,7 @@ export function useCourseNotes(options: UseCourseNotesOptions = {}) {
           updatedAt: new Date().toISOString(),
         };
 
-        const noteId = await addCourseNote(newNote);
+        const noteId = await addCourseNote(user.uid, newNote);
         return noteId;
       } catch (err) {
         const message = err instanceof Error ? err.message : '新增筆記失敗';
@@ -105,7 +105,7 @@ export function useCourseNotes(options: UseCourseNotesOptions = {}) {
       }
 
       try {
-        await updateCourseNote(noteId, {
+        await updateCourseNote(user.uid, noteId, {
           ...updates,
           updatedAt: new Date().toISOString(),
         });
@@ -128,7 +128,7 @@ export function useCourseNotes(options: UseCourseNotesOptions = {}) {
       }
 
       try {
-        await deleteCourseNote(noteId);
+        await deleteCourseNote(user.uid, noteId);
       } catch (err) {
         const message = err instanceof Error ? err.message : '刪除筆記失敗';
         setError(message);
@@ -148,7 +148,7 @@ export function useCourseNotes(options: UseCourseNotesOptions = {}) {
       }
 
       try {
-        await toggleCourseNoteCompletion(noteId, completed);
+        await toggleCourseNoteCompletion(user.uid, noteId, completed);
       } catch (err) {
         const message = err instanceof Error ? err.message : '更新狀態失敗';
         setError(message);
@@ -167,7 +167,7 @@ export function useCourseNotes(options: UseCourseNotesOptions = {}) {
     }
 
     try {
-      const tasks = await getIncompleteTasks();
+      const tasks = await getIncompleteTasks(user.uid);
       return tasks;
     } catch (err) {
       const message = err instanceof Error ? err.message : '載入待辦事項失敗';

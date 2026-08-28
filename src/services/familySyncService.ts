@@ -1,33 +1,39 @@
 /**
- * Family Sync Service
- * 
- * 負責將 schedule-app 中的打工班表 (WorkShift / SalaryRecord)
- * 同步寫入 family-web 的 Firebase Firestore 資料庫 (schedules 集合) 中。
+ * family-web 打工月曆同步服務
+ *
+ * 主資料依 Google 帳號隔離；本服務只將 Brian 與 lovesweet 的打工資料
+ * 複製到 family-web，並在標題前加入可辨識的家庭成員前綴。
  */
 
-import { doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { familyDb } from '@/lib/firebase';
+import { getFamilyWebTitlePrefix } from '@/config/permissions';
 import type { WorkShift } from '@/data/schedule';
-import type { SalaryRecord } from '@/data/workRecords';
 
-/**
- * 將打工資料格式轉為 family-web 的 ScheduleItem 格式
- */
-function mapShiftToFamilySchedule(shift: WorkShift | SalaryRecord) {
-  const note = 'note' in shift ? shift.note : '';
-  const location = 'location' in shift ? shift.location : '';
-  
-  // 決定標題：移除 Emoji 及 "打工: " 前綴，直接以備註作為標題
-  let title = '阿弟排班';
-  if (note && note.trim()) {
-    title = note.trim();
-  }
+type FamilySyncShift = WorkShift;
 
-  // 決定描述呈現
-  const descParts: string[] = [];
-  if (location) descParts.push(`地點: ${location}`);
-  if (note && note.trim() !== title) descParts.push(note.trim());
-  const description = descParts.join(' | ') || title;
+function getFamilyDocId(workShiftId: string, titlePrefix: string): string {
+  const ownerKey = titlePrefix === '百頁' ? 'brian' : 'lovesweet';
+  return `workshift_${ownerKey}_${workShiftId}`;
+}
+
+function mapShiftToFamilySchedule(
+  shift: FamilySyncShift,
+  titlePrefix: string
+): Record<string, string> {
+  const note = 'note' in shift && typeof shift.note === 'string' ? shift.note.trim() : '';
+  const shiftCategory = typeof shift.shiftCategory === 'string'
+    ? shift.shiftCategory.trim()
+    : '';
+  const location = 'location' in shift && typeof shift.location === 'string'
+    ? shift.location.trim()
+    : '';
+  const displayName = shiftCategory || note || '打工班表';
+  const title = `${titlePrefix}${displayName}`;
+  const descriptionParts: string[] = [];
+
+  if (location) descriptionParts.push(`地點: ${location}`);
+  if (note && note !== displayName) descriptionParts.push(note);
 
   return {
     title,
@@ -35,107 +41,103 @@ function mapShiftToFamilySchedule(shift: WorkShift | SalaryRecord) {
     startTime: shift.startTime,
     endTime: shift.endTime,
     category: '阿弟排班',
-    description,
+    description: descriptionParts.join(' | ') || title,
     source: 'schedule-app',
     workShiftId: shift.id,
     updatedAt: new Date().toISOString(),
   };
 }
 
-/**
- * 取得在 family-web Firestore `schedules` 集合中對應的文件 ID
- */
-function getFamilyDocId(workShiftId: string): string {
-  return `workshift_${workShiftId}`;
+function getSyncContext(email: string | null | undefined) {
+  const titlePrefix = getFamilyWebTitlePrefix(email);
+  if (!familyDb || !titlePrefix) return null;
+  return { db: familyDb, titlePrefix };
 }
 
 /**
- * 同步 (新增或覆蓋) 一筆打工班表到 family-web 的 schedules 集合
+ * 同步指定帳號的一筆打工班表到 family-web。
+ * 未列入同步白名單的帳號會直接略過，不會寫入 secondary Firebase。
  */
 export async function syncWorkShiftToFamilyWeb(
-  shift: WorkShift | SalaryRecord
+  shift: FamilySyncShift,
+  email: string | null | undefined
 ): Promise<void> {
-  try {
-    if (!familyDb) return;
-    const familyDocId = getFamilyDocId(shift.id);
-    const docRef = doc(familyDb, 'schedules', familyDocId);
-    const scheduleData = mapShiftToFamilySchedule(shift);
+  const context = getSyncContext(email);
+  if (!context) return;
 
-    await setDoc(docRef, scheduleData, { merge: true });
-    console.log(`[FamilySync] 已成功同步打工班表 (${shift.date}) 到 family-web`);
+  try {
+    const docRef = doc(context.db, 'schedules', getFamilyDocId(shift.id, context.titlePrefix));
+    await setDoc(docRef, mapShiftToFamilySchedule(shift, context.titlePrefix), { merge: true });
   } catch (error) {
     console.error('[FamilySync] 同步至 family-web 失敗:', error);
   }
 }
 
 /**
- * 更新 family-web 中的打工班表
+ * 更新 family-web 中對應的班表，使用完整合併資料確保標題前綴同步更新。
  */
 export async function updateWorkShiftInFamilyWeb(
   id: string,
-  updatedShift: Partial<WorkShift | SalaryRecord>
+  updatedShift: Partial<FamilySyncShift>,
+  email: string | null | undefined
 ): Promise<void> {
-  try {
-    if (!familyDb) return;
-    const familyDocId = getFamilyDocId(id);
-    const docRef = doc(familyDb, 'schedules', familyDocId);
+  const context = getSyncContext(email);
+  if (!context) return;
 
-    const updatePayload: Record<string, any> = {
+  try {
+    const docRef = doc(context.db, 'schedules', getFamilyDocId(id, context.titlePrefix));
+    const updatePayload: Record<string, string> = {
       updatedAt: new Date().toISOString(),
+      category: '阿弟排班',
+      source: 'schedule-app',
+      workShiftId: id,
     };
 
     if (updatedShift.date !== undefined) updatePayload.date = updatedShift.date;
     if (updatedShift.startTime !== undefined) updatePayload.startTime = updatedShift.startTime;
     if (updatedShift.endTime !== undefined) updatePayload.endTime = updatedShift.endTime;
 
-    const note = 'note' in updatedShift ? updatedShift.note : undefined;
-    if (note !== undefined) {
-      updatePayload.title = note && note.trim() ? note.trim() : '阿弟排班';
-      updatePayload.description = note;
+    if (updatedShift.shiftCategory !== undefined || updatedShift.note !== undefined) {
+      const shiftCategory = updatedShift.shiftCategory?.trim() || '';
+      const note = updatedShift.note?.trim() || '';
+      const displayName = shiftCategory || note || '打工班表';
+      updatePayload.title = `${context.titlePrefix}${displayName}`;
+      updatePayload.description = note && note !== displayName ? note : updatePayload.title;
     }
 
-    // 補齊基礎 metadata，確保若文件不存在時（Upsert）也能符合 family-web 結構
-    updatePayload.category = '阿弟排班';
-    updatePayload.source = 'schedule-app';
-    updatePayload.workShiftId = id;
-
-    // 使用 setDoc(..., { merge: true }) 代替 updateDoc，
-    // 若 document 已存在則更新，若不存在則自動創建（不會觸發 No document to update 錯誤）
     await setDoc(docRef, updatePayload, { merge: true });
-    console.log(`[FamilySync] 已成功更新/同步 family-web 的打工班表 (${id})`);
   } catch (error) {
     console.error('[FamilySync] 更新 family-web 失敗:', error);
   }
 }
 
 /**
- * 刪除 family-web 中對應的打工班表
+ * 刪除 family-web 中對應的班表。
  */
-export async function deleteWorkShiftFromFamilyWeb(id: string): Promise<void> {
-  try {
-    if (!familyDb) return;
-    const familyDocId = getFamilyDocId(id);
-    const docRef = doc(familyDb, 'schedules', familyDocId);
+export async function deleteWorkShiftFromFamilyWeb(
+  id: string,
+  email: string | null | undefined
+): Promise<void> {
+  const context = getSyncContext(email);
+  if (!context) return;
 
-    await deleteDoc(docRef);
-    console.log(`[FamilySync] 已成功從 family-web 刪除打工班表 (${id})`);
+  try {
+    await deleteDoc(doc(context.db, 'schedules', getFamilyDocId(id, context.titlePrefix)));
   } catch (error) {
     console.error('[FamilySync] 刪除 family-web 項目失敗:', error);
   }
 }
 
 /**
- * 批次同步多筆打工班表到 family-web
+ * 批次同步指定帳號的打工班表到 family-web。
  */
 export async function batchSyncWorkShiftsToFamilyWeb(
-  shifts: Array<WorkShift | SalaryRecord>
-): Promise<void> {
-  try {
-    if (!familyDb) return;
-    const promises = shifts.map((shift) => syncWorkShiftToFamilyWeb(shift));
-    await Promise.all(promises);
-    console.log(`[FamilySync] 已批次同步 ${shifts.length} 筆打工班表到 family-web`);
-  } catch (error) {
-    console.error('[FamilySync] 批次同步至 family-web 失敗:', error);
-  }
+  shifts: FamilySyncShift[],
+  email: string | null | undefined
+): Promise<number> {
+  const context = getSyncContext(email);
+  if (!context) return 0;
+
+  await Promise.all(shifts.map((shift) => syncWorkShiftToFamilyWeb(shift, email)));
+  return shifts.length;
 }

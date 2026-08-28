@@ -29,6 +29,7 @@ export default function GamesPage() {
   const {
     guides,
     loading,
+    canEdit,
     addGuide,
     updateGuide,
     removeGuide,
@@ -177,16 +178,18 @@ export default function GamesPage() {
           <span className={styles.icon}>🎮</span>
           遊戲攻略中心
         </h1>
-        <button
-          className={`${styles.btnEditToggle} ${editMode ? styles.active : ''}`}
-          onClick={() => {
-            setEditMode(!editMode);
-            setShowAddForm(false);
-            setEditingGuide(null);
-          }}
-        >
-          {editMode ? '✓ 完成編輯' : '✎ 編輯模式'}
-        </button>
+        {canEdit && (
+          <button
+            className={`${styles.btnEditToggle} ${editMode ? styles.active : ''}`}
+            onClick={() => {
+              setEditMode(!editMode);
+              setShowAddForm(false);
+              setEditingGuide(null);
+            }}
+          >
+            {editMode ? '✓ 完成編輯' : '✎ 編輯模式'}
+          </button>
+        )}
       </div>
 
       {/* ============================================================
@@ -238,7 +241,7 @@ export default function GamesPage() {
       {/* ============================================================
           編輯模式：新增攻略按鈕
           ============================================================ */}
-      {editMode && !showAddForm && !editingGuide && (
+      {canEdit && editMode && !showAddForm && !editingGuide && (
         <button className={`${styles.btnAddGuide} page-section-enter page-section-enter-delay-2`} onClick={() => setShowAddForm(true)}>
           + 新增攻略
         </button>
@@ -247,7 +250,7 @@ export default function GamesPage() {
       {/* ============================================================
           新增/編輯表單
           ============================================================ */}
-      {(showAddForm || editingGuide) && (
+      {canEdit && (showAddForm || editingGuide) && (
         <div ref={formRef} className="page-section-enter page-section-enter-delay-2">
           <GuideEditForm
             guide={editingGuide || undefined}
@@ -287,7 +290,7 @@ export default function GamesPage() {
                   <GuideCard
                     key={guide.id}
                     guide={guide}
-                    editMode={editMode}
+                    editMode={canEdit && editMode}
                     onEdit={() => setEditingGuide(guide)}
                     onDelete={() => handleDeleteGuide(guide.id, guide.title)}
                   />

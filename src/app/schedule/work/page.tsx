@@ -56,13 +56,14 @@ export default function WorkSchedulePage() {
   const { toast } = useToast();
   const { confirm } = useConfirm();
 
-  // 使用共享資料 Hook（包含 CRUD 操作與同步）
+  // 使用個人資料 Hook，避免不同 Google 帳號共用班表
   const {
     courses,
     shifts,
     addWorkShift,
     updateWorkShift,
     deleteWorkShift,
+    canSyncToFamilyWeb,
     syncAllWorkShiftsToFamilyWeb,
   } = useScheduleData();
   const { templates, loading: templatesLoading } = useShiftTemplates();
@@ -345,7 +346,7 @@ export default function WorkSchedulePage() {
     toast.success(`已成功為 ${candidates.length} 個日期套用「${template.name}」`);
   };
 
-  // 處理一鍵同步本月排班至家庭月曆
+  // 將目前月份的個人班表手動同步到 family-web
   const handleSyncMonthToFamily = async () => {
     const year = currentMonth.getFullYear();
     const month = (currentMonth.getMonth() + 1).toString().padStart(2, '0');
@@ -359,8 +360,8 @@ export default function WorkSchedulePage() {
       } else {
         toast.info(`${year}年${month}月目前尚無排班資料。`);
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
       toast.error('同步至家庭月曆失敗');
     } finally {
       setIsSyncing(false);
@@ -402,25 +403,27 @@ export default function WorkSchedulePage() {
               >
                 {currentMonth.getFullYear()} 年 {currentMonth.getMonth() + 1} 月
               </h2>
-              <button
-                onClick={handleSyncMonthToFamily}
-                disabled={isSyncing}
-                className="btn"
-                style={{
-                  background: '#b87e6b',
-                  color: '#f0ece1',
-                  fontSize: '0.85rem',
-                  padding: '4px 12px',
-                  borderRadius: '9999px',
-                  border: 'none',
-                  cursor: isSyncing ? 'not-allowed' : 'pointer',
-                  opacity: isSyncing ? 0.7 : 1,
-                  flexShrink: 0,
-                }}
-                title="將本月打工班表同步至 family-web 家庭月曆"
-              >
-                {isSyncing ? '同步中...' : '同步至家庭月曆'}
-              </button>
+              {canSyncToFamilyWeb && (
+                <button
+                  onClick={handleSyncMonthToFamily}
+                  disabled={isSyncing}
+                  className="btn"
+                  style={{
+                    backgroundColor: '#b87e6b',
+                    color: '#f0ece1',
+                    fontSize: '0.85rem',
+                    padding: '4px 12px',
+                    borderRadius: '9999px',
+                    border: 'none',
+                    cursor: isSyncing ? 'not-allowed' : 'pointer',
+                    opacity: isSyncing ? 0.7 : 1,
+                    flexShrink: 0,
+                  }}
+                  title="將本月個人打工班表同步至 family-web 家庭月曆"
+                >
+                  {isSyncing ? '同步中...' : '同步至家庭月曆'}
+                </button>
+              )}
               <button
                 onClick={isMultiSelectMode ? handleCancelMultiSelect : handleStartMultiSelect}
                 className="btn"

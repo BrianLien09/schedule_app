@@ -10,7 +10,6 @@ import { hasWriteAccess } from '@/config/permissions';
 import type { ShiftTemplate } from '@/data/shiftTemplates';
 import { sortShiftTemplatesByPriority } from '@/data/shiftTemplates';
 
-const SHARED_DATA_PATH = 'shared';
 const SHIFT_TEMPLATES_COLLECTION = 'shiftTemplates';
 
 export function useShiftTemplates() {
@@ -31,7 +30,7 @@ export function useShiftTemplates() {
     setCanEdit(hasWriteAccess(user.email));
 
     const unsubscribe = subscribeToCollection<ShiftTemplate>(
-      SHARED_DATA_PATH,
+      user.uid,
       SHIFT_TEMPLATES_COLLECTION,
       (data) => {
         setTemplates(data);
@@ -51,7 +50,7 @@ export function useShiftTemplates() {
       console.warn('❌ 無編輯權限');
       return;
     }
-    await setDocument(SHARED_DATA_PATH, SHIFT_TEMPLATES_COLLECTION, template.id, template);
+    await setDocument(user.uid, SHIFT_TEMPLATES_COLLECTION, template.id, template);
   };
 
   const updateTemplate = async (id: string, updates: Partial<ShiftTemplate>) => {
@@ -59,7 +58,7 @@ export function useShiftTemplates() {
       console.warn('❌ 無編輯權限');
       return;
     }
-    await updateDocument(SHARED_DATA_PATH, SHIFT_TEMPLATES_COLLECTION, id, updates);
+    await updateDocument(user.uid, SHIFT_TEMPLATES_COLLECTION, id, updates);
   };
 
   const deleteTemplate = async (id: string) => {
@@ -67,7 +66,7 @@ export function useShiftTemplates() {
       console.warn('❌ 無編輯權限');
       return;
     }
-    await deleteDocument(SHARED_DATA_PATH, SHIFT_TEMPLATES_COLLECTION, id);
+    await deleteDocument(user.uid, SHIFT_TEMPLATES_COLLECTION, id);
   };
 
   return {

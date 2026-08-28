@@ -1,0 +1,51 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isFamilyMember() {
+      return request.auth != null &&
+        request.auth.token.email in [
+          'brianlien09@gmail.com',
+          'mangoeunice@gmail.com',
+          'andylien059@gmail.com',
+          'lovesweet95170@gmail.com'
+        ];
+    }
+
+    function isGuideEditor() {
+      return isFamilyMember() &&
+        request.auth.token.email == 'brianlien09@gmail.com';
+    }
+
+    function isPersonalCollection(collectionName) {
+      return collectionName in [
+        'courses',
+        'workShifts',
+        'salaryRecords',
+        'events',
+        'allowanceRecords',
+        'allowanceSourceTypes',
+        'shiftTemplates',
+        'courseNotes'
+      ];
+    }
+
+    // 一般生活資料依 UID 隔離，家庭成員只能讀寫自己的資料。
+    match /users/{userId}/{collectionName}/{document=**} {
+      allow read, write: if isFamilyMember() &&
+        request.auth.uid == userId &&
+        isPersonalCollection(collectionName);
+    }
+
+    // 遊戲攻略是唯一的家庭共用資料；家人可讀，管理帳號可維護。
+    match /shared/data/gameGuides/{guideId} {
+      allow read: if isFamilyMember();
+      allow create, update, delete: if isGuideEditor();
+    }
+
+    // 未明確列出的路徑一律拒絕。
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
