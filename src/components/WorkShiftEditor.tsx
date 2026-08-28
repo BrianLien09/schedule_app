@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import type { Course, WorkShift } from '../data/schedule';
-import Modal from './Modal';
+import Modal, { ModalContent } from './Modal';
 import styles from './WorkShiftEditor.module.css';
 
 import { useShiftTemplates } from '@/hooks/useShiftTemplates';
@@ -137,7 +137,7 @@ export default function WorkShiftEditor({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, closeModal: () => void = onClose) => {
     e.preventDefault();
 
     if (!formData.date || !formData.startTime || !formData.endTime) {
@@ -186,7 +186,7 @@ export default function WorkShiftEditor({
     }
 
     const saved = await onSave(newShift);
-    if (saved !== false) onClose();
+    if (saved !== false) closeModal();
   };
 
   const handleRoleChange = (newRole: 'assistant' | 'instructor') => {
@@ -205,10 +205,10 @@ export default function WorkShiftEditor({
     });
   };
 
-  const handleDelete = () => {
+  const handleDelete = (closeModal: () => void = onClose) => {
     if (shift?.id && onDelete) {
       onDelete(shift.id);
-      onClose();
+      closeModal();
     }
   };
 
@@ -218,7 +218,7 @@ export default function WorkShiftEditor({
       onClose={onClose}
       title={mode === 'add' ? '新增打工班表' : '編輯打工班表'}
     >
-      <form onSubmit={handleSubmit} className={styles.form}>
+      <ModalContent render={(requestClose) => <form onSubmit={(e) => handleSubmit(e, requestClose)} className={styles.form}>
         {/* 日期與身份 */}
         <div className={styles.formRow}>
           <div className={styles.formGroup}>
@@ -356,19 +356,19 @@ export default function WorkShiftEditor({
             <button
               type="button"
               className={`btn ${styles.deleteButton}`}
-              onClick={handleDelete}
+              onClick={() => handleDelete(requestClose)}
             >
               🗑️ 刪除
             </button>
           )}
-          <button type="button" className={`btn ${styles.cancelButton}`} onClick={onClose}>
+          <button type="button" className={`btn ${styles.cancelButton}`} onClick={requestClose}>
             取消
           </button>
           <button type="submit" className={`btn ${styles.saveButton}`}>
             {mode === 'add' ? '新增' : '儲存'}
           </button>
         </div>
-      </form>
+      </form>} />
     </Modal>
   );
 }

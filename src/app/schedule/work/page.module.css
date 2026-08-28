@@ -60,6 +60,30 @@
   gap: 0.5rem;
 }
 
+.calendarGrid {
+  --calendar-grid-offset: 12px;
+  animation: calendarGridEnter 240ms var(--ease-standard) both;
+}
+
+.calendarGridPrevious {
+  --calendar-grid-offset: -12px;
+}
+
+.calendarGridNext {
+  --calendar-grid-offset: 12px;
+}
+
+@keyframes calendarGridEnter {
+  from {
+    opacity: 0;
+    transform: translateX(var(--calendar-grid-offset));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @media (max-width: 768px) {
   .daysGrid {
     gap: 2px;
@@ -632,6 +656,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .calendarGrid {
+    animation: none;
+  }
+
   .dayCell,
   .shiftBadge,
   .shiftCard,

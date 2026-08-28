@@ -11,10 +11,10 @@
   z-index: 2000;
   padding: 0.75rem;
   overflow-y: auto;
-  animation: fadeIn 0.2s ease;
+  animation: modalOverlayEnter 220ms ease-out both;
 }
 
-@keyframes fadeIn {
+@keyframes modalOverlayEnter {
   from {
     opacity: 0;
   }
@@ -23,11 +23,24 @@
   }
 }
 
+.overlayClosing {
+  animation: modalOverlayExit 220ms ease-in both;
+}
+
+@keyframes modalOverlayExit {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
 .dialog {
   width: 90%;
   box-sizing: border-box;
   padding: clamp(1rem, 2.5vw, 1.5rem);
-  animation: slideUp 0.3s ease;
+  animation: modalDialogEnter 260ms var(--ease-standard, cubic-bezier(0.22, 1, 0.36, 1)) both;
   max-height: calc(100dvh - 1.5rem);
   display: flex;
   flex-direction: column;
@@ -41,14 +54,29 @@
   scrollbar-gutter: stable;
 }
 
-@keyframes slideUp {
+@keyframes modalDialogEnter {
   from {
     opacity: 0;
-    transform: translateY(30px) scale(0.95);
+    transform: translateY(12px) scale(0.96);
   }
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+.dialogClosing {
+  animation: modalDialogExit 220ms ease-in both;
+}
+
+@keyframes modalDialogExit {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
   }
 }
 
@@ -81,7 +109,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: all 0.2s;
+  transition: transform 160ms ease, background-color 160ms ease;
   flex-shrink: 0;
 }
 
@@ -114,7 +142,15 @@
     animation: none;
   }
 
+  .overlayClosing {
+    animation: none;
+  }
+
   .dialog {
+    animation: none;
+  }
+
+  .dialogClosing {
     animation: none;
   }
 

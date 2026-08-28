@@ -172,7 +172,7 @@ export default function GamesPage() {
       {/* ============================================================
           工具列：標題 + 編輯模式切換
           ============================================================ */}
-      <div className={styles.toolbar}>
+      <div className={`${styles.toolbar} page-section-enter`}>
         <h1 className={styles.pageTitle}>
           <span className={styles.icon}>🎮</span>
           遊戲攻略中心
@@ -192,7 +192,7 @@ export default function GamesPage() {
       {/* ============================================================
           遊戲切換器
           ============================================================ */}
-      <div className={styles.gameSelector}>
+      <div className={`${styles.gameSelector} page-section-enter page-section-enter-delay-1`}>
         {games.map((game) => (
           <button
             key={game.id}
@@ -214,7 +214,7 @@ export default function GamesPage() {
           版本篩選器（如果有版本）
           ============================================================ */}
       {availableVersions.length > 0 && (
-        <div className={styles.versionSelector}>
+        <div className={`${styles.versionSelector} page-section-enter page-section-enter-delay-2`}>
           {/* 先顯示所有版本號（最新到最舊） */}
           {availableVersions.map((ver) => (
             <button
@@ -239,7 +239,7 @@ export default function GamesPage() {
           編輯模式：新增攻略按鈕
           ============================================================ */}
       {editMode && !showAddForm && !editingGuide && (
-        <button className={styles.btnAddGuide} onClick={() => setShowAddForm(true)}>
+        <button className={`${styles.btnAddGuide} page-section-enter page-section-enter-delay-2`} onClick={() => setShowAddForm(true)}>
           + 新增攻略
         </button>
       )}
@@ -248,7 +248,7 @@ export default function GamesPage() {
           新增/編輯表單
           ============================================================ */}
       {(showAddForm || editingGuide) && (
-        <div ref={formRef}>
+        <div ref={formRef} className="page-section-enter page-section-enter-delay-2">
           <GuideEditForm
             guide={editingGuide || undefined}
             gameId={selectedGame}
@@ -266,7 +266,7 @@ export default function GamesPage() {
           攻略卡片網格 - 依分類分組顯示
           ============================================================ */}
       {filteredGuides.length === 0 ? (
-        <div className={styles.emptyState}>
+        <div className={`${styles.emptyState} page-section-enter page-section-enter-delay-3`}>
           <p>📝 目前沒有攻略資料</p>
           {editMode && (
             <button className={styles.btnAddGuide} onClick={() => setShowAddForm(true)}>
@@ -275,7 +275,7 @@ export default function GamesPage() {
           )}
         </div>
       ) : (
-        <div className={styles.groupedGuidesContainer}>
+        <div className={`${styles.groupedGuidesContainer} page-section-enter page-section-enter-delay-3`}>
           {groupedGuides.map(([category, guides]) => (
             <div key={category} className={styles.categoryGroup}>
               <div className={styles.categoryHeader}>

@@ -23,12 +23,12 @@ export default function ManagePage() {
   return (
     <div className={styles.pageContainer}>
       <div className="glass card">
-        <div className={styles.header}>
+        <div className={`${styles.header} page-section-enter`}>
           <h1>資料管理</h1>
           <p className={styles.subtitle}>新增、編輯或刪除課程和打工班表</p>
         </div>
 
-        <div className={styles.tabs}>
+        <div className={`${styles.tabs} page-section-enter page-section-enter-delay-1`}>
           <button
             className={`${styles.tab} ${activeTab === 'courses' ? styles.tabActive : ''}`}
             onClick={() => setActiveTab('courses')}

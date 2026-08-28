@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import styles from './SalaryAnalytics.module.css';
 
 export interface MonthStats {
   month: string; // YYYY-MM
@@ -95,7 +96,7 @@ export default function SalaryAnalytics({
               color: '#a855f7',
               fontWeight: '600',
               cursor: 'pointer',
-              transition: 'all 0.2s',
+              transition: 'background-color 0.2s ease, color 0.2s ease',
               fontSize: '0.9rem',
             }}
           >
@@ -105,7 +106,7 @@ export default function SalaryAnalytics({
       </div>
 
       {showStats && (
-        <>
+        <div className={styles.statsContent}>
           {/* 總覽指標列 */}
           <div style={{ 
             display: 'grid', 
@@ -113,7 +114,7 @@ export default function SalaryAnalytics({
             gap: 'var(--spacing-md)',
             marginBottom: 'var(--spacing-lg)'
           }}>
-            <div style={{
+            <div className={styles.statCard} style={{
               padding: '1rem',
               borderRadius: '12px',
               background: 'rgba(184, 126, 107, 0.12)',
@@ -127,7 +128,7 @@ export default function SalaryAnalytics({
               </div>
             </div>
 
-            <div style={{
+            <div className={styles.statCard} style={{
               padding: '1rem',
               borderRadius: '12px',
               background: 'rgba(95, 113, 134, 0.12)',
@@ -141,7 +142,7 @@ export default function SalaryAnalytics({
               </div>
             </div>
 
-            <div style={{
+            <div className={styles.statCard} style={{
               padding: '1rem',
               borderRadius: '12px',
               background: 'rgba(120, 136, 155, 0.12)',
@@ -155,7 +156,7 @@ export default function SalaryAnalytics({
               </div>
             </div>
 
-            <div style={{
+            <div className={styles.statCard} style={{
               padding: '1rem',
               borderRadius: '12px',
               background: 'rgba(217, 119, 6, 0.12)',
@@ -196,15 +197,16 @@ export default function SalaryAnalytics({
               {monthlyStats.map((stat) => {
                 const heightPercent = (stat.totalPay / maxMonthlyPay) * 100;
                 const barHeight = Math.max(heightPercent, 5);
-                const [year, month] = stat.month.split('-');
+                const [, month] = stat.month.split('-');
                 
                 const labelTop = stat.totalPay === 0 
                   ? 'calc(100% - 50px)' 
                   : `${100 - barHeight - 12}%`;
                 
                 return (
-                  <div 
+                  <div
                     key={stat.month}
+                    className={styles.chartColumn}
                     style={{
                       flex: 1,
                       maxWidth: '100px',
@@ -216,7 +218,7 @@ export default function SalaryAnalytics({
                     }}
                   >
                     {/* 數值標記 */}
-                    <div style={{
+                    <div className={styles.chartValue} style={{
                       position: 'absolute',
                       top: labelTop,
                       fontSize: '0.85rem',
@@ -233,13 +235,13 @@ export default function SalaryAnalytics({
                     
                     {/* 長條本體 */}
                     <div
+                      className={styles.chartBar}
                       style={{
                         width: '100%',
                         height: `${barHeight}%`,
                         minHeight: '20px',
                         background: 'linear-gradient(to top, var(--color-primary, #b87e6b) 0%, #d89e8b 100%)',
                         borderRadius: '8px 8px 0 0',
-                        transition: 'all 0.3s ease',
                         cursor: 'pointer',
                         boxShadow: '0 4px 12px rgba(184, 126, 107, 0.2)',
                       }}
@@ -272,7 +274,7 @@ export default function SalaryAnalytics({
               提示：將游標移動至長條圖上方可查看該月詳細數據。
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

@@ -18,6 +18,7 @@ import SalaryRecordForm from './salary/SalaryRecordForm';
 import SalaryRecordList from './salary/SalaryRecordList';
 import SalaryAnalytics, { type MonthStats } from './salary/SalaryAnalytics';
 import ShiftTemplateManager from './salary/ShiftTemplateManager';
+import styles from './SalaryCalculator.module.css';
 
 /** 身份類型 */
 type RoleType = 'assistant' | 'instructor';
@@ -869,7 +870,7 @@ export default function SalaryCalculator() {
       <div style={{ maxWidth: '1000px', margin: '0 auto' }} className={isPrintMode ? 'print-friendly' : ''} ref={pdfContentRef}>
         
         {/* 標題與速覽卡片列 */}
-        <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+        <div className={!isPrintMode ? 'page-section-enter' : undefined} style={{ marginBottom: 'var(--spacing-lg)' }}>
           <h2 style={{ 
             fontSize: '1.5rem', 
             fontWeight: 'bold', 
@@ -895,7 +896,7 @@ export default function SalaryCalculator() {
 
         {/* 標籤頁 (Tabs) 導覽列 */}
         {!isPrintMode && (
-          <div className="no-print" style={{
+          <div className="no-print page-section-enter page-section-enter-delay-1" style={{
             display: 'flex',
             gap: '0.5rem',
             marginBottom: 'var(--spacing-lg)',
@@ -914,7 +915,7 @@ export default function SalaryCalculator() {
                 fontWeight: '600',
                 fontSize: '0.95rem',
                 cursor: 'pointer',
-                transition: 'all 0.2s',
+                transition: 'background-color 0.2s ease, color 0.2s ease',
               }}
             >
               薪資明細與記帳
@@ -931,7 +932,7 @@ export default function SalaryCalculator() {
                 fontWeight: '600',
                 fontSize: '0.95rem',
                 cursor: 'pointer',
-                transition: 'all 0.2s',
+                transition: 'background-color 0.2s ease, color 0.2s ease',
               }}
             >
               統計與趨勢分析
@@ -948,7 +949,7 @@ export default function SalaryCalculator() {
                 fontWeight: '600',
                 fontSize: '0.95rem',
                 cursor: 'pointer',
-                transition: 'all 0.2s',
+                transition: 'background-color 0.2s ease, color 0.2s ease',
               }}
             >
               班別範本管理
@@ -957,6 +958,7 @@ export default function SalaryCalculator() {
         )}
 
         {/* 標籤頁內容切換 */}
+        <div key={activeTab} className={styles.tabPanel}>
         {activeTab === 'records' && (
           <>
             {/* 新增記錄表單 */}
@@ -1052,6 +1054,7 @@ export default function SalaryCalculator() {
             onResetTemplateForm={resetTemplateForm}
           />
         )}
+        </div>
 
         {/* Excel 匯入預覽 Modal */}
         {showImportModal && importValidation && (

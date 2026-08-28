@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useAllowanceData } from '@/hooks/useAllowanceData';
 import { useScheduleData } from '@/hooks/useScheduleData';
 import { ROLE_HOURLY_RATES, calculateWorkHours, type RoleType } from '@/data/workRecords';
@@ -21,13 +21,49 @@ interface QuickActionModalProps {
   onClose: () => void;
 }
 
+const QUICK_ACTION_EXIT_DURATION = 220;
+
 export default function QuickActionModal({
   isOpen,
   initialTab = 'allowance',
   onClose,
 }: QuickActionModalProps) {
   const [activeTab, setActiveTab] = useState<'allowance' | 'work'>(initialTab);
+  const [isClosing, setIsClosing] = useState(false);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const closeTimerRef = useRef<number | null>(null);
+  const focusFrameRef = useRef<number | null>(null);
   const { toast } = useToast();
+
+  const clearCloseTimer = useCallback(() => {
+    if (closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  }, []);
+
+  const restoreFocus = useCallback(() => {
+    const previousFocus = previousFocusRef.current;
+    previousFocusRef.current = null;
+
+    if (previousFocus && document.contains(previousFocus)) {
+      previousFocus.focus();
+    }
+  }, []);
+
+  const requestClose = useCallback(() => {
+    if (!isOpen || isClosing) return;
+
+    clearCloseTimer();
+    setIsClosing(true);
+    closeTimerRef.current = window.setTimeout(() => {
+      closeTimerRef.current = null;
+      setIsClosing(false);
+      restoreFocus();
+      onClose();
+    }, QUICK_ACTION_EXIT_DURATION);
+  }, [clearCloseTimer, isClosing, isOpen, onClose, restoreFocus]);
 
   // 每次 Modal 開啟時，依照呼叫方設定的 initialTab 重置 Tab
   // 因為 useState 只在首次 mount 時使用初始值，後續父元件改變 initialTab 不會觸發更新
@@ -36,6 +72,46 @@ export default function QuickActionModal({
       setActiveTab(initialTab);
     }
   }, [isOpen, initialTab]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      restoreFocus();
+      return;
+    }
+
+    previousFocusRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    focusFrameRef.current = window.requestAnimationFrame(() => {
+      closeButtonRef.current?.focus();
+      focusFrameRef.current = null;
+    });
+
+    return () => {
+      if (focusFrameRef.current !== null) {
+        window.cancelAnimationFrame(focusFrameRef.current);
+        focusFrameRef.current = null;
+      }
+    };
+  }, [isOpen, restoreFocus]);
+
+  useEffect(() => {
+    return () => clearCloseTimer();
+  }, [clearCloseTimer]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        requestClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, requestClose]);
 
   // 生活費資料 Hook
   const { records: allowanceRecords, addRecord: addAllowanceRecord } = useAllowanceData();
@@ -115,7 +191,7 @@ export default function QuickActionModal({
         timestamp: Date.now(),
       });
       toast.success('🎉 成功快捷新增生活費記錄！');
-      onClose();
+      requestClose();
     } catch {
       toast.error('儲存失敗，請確認權限');
     }
@@ -147,18 +223,30 @@ export default function QuickActionModal({
       });
 
       toast.success(`🎉 成功新增 ${shiftCategory || '打工'} 班表，並同步薪資記錄！`);
-      onClose();
+      requestClose();
     } catch {
       toast.error('儲存失敗，請確認權限');
     }
   };
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+    <div
+      className={`${styles.overlay} ${isClosing ? styles.overlayClosing : ''}`}
+      onClick={requestClose}
+    >
+      <div
+        className={`${styles.modal} ${isClosing ? styles.modalClosing : ''}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className={styles.header}>
           <h3 className={styles.headerTitle}>⚡ 快捷新增 (Quick Action)</h3>
-          <button className={styles.closeBtn} onClick={onClose}>
+          <button
+            ref={closeButtonRef}
+            type="button"
+            className={styles.closeBtn}
+            onClick={requestClose}
+            aria-label="關閉"
+          >
             &times;
           </button>
         </div>
@@ -244,7 +332,7 @@ export default function QuickActionModal({
             </div>
 
             <div className={styles.footer}>
-              <button type="button" className={styles.cancelBtn} onClick={onClose}>
+              <button type="button" className={styles.cancelBtn} onClick={requestClose}>
                 取消
               </button>
               <button type="submit" className={styles.submitBtn}>
@@ -371,7 +459,7 @@ export default function QuickActionModal({
             </div>
 
             <div className={styles.footer}>
-              <button type="button" className={styles.cancelBtn} onClick={onClose}>
+              <button type="button" className={styles.cancelBtn} onClick={requestClose}>
                 取消
               </button>
               <button type="submit" className={styles.submitBtn}>

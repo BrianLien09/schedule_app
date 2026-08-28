@@ -7,12 +7,74 @@
  * 支援 Esc 關閉、點擊 overlay 關閉、danger 模式。
  */
 
-import { useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useConfirm } from '@/context/ConfirmContext';
 import styles from './ConfirmDialog.module.css';
 
+const CONFIRM_EXIT_DURATION = 220;
+
 export default function ConfirmDialog() {
   const { state, handleResponse } = useConfirm();
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const closeTimerRef = useRef<number | null>(null);
+  const focusFrameRef = useRef<number | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
+
+  const clearCloseTimer = useCallback(() => {
+    if (closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  }, []);
+
+  const restoreFocus = useCallback(() => {
+    const previousFocus = previousFocusRef.current;
+    previousFocusRef.current = null;
+
+    if (previousFocus && document.contains(previousFocus)) {
+      previousFocus.focus();
+    }
+  }, []);
+
+  const requestResponse = useCallback((confirmed: boolean) => {
+    if (!state.isOpen || isClosing) return;
+
+    clearCloseTimer();
+    setIsClosing(true);
+    closeTimerRef.current = window.setTimeout(() => {
+      closeTimerRef.current = null;
+      setIsClosing(false);
+      restoreFocus();
+      handleResponse(confirmed);
+    }, CONFIRM_EXIT_DURATION);
+  }, [clearCloseTimer, handleResponse, isClosing, restoreFocus, state.isOpen]);
+
+  useEffect(() => {
+    if (!state.isOpen) {
+      restoreFocus();
+      return;
+    }
+
+    previousFocusRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    focusFrameRef.current = window.requestAnimationFrame(() => {
+      confirmButtonRef.current?.focus();
+      focusFrameRef.current = null;
+    });
+
+    return () => {
+      if (focusFrameRef.current !== null) {
+        window.cancelAnimationFrame(focusFrameRef.current);
+        focusFrameRef.current = null;
+      }
+    };
+  }, [restoreFocus, state.isOpen]);
+
+  useEffect(() => {
+    return () => clearCloseTimer();
+  }, [clearCloseTimer]);
 
   // Esc 鍵關閉
   useEffect(() => {
@@ -21,13 +83,13 @@ export default function ConfirmDialog() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        handleResponse(false);
+        requestResponse(false);
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [state.isOpen, handleResponse]);
+  }, [requestResponse, state.isOpen]);
 
   // 開啟時鎖定 body 滾動
   useEffect(() => {
@@ -44,9 +106,12 @@ export default function ConfirmDialog() {
   if (!state.isOpen) return null;
 
   return (
-    <div className={styles.overlay} onClick={() => handleResponse(false)}>
+    <div
+      className={`${styles.overlay} ${isClosing ? styles.overlayClosing : ''}`}
+      onClick={() => requestResponse(false)}
+    >
       <div
-        className={`glass ${styles.dialog}`}
+        className={`glass ${styles.dialog} ${isClosing ? styles.dialogClosing : ''}`}
         onClick={(e) => e.stopPropagation()}
         role="alertdialog"
         aria-modal="true"
@@ -64,13 +129,15 @@ export default function ConfirmDialog() {
         <div className={styles.actions}>
           <button
             className={`btn ${styles.cancelBtn}`}
-            onClick={() => handleResponse(false)}
+            onClick={() => requestResponse(false)}
           >
             {state.cancelText || '取消'}
           </button>
           <button
+            ref={confirmButtonRef}
+            type="button"
             className={`btn ${styles.confirmBtn} ${state.danger ? styles.danger : ''}`}
-            onClick={() => handleResponse(true)}
+            onClick={() => requestResponse(true)}
             autoFocus
           >
             {state.confirmText || '確認'}

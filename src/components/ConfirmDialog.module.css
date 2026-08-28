@@ -11,14 +11,22 @@
   align-items: center;
   justify-content: center;
   padding: var(--spacing-md);
-  animation: overlayFadeIn 0.2s ease;
+  animation: overlayFadeIn 200ms ease-out both;
+}
+
+.overlayClosing {
+  animation: overlayFadeOut 220ms ease-in both;
 }
 
 .dialog {
   max-width: 420px;
   width: 100%;
   padding: var(--spacing-xl);
-  animation: dialogSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: dialogSlideUp 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.dialogClosing {
+  animation: dialogSlideDown 220ms ease-in both;
 }
 
 .title {
@@ -75,6 +83,11 @@
   to { opacity: 1; }
 }
 
+@keyframes overlayFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
 @keyframes dialogSlideUp {
   from {
     transform: translateY(20px);
@@ -86,10 +99,26 @@
   }
 }
 
+@keyframes dialogSlideDown {
+  from {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(8px) scale(0.98);
+    opacity: 0;
+  }
+}
+
 /* 尊重動態偏好 */
 @media (prefers-reduced-motion: reduce) {
   .overlay,
   .dialog {
+    animation: none;
+  }
+
+  .overlayClosing,
+  .dialogClosing {
     animation: none;
   }
 }

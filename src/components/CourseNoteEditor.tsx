@@ -10,7 +10,7 @@ import { useState } from 'react';
 import type { CourseNote, NoteType } from '@/data/courseNotes';
 import { NOTE_TYPE_LABELS } from '@/data/courseNotes';
 import { useToast } from '@/context/ToastContext';
-import Modal from './Modal';
+import Modal, { ModalContent } from './Modal';
 import styles from './CourseNoteEditor.module.css';
 
 interface CourseNoteEditorProps {
@@ -48,7 +48,7 @@ export default function CourseNoteEditor({
   const [tags, setTags] = useState(note?.tags?.join(', ') || '');
   const [saving, setSaving] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, closeModal: () => void = onCancel) => {
     e.preventDefault();
 
     if (!title.trim()) {
@@ -72,6 +72,7 @@ export default function CourseNoteEditor({
           .map((tag) => tag.trim())
           .filter(Boolean),
       });
+      closeModal();
     } catch (error) {
       console.error('儲存筆記失敗:', error);
       toast.error('儲存失敗，請稍後再試');
@@ -115,7 +116,7 @@ export default function CourseNoteEditor({
       maxWidth="700px"
       className={styles.editorModal}
     >
-      <form onSubmit={handleSubmit} className={styles.editorForm}>
+      <ModalContent render={(requestClose) => <form onSubmit={(e) => handleSubmit(e, requestClose)} className={styles.editorForm}>
         {/* 課程名稱顯示 */}
         <div className={styles.courseInfo}>
           📚 {courseName}
@@ -257,14 +258,14 @@ export default function CourseNoteEditor({
 
         {/* 操作按鈕 */}
         <div className={styles.formActions}>
-          <button type="button" onClick={onCancel}>
+          <button type="button" onClick={requestClose}>
             取消
           </button>
           <button type="submit" disabled={saving}>
             {saving ? '儲存中...' : note ? '更新' : '新增'}
           </button>
         </div>
-      </form>
+      </form>} />
     </Modal>
   );
 }

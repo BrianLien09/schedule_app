@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import type { Course, WorkShift } from '../data/schedule';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
-import Modal from './Modal';
+import Modal, { ModalContent } from './Modal';
 import styles from './CourseEditor.module.css';
 import { findCourseConflicts, formatConflictMessage } from '@/utils/scheduleConflicts';
 
@@ -56,7 +56,7 @@ export default function CourseEditor({
     }
   }, [course, mode]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, closeModal: () => void = onClose) => {
     e.preventDefault();
 
     if (!formData.name || !formData.startTime || !formData.endTime) {
@@ -93,7 +93,7 @@ export default function CourseEditor({
     }
 
     onSave(newCourse);
-    onClose();
+    closeModal();
   };
 
   const handleChange = (field: keyof Course, value: string | number) => {
@@ -106,7 +106,7 @@ export default function CourseEditor({
       onClose={onClose}
       title={mode === 'add' ? '新增課程' : '編輯課程'}
     >
-      <form onSubmit={handleSubmit} className={styles.form}>
+      <ModalContent render={(requestClose) => <form onSubmit={(e) => handleSubmit(e, requestClose)} className={styles.form}>
         <div className={styles.formGroup}>
           <label htmlFor="name">
             課程名稱 <span className={styles.required}>*</span>
@@ -193,14 +193,14 @@ export default function CourseEditor({
         </div>
 
         <div className={styles.buttonGroup}>
-          <button type="button" className={`btn ${styles.cancelButton}`} onClick={onClose}>
+          <button type="button" className={`btn ${styles.cancelButton}`} onClick={requestClose}>
             取消
           </button>
           <button type="submit" className={`btn ${styles.saveButton}`}>
             {mode === 'add' ? '新增' : '儲存'}
           </button>
         </div>
-      </form>
+      </form>} />
     </Modal>
   );
 }

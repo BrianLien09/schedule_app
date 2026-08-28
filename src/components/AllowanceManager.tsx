@@ -397,7 +397,7 @@ export default function AllowanceManager() {
   return (
     <div className={styles.container}>
       {/* 標題與新增按鈕 */}
-      <div className={styles.header}>
+      <div className={`${styles.header} page-section-enter`}>
         <h1 className={styles.title}>💰 生活費記錄</h1>
         {canEdit && (
           <button
@@ -410,7 +410,7 @@ export default function AllowanceManager() {
       </div>
 
       {/* 月份篩選 */}
-      <div className={`glass ${styles.filterSection}`}>
+      <div className={`glass ${styles.filterSection} page-section-enter page-section-enter-delay-1`}>
         <div className={styles.filterLabel}>篩選月份</div>
         <div className={styles.filterButtons}>
           {quickFilters.map((filter) => (
@@ -434,7 +434,7 @@ export default function AllowanceManager() {
 
       {/* 統計卡片區 */}
       {filteredRecords.length > 0 && (
-        <div className={styles.statsGrid}>
+        <div className={`${styles.statsGrid} page-section-enter page-section-enter-delay-2`}>
           <StatCard
             icon={<span style={{ fontSize: '2rem' }}>💰</span>}
             label={filterMonth ? "本月累計" : "累計收入"}
@@ -466,7 +466,7 @@ export default function AllowanceManager() {
       {/* 記錄列表 */}
       <div className={styles.recordsList}>
         {filteredRecords.length === 0 ? (
-          <div className="glass card">
+          <div className="glass card page-section-enter page-section-enter-delay-3">
             <div className={styles.emptyState}>
               <div className={styles.emptyStateIcon}>📭</div>
               <div className={styles.emptyStateTitle}>尚無記錄</div>

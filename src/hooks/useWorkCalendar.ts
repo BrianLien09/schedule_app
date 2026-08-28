@@ -25,7 +25,9 @@ export function useWorkCalendar(workShifts: WorkShift[]) {
 
   // 切換月份
   const changeMonth = (offset: number) => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + offset, 1));
+    setCurrentMonth((previousMonth) => (
+      new Date(previousMonth.getFullYear(), previousMonth.getMonth() + offset, 1)
+    ));
   };
 
   // 建立快速查詢表 (Lookup Map) 以優化效能 O(N) -> O(1)

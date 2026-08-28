@@ -181,17 +181,10 @@ export default function SchoolSchedulePage() {
 
   // 儲存筆記
   const handleSaveNote = async (noteData: Parameters<typeof addNote>[0]) => {
-    try {
-      if (editingNote) {
-        await updateNote(editingNote.id, noteData);
-      } else {
-        await addNote(noteData);
-      }
-      setIsNoteEditorOpen(false);
-      setSelectedCourse(null);
-      setEditingNote(null);
-    } catch (error) {
-      console.error('儲存筆記失敗:', error);
+    if (editingNote) {
+      await updateNote(editingNote.id, noteData);
+    } else {
+      await addNote(noteData);
     }
   };
 
@@ -240,7 +233,7 @@ export default function SchoolSchedulePage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-      <div className="glass" style={{ padding: '1.5rem', minHeight: '600px' }}>
+      <div className="glass page-section-enter" style={{ padding: '1.5rem', minHeight: '600px' }}>
           <div>
             {/* 標題列：標題 + 學期選擇器 + 功能按鈕 */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '10px' }}>
@@ -465,7 +458,7 @@ export default function SchoolSchedulePage() {
       </div>
 
       {/* 課程筆記區塊 */}
-      <div className="glass" style={{ padding: '1.5rem' }}>
+      <div className="glass page-section-enter page-section-enter-delay-1" style={{ padding: '1.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <h3 style={{ fontSize: '1.3rem', margin: 0 }}>
             📝 課程筆記

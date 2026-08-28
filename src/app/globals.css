@@ -522,8 +522,39 @@ textarea:focus-visible {
   50% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
 }
 
+@keyframes pageSectionEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-section-enter {
+  animation: pageSectionEnter 420ms var(--ease-standard) both;
+}
+
+.page-section-enter-delay-1 {
+  animation-delay: 60ms;
+}
+
+.page-section-enter-delay-2 {
+  animation-delay: 120ms;
+}
+
+.page-section-enter-delay-3 {
+  animation-delay: 180ms;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .page-transition {
+    animation: none;
+  }
+
+  .page-section-enter {
     animation: none;
   }
 }

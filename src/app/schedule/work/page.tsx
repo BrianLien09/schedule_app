@@ -79,6 +79,13 @@ export default function WorkSchedulePage() {
   } = useWorkCalendar(shifts);
 
   const { days, startDay } = getDaysInMonth(currentMonth);
+  const [monthDirection, setMonthDirection] = useState<'previous' | 'next'>('next');
+  const monthKey = `${currentMonth.getFullYear()}-${currentMonth.getMonth() + 1}`;
+
+  const handleMonthChange = (offset: number) => {
+    setMonthDirection(offset < 0 ? 'previous' : 'next');
+    changeMonth(offset);
+  };
 
   // ========== 拖曳相關狀態 ==========
   const [draggedShift, setDraggedShift] = useState<WorkShift | null>(null);
@@ -362,7 +369,7 @@ export default function WorkSchedulePage() {
 
   return (
     <div className={styles.pageContainer}>
-      <div className={`glass ${styles.calendarContainer}`} style={{ padding: '1.5rem', minHeight: '600px' }}>
+      <div className={`glass ${styles.calendarContainer} page-section-enter`} style={{ padding: '1.5rem', minHeight: '600px' }}>
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
           {/* 月曆標題區 */}
           <div
@@ -377,7 +384,7 @@ export default function WorkSchedulePage() {
             }}
           >
             <button
-              onClick={() => changeMonth(-1)}
+              onClick={() => handleMonthChange(-1)}
               className="btn"
               style={{ flexShrink: 0 }}
             >
@@ -428,7 +435,7 @@ export default function WorkSchedulePage() {
               </button>
             </div>
             <button
-              onClick={() => changeMonth(1)}
+              onClick={() => handleMonthChange(1)}
               className="btn"
               style={{ flexShrink: 0 }}
             >
@@ -470,6 +477,14 @@ export default function WorkSchedulePage() {
             </div>
           )}
 
+          <div
+            key={monthKey}
+            className={`${styles.calendarGrid} ${
+              monthDirection === 'previous'
+                ? styles.calendarGridPrevious
+                : styles.calendarGridNext
+            }`}
+          >
           {/* 週標題 */}
           <div className={styles.weekdaysGrid}>
             {['一', '二', '三', '四', '五', '六', '日'].map((d) => (
@@ -539,6 +554,7 @@ export default function WorkSchedulePage() {
                 </div>
               );
             })}
+          </div>
           </div>
 
           {/* 本月詳細列表 */}
