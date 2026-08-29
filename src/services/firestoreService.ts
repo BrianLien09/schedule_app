@@ -10,6 +10,7 @@
  * /users/{userId}/courses/{courseId}
  * /users/{userId}/workShifts/{shiftId}
  * /users/{userId}/salaryRecords/{recordId}
+ * /users/{userId}/workRoles/{roleId}
  * /users/{userId}/allowanceRecords/{recordId}
  * /users/{userId}/events/{eventId}
  * /users/{userId}/courseNotes/{noteId}

@@ -10,7 +10,9 @@ import LoginPrompt from '../../../components/LoginPrompt';
 import WorkShiftEditor from '../../../components/WorkShiftEditor';
 import { LoadingSpinner } from '../../../components/Loading';
 import { useShiftTemplates } from '@/hooks/useShiftTemplates';
+import { useWorkRoles } from '@/hooks/useWorkRoles';
 import type { ShiftTemplate } from '@/data/shiftTemplates';
+import { getWorkRoleHourlyRate, getWorkRoleLabel } from '@/data/workRoles';
 import {
   findWorkShiftConflicts,
   formatConflictMessage,
@@ -67,6 +69,7 @@ export default function WorkSchedulePage() {
     syncAllWorkShiftsToFamilyWeb,
   } = useScheduleData();
   const { templates, loading: templatesLoading } = useShiftTemplates();
+  const { roles } = useWorkRoles();
   const [isSyncing, setIsSyncing] = useState(false);
 
   const {
@@ -165,7 +168,8 @@ export default function WorkSchedulePage() {
       note: draggedShift.note,
       shiftCategory: draggedShift.shiftCategory || draggedShift.note,
       role: draggedShift.role || 'assistant',
-      hourlyRate: draggedShift.hourlyRate || 200,
+      roleName: draggedShift.roleName || getWorkRoleLabel(draggedShift.role || 'assistant', roles),
+      hourlyRate: draggedShift.hourlyRate ?? getWorkRoleHourlyRate(draggedShift.role, roles),
       workHours: draggedShift.workHours,
     };
 
@@ -204,8 +208,9 @@ export default function WorkSchedulePage() {
         date: dateStr,
         startTime: '09:00',
         endTime: '18:00',
-        role: 'assistant',
-        hourlyRate: 200,
+        role: roles[0]?.id || 'assistant',
+        roleName: getWorkRoleLabel(roles[0]?.id || 'assistant', roles),
+        hourlyRate: getWorkRoleHourlyRate(roles[0]?.id || 'assistant', roles),
         note: '',
       } as WorkShift);
       setEditorMode('add');
@@ -330,7 +335,8 @@ export default function WorkSchedulePage() {
       endTime: template.endTime,
       note: template.name,
       shiftCategory: template.name,
-      role: template.role || 'assistant',
+      role: template.role || roles[0]?.id || 'assistant',
+      roleName: getWorkRoleLabel(template.role || roles[0]?.id || 'assistant', roles),
       hourlyRate: template.hourlyRate,
       workHours: template.workHours,
     }));
@@ -584,8 +590,8 @@ export default function WorkSchedulePage() {
                 ) : (
                   currentMonthShifts.map((shift: WorkShift) => {
                     const isSelected = selectedDate === shift.date;
-                    const roleLabel = shift.role === 'instructor' ? '講師' : '助教';
-                    const rate = shift.hourlyRate || (shift.role === 'instructor' ? 500 : 200);
+                    const roleLabel = getWorkRoleLabel(shift.role, roles, shift.roleName);
+                    const rate = shift.hourlyRate ?? getWorkRoleHourlyRate(shift.role, roles);
                     const shiftTitle = shift.shiftCategory || shift.note || '打工';
                     const badgeStyle = getShiftBadgeStyle(shiftTitle, shift.role);
 

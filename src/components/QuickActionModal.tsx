@@ -3,8 +3,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useAllowanceData } from '@/hooks/useAllowanceData';
 import { useScheduleData } from '@/hooks/useScheduleData';
-import { ROLE_HOURLY_RATES, calculateWorkHours, type RoleType } from '@/data/workRecords';
+import { calculateWorkHours } from '@/data/workRecords';
+import { getWorkRoleHourlyRate, getWorkRoleLabel, type RoleType } from '@/data/workRoles';
 import { useShiftTemplates } from '@/hooks/useShiftTemplates';
+import { useWorkRoles } from '@/hooks/useWorkRoles';
 import { useToast } from '@/context/ToastContext';
 import { generateAllowanceId } from '@/data/allowance';
 import { generateWorkShiftId } from '@/data/schedule';
@@ -117,6 +119,7 @@ export default function QuickActionModal({
   const { records: allowanceRecords, addRecord: addAllowanceRecord } = useAllowanceData();
   // 班表資料 Hook
   const { addWorkShift } = useScheduleData();
+  const { roles } = useWorkRoles();
   // 薪資記錄 Hook（同步寫入薪資記錄）
   // 班別模板 Hook
   const { templates } = useShiftTemplates();
@@ -134,7 +137,7 @@ export default function QuickActionModal({
   const [role, setRole] = useState<RoleType>('assistant');
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('18:00');
-  const [hourlyRate, setHourlyRate] = useState(ROLE_HOURLY_RATES['assistant']);
+  const [hourlyRate, setHourlyRate] = useState(200);
   const [shiftCategory, setShiftCategory] = useState('');
 
   // 計算工作時數（自動從開始/結束時間算出）
@@ -153,13 +156,14 @@ export default function QuickActionModal({
       setStartTime(template.startTime);
       setEndTime(template.endTime);
       setHourlyRate(template.hourlyRate);
+      if (template.role) setRole(template.role);
     }
   };
 
   // 當切換身份時自動更新預設時薪
   const handleRoleChange = (newRole: RoleType) => {
     setRole(newRole);
-    setHourlyRate(ROLE_HOURLY_RATES[newRole]);
+    setHourlyRate(getWorkRoleHourlyRate(newRole, roles));
   };
 
   // 提交生活費快捷新增
@@ -217,6 +221,7 @@ export default function QuickActionModal({
         note: shiftCategory || undefined,
         shiftCategory: shiftCategory || undefined,
         role,
+        roleName: getWorkRoleLabel(role, roles),
         hourlyRate,
         workHours,
         location: undefined,
@@ -355,17 +360,24 @@ export default function QuickActionModal({
                 />
               </div>
 
-              {/* 第二行：身份 + 班別（與薪資計算器對齊） */}
+              {/* 第二行：職位 / 身份 + 班別（與薪資計算器對齊） */}
               <div className={styles.grid2}>
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>身份</label>
+                  <label className={styles.label}>職位 / 身份</label>
                   <select
                     className={styles.select}
                     value={role}
-                    onChange={(e) => handleRoleChange(e.target.value as RoleType)}
+                    onChange={(e) => handleRoleChange(e.target.value)}
                   >
-                    <option value="assistant">助教 ($200/hr)</option>
-                    <option value="instructor">講師 ($500/hr)</option>
+                    {roles.length === 0 ? (
+                      <option value={role}>{getWorkRoleLabel(role, roles)}</option>
+                    ) : (
+                      roles.map((workRole) => (
+                        <option key={workRole.id} value={workRole.id}>
+                          {workRole.name} (NT$ {workRole.hourlyRate}/小時)
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
 

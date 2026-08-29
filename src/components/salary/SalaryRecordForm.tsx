@@ -3,16 +3,13 @@
 import React from 'react';
 import type { SalaryRecord } from '@/hooks/useSalaryData';
 import type { ShiftTemplate } from '@/data/shiftTemplates';
+import {
+  getWorkRoleHourlyRate,
+  getWorkRoleLabel,
+  type RoleType,
+  type WorkRole,
+} from '@/data/workRoles';
 import styles from './SalaryRecordForm.module.css';
-
-/** 身份類型 */
-type RoleType = 'assistant' | 'instructor';
-
-/** 身份時薪對應 */
-const ROLE_HOURLY_RATES: Record<RoleType, number> = {
-  assistant: 200,    // 助教
-  instructor: 500,   // 講師
-};
 
 const WEEKDAY_SHORT_LABELS = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'] as const;
 
@@ -21,6 +18,7 @@ interface SalaryRecordFormProps {
   setCurrentRecord: React.Dispatch<React.SetStateAction<Omit<SalaryRecord, 'id'>>>;
   workHours: string;
   setWorkHours: (val: string) => void;
+  roles: WorkRole[];
   shiftCategoryOptions: string[];
   templates: ShiftTemplate[];
   importMonth: string;
@@ -38,6 +36,7 @@ export default function SalaryRecordForm({
   setCurrentRecord,
   workHours,
   setWorkHours,
+  roles,
   shiftCategoryOptions,
   templates,
   importMonth,
@@ -213,11 +212,12 @@ export default function SalaryRecordForm({
           <select
             value={currentRecord.role}
             onChange={(e) => {
-              const newRole = e.target.value as RoleType;
-              setCurrentRecord(prev => ({ 
-                ...prev, 
+              const newRole: RoleType = e.target.value;
+              setCurrentRecord(prev => ({
+                ...prev,
                 role: newRole,
-                hourlyRate: ROLE_HOURLY_RATES[newRole],
+                roleName: getWorkRoleLabel(newRole, roles),
+                hourlyRate: getWorkRoleHourlyRate(newRole, roles),
               }));
             }}
             style={{
@@ -230,8 +230,24 @@ export default function SalaryRecordForm({
               cursor: 'pointer',
             }}
           >
-            <option value="assistant" style={{ background: '#f0ece1', color: '#3d3a36' }}>助教 ($200/hr)</option>
-            <option value="instructor" style={{ background: '#f0ece1', color: '#3d3a36' }}>講師 ($500/hr)</option>
+            {roles.length === 0 ? (
+              <option value={currentRecord.role} style={{ background: '#f0ece1', color: '#3d3a36' }}>
+                {getWorkRoleLabel(currentRecord.role, roles, currentRecord.roleName)}
+              </option>
+            ) : (
+              <>
+                {!roles.some((role) => role.id === currentRecord.role) && (
+                  <option value={currentRecord.role} style={{ background: '#f0ece1', color: '#3d3a36' }}>
+                    {getWorkRoleLabel(currentRecord.role, roles, currentRecord.roleName)}（已移除）
+                  </option>
+                )}
+                {roles.map((role) => (
+                  <option key={role.id} value={role.id} style={{ background: '#f0ece1', color: '#3d3a36' }}>
+                    {role.name} (NT$ {role.hourlyRate}/小時)
+                  </option>
+                ))}
+              </>
+            )}
           </select>
         </div>
 

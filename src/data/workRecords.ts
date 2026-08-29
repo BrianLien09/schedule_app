@@ -1,6 +1,10 @@
 import type { WorkShift } from '@/data/schedule';
+import {
+  getWorkRoleHourlyRate,
+  type RoleType,
+} from '@/data/workRoles';
 
-export type RoleType = 'assistant' | 'instructor';
+export type { RoleType } from '@/data/workRoles';
 
 export interface SalaryRecord {
   id: string;
@@ -10,14 +14,12 @@ export interface SalaryRecord {
   workHours: number;
   hourlyRate: number;
   role: RoleType;
+  roleName?: string;
   shiftCategory?: string;
   workShiftId?: string;
 }
 
-export const ROLE_HOURLY_RATES: Record<RoleType, number> = {
-  assistant: 200,
-  instructor: 500,
-};
+export { ROLE_HOURLY_RATES } from '@/data/workRoles';
 
 /**
  * 依照上下班時間換算工時，避免月曆端新增資料時缺少薪資欄位。
@@ -42,6 +44,7 @@ export function mapSalaryRecordToWorkShift(record: SalaryRecord): WorkShift {
     endTime: record.endTime,
     note: record.shiftCategory,
     role: record.role,
+    roleName: record.roleName,
     hourlyRate: record.hourlyRate,
     workHours: record.workHours,
     shiftCategory: record.shiftCategory,
@@ -66,7 +69,7 @@ export function createSalaryRecordFromWorkShift(
   const existingRecord = options.existingRecord;
   const role = shift.role ?? existingRecord?.role ?? 'assistant';
   const hourlyRate =
-    shift.hourlyRate ?? existingRecord?.hourlyRate ?? ROLE_HOURLY_RATES[role];
+    shift.hourlyRate ?? existingRecord?.hourlyRate ?? getWorkRoleHourlyRate(role);
   const workHours =
     shift.workHours ?? calculateWorkHours(shift.startTime, shift.endTime);
   const shiftCategory = shift.shiftCategory ?? shift.note ?? existingRecord?.shiftCategory;
@@ -86,6 +89,7 @@ export function createSalaryRecordFromWorkShift(
     workHours: Number.isFinite(workHours) ? workHours : 0,
     hourlyRate,
     role,
+    roleName: shift.roleName ?? existingRecord?.roleName,
     shiftCategory: shiftCategory?.trim() ? shiftCategory : undefined,
     workShiftId:
       options.legacyWorkShiftId ??

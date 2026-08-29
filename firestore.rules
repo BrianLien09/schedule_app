@@ -26,6 +26,7 @@ service cloud.firestore {
         'allowanceRecords',
         'allowanceSourceTypes',
         'shiftTemplates',
+        'workRoles',
         'courseNotes'
       ];
     }

@@ -86,11 +86,16 @@ export default function WorkShiftManager() {
       shiftDate.setDate(shiftDate.getDate() + 7); // 加7天
       
       const newShift: WorkShift = {
-        id: `shift-${Date.now()}-${Math.random()}`,
+        id: generateWorkShiftId(),
         date: shiftDate.toISOString().split('T')[0],
         startTime: shift.startTime,
         endTime: shift.endTime,
         note: shift.note,
+        role: shift.role,
+        roleName: shift.roleName,
+        hourlyRate: shift.hourlyRate,
+        workHours: shift.workHours,
+        shiftCategory: shift.shiftCategory,
       };
       
       addWorkShift(newShift);
@@ -136,11 +141,16 @@ export default function WorkShiftManager() {
       }
       
       const newShift: WorkShift = {
-        id: `shift-${Date.now()}-${Math.random()}`,
+        id: generateWorkShiftId(),
         date: newDate.toISOString().split('T')[0],
         startTime: shift.startTime,
         endTime: shift.endTime,
         note: shift.note,
+        role: shift.role,
+        roleName: shift.roleName,
+        hourlyRate: shift.hourlyRate,
+        workHours: shift.workHours,
+        shiftCategory: shift.shiftCategory,
       };
       
       addWorkShift(newShift);

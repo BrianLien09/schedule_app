@@ -2,11 +2,13 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
-import type { Course, WorkShift } from '../data/schedule';
+import { generateWorkShiftId, type Course, type WorkShift } from '../data/schedule';
+import { getWorkRoleHourlyRate, getWorkRoleLabel, type RoleType } from '@/data/workRoles';
 import Modal, { ModalContent } from './Modal';
 import styles from './WorkShiftEditor.module.css';
 
 import { useShiftTemplates } from '@/hooks/useShiftTemplates';
+import { useWorkRoles } from '@/hooks/useWorkRoles';
 import { findWorkShiftConflicts, formatConflictMessage } from '@/utils/scheduleConflicts';
 
 interface WorkShiftEditorProps {
@@ -19,11 +21,6 @@ interface WorkShiftEditorProps {
   existingCourses?: Course[];
   existingShifts?: WorkShift[];
 }
-
-const ROLE_RATES = {
-  assistant: 200,
-  instructor: 500,
-};
 
 /**
  * 計算兩時間點之間的工時 (小時)
@@ -53,6 +50,7 @@ export default function WorkShiftEditor({
   const { toast } = useToast();
   const { confirm } = useConfirm();
   const { templates } = useShiftTemplates();
+  const { roles } = useWorkRoles();
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [formData, setFormData] = useState<Partial<WorkShift>>({
     date: new Date().toISOString().split('T')[0],
@@ -71,8 +69,9 @@ export default function WorkShiftEditor({
       const cat = shift.shiftCategory || shift.note || '';
       setFormData({
         ...shift,
-        role: shift.role || 'assistant',
-        hourlyRate: shift.hourlyRate || (shift.role === 'instructor' ? 500 : 200),
+        role: shift.role || roles[0]?.id || 'assistant',
+        roleName: shift.roleName || getWorkRoleLabel(shift.role || roles[0]?.id || 'assistant', roles),
+        hourlyRate: shift.hourlyRate ?? getWorkRoleHourlyRate(shift.role || roles[0]?.id || 'assistant', roles),
         workHours: shift.workHours ?? calculatedH,
         shiftCategory: cat,
         note: shift.note || shift.shiftCategory || '',
@@ -85,19 +84,21 @@ export default function WorkShiftEditor({
       const startT = shift?.startTime ?? '09:00';
       const endT = shift?.endTime ?? '18:00';
       const cat = shift?.shiftCategory || shift?.note || '';
+      const role = shift?.role || roles[0]?.id || 'assistant';
       setFormData({
         date: startDate,
         startTime: startT,
         endTime: endT,
-        role: 'assistant',
-        hourlyRate: 200,
+        role,
+        roleName: shift?.roleName || getWorkRoleLabel(role, roles),
+        hourlyRate: shift?.hourlyRate ?? getWorkRoleHourlyRate(role, roles),
         workHours: calculateHours(startT, endT),
         shiftCategory: cat,
         note: shift?.note || '',
       });
       setIsCustomCategory(false);
     }
-  }, [shift, mode, templates]);
+  }, [shift, mode, roles, templates]);
 
   /**
    * 當使用者選擇下拉選單範本時，自動將該範本的欄位 (時間/身份/時薪) 帶入表單
@@ -115,8 +116,8 @@ export default function WorkShiftEditor({
       const startT = selectedTpl.startTime || formData.startTime || '09:00';
       const endT = selectedTpl.endTime || formData.endTime || '18:00';
       const calculatedH = calculateHours(startT, endT);
-      const role = selectedTpl.role || formData.role || 'assistant';
-      const hourlyRate = selectedTpl.hourlyRate ?? ROLE_RATES[role];
+      const role = selectedTpl.role || formData.role || roles[0]?.id || 'assistant';
+      const hourlyRate = selectedTpl.hourlyRate ?? getWorkRoleHourlyRate(role, roles);
 
       setFormData((prev) => ({
         ...prev,
@@ -125,6 +126,7 @@ export default function WorkShiftEditor({
         startTime: startT,
         endTime: endT,
         role,
+        roleName: getWorkRoleLabel(role, roles),
         hourlyRate,
         workHours: calculatedH > 0 ? calculatedH : prev.workHours,
       }));
@@ -150,18 +152,19 @@ export default function WorkShiftEditor({
       return;
     }
 
-    const role = formData.role || 'assistant';
-    const hourlyRate = formData.hourlyRate ?? ROLE_RATES[role];
+    const role = formData.role || roles[0]?.id || 'assistant';
+    const hourlyRate = formData.hourlyRate ?? getWorkRoleHourlyRate(role, roles);
     const autoHours = calculateHours(formData.startTime, formData.endTime);
     const workHours = formData.workHours !== undefined ? formData.workHours : autoHours;
     const category = formData.shiftCategory?.trim() || formData.note?.trim() || '';
 
     const newShift: WorkShift = {
-      id: shift?.id || `shift-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      id: shift?.id || generateWorkShiftId(),
       date: formData.date,
       startTime: formData.startTime,
       endTime: formData.endTime,
       role,
+      roleName: formData.roleName || getWorkRoleLabel(role, roles),
       hourlyRate,
       workHours,
       shiftCategory: category,
@@ -189,11 +192,12 @@ export default function WorkShiftEditor({
     if (saved !== false) closeModal();
   };
 
-  const handleRoleChange = (newRole: 'assistant' | 'instructor') => {
+  const handleRoleChange = (newRole: RoleType) => {
     setFormData((prev) => ({
       ...prev,
       role: newRole,
-      hourlyRate: ROLE_RATES[newRole],
+      roleName: getWorkRoleLabel(newRole, roles),
+      hourlyRate: getWorkRoleHourlyRate(newRole, roles),
     }));
   };
 
@@ -219,7 +223,7 @@ export default function WorkShiftEditor({
       title={mode === 'add' ? '新增打工班表' : '編輯打工班表'}
     >
       <ModalContent render={(requestClose) => <form onSubmit={(e) => handleSubmit(e, requestClose)} className={styles.form}>
-        {/* 日期與身份 */}
+        {/* 日期與職位 / 身份 */}
         <div className={styles.formRow}>
           <div className={styles.formGroup}>
             <label htmlFor="date">
@@ -236,15 +240,31 @@ export default function WorkShiftEditor({
 
           <div className={styles.formGroup}>
             <label htmlFor="role">
-              身份權限 <span className={styles.required}>*</span>
+              職位 / 身份 <span className={styles.required}>*</span>
             </label>
             <select
               id="role"
-              value={formData.role || 'assistant'}
-              onChange={(e) => handleRoleChange(e.target.value as 'assistant' | 'instructor')}
+              value={formData.role || roles[0]?.id || 'assistant'}
+              onChange={(e) => handleRoleChange(e.target.value)}
             >
-              <option value="assistant">助教 ($200/hr)</option>
-              <option value="instructor">講師 ($500/hr)</option>
+              {roles.length === 0 ? (
+                <option value={formData.role || 'assistant'}>
+                  {getWorkRoleLabel(formData.role, roles, formData.roleName)}
+                </option>
+              ) : (
+                <>
+                  {formData.role && !roles.some((role) => role.id === formData.role) && (
+                    <option value={formData.role}>
+                      {getWorkRoleLabel(formData.role, roles, formData.roleName)}（已移除）
+                    </option>
+                  )}
+                  {roles.map((role) => (
+                    <option key={role.id} value={role.id}>
+                      {role.name} (NT$ {role.hourlyRate}/小時)
+                    </option>
+                  ))}
+                </>
+              )}
             </select>
           </div>
         </div>
@@ -317,7 +337,7 @@ export default function WorkShiftEditor({
               <option value="">-- 請選擇班別範本 --</option>
               {templates.map((tpl) => (
                 <option key={tpl.id} value={tpl.name}>
-                  {tpl.name} ({tpl.startTime}~{tpl.endTime} | ${tpl.hourlyRate || (tpl.role === 'instructor' ? 500 : 200)}/h)
+                  {tpl.name} ({tpl.startTime}~{tpl.endTime} | NT$ {tpl.hourlyRate}/小時)
                 </option>
               ))}
               <option value="__custom__">✍️ 自訂輸入班別名稱...</option>

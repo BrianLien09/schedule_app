@@ -2,16 +2,15 @@
 
 import React, { RefObject, useMemo } from 'react';
 import type { SalaryRecord } from '@/hooks/useSalaryData';
+import { getWorkRoleLabel, type RoleType, type WorkRole } from '@/data/workRoles';
 import styles from './SalaryRecordList.module.css';
-
-/** 身份類型 */
-type RoleType = 'assistant' | 'instructor';
 
 const WEEKDAY_SHORT_LABELS = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'] as const;
 
 interface SalaryRecordListProps {
   records: SalaryRecord[];
   filteredRecords: SalaryRecord[];
+  roles: WorkRole[];
   filterMonth: string;
   updateFilterMonth: (month: string) => void;
   quickFilters: Array<{ label: string; value: string; description: string }>;
@@ -81,6 +80,7 @@ interface SalaryRecordListProps {
 export default function SalaryRecordList({
   records,
   filteredRecords,
+  roles,
   filterMonth,
   updateFilterMonth,
   quickFilters,
@@ -434,6 +434,7 @@ export default function SalaryRecordList({
                     .map((record) => {
                       const displayShiftName = getDisplayShiftName(record);
                       const isSelected = selectedRecordIds.has(record.id);
+                      const roleLabel = getWorkRoleLabel(record.role, roles, record.roleName);
                       const isInstructor = record.role === 'instructor';
                       return (
                         <tr 
@@ -462,7 +463,7 @@ export default function SalaryRecordList({
                               color: isInstructor ? '#c88d55' : 'var(--color-secondary)',
                               border: isInstructor ? '1px dashed rgba(200, 141, 85, 0.4)' : '1px dashed rgba(95, 113, 134, 0.4)',
                             }}>
-                              {isInstructor ? '講師' : '助教'}
+                              {roleLabel}
                             </span>
                           </td>
                           <td>
@@ -568,6 +569,7 @@ export default function SalaryRecordList({
                 .map((record) => {
                   const displayShiftName = getDisplayShiftName(record);
                   const isSelected = selectedRecordIds.has(record.id);
+                  const roleLabel = getWorkRoleLabel(record.role, roles, record.roleName);
                   const isInstructor = record.role === 'instructor';
                   const pay = calculatePay(record);
                   const hours = calculateHours(record);
@@ -597,7 +599,7 @@ export default function SalaryRecordList({
                             border: isInstructor ? '1px dashed rgba(200, 141, 85, 0.4)' : '1px dashed rgba(95, 113, 134, 0.4)',
                           }}
                         >
-                          {isInstructor ? '講師' : '助教'} ${record.hourlyRate}/h
+                          {roleLabel} NT$ {record.hourlyRate}/小時
                         </span>
                       </div>
 
@@ -692,11 +694,36 @@ export default function SalaryRecordList({
                 <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>身份</label>
                 <select
                   value={editingRecord.role}
-                  onChange={(e) => setEditingRecord({ ...editingRecord, role: e.target.value as RoleType })}
+                  onChange={(e) => {
+                    const roleId: RoleType = e.target.value;
+                    const selectedRole = roles.find((role) => role.id === roleId);
+                    setEditingRecord({
+                      ...editingRecord,
+                      role: roleId,
+                      roleName: selectedRole?.name,
+                      hourlyRate: selectedRole?.hourlyRate ?? editingRecord.hourlyRate,
+                    });
+                  }}
                   style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
                 >
-                  <option value="assistant">助教 ($200/hr)</option>
-                  <option value="instructor">講師 ($500/hr)</option>
+                  {roles.length === 0 ? (
+                    <option value={editingRecord.role}>
+                      {getWorkRoleLabel(editingRecord.role, roles, editingRecord.roleName)}
+                    </option>
+                  ) : (
+                    <>
+                      {!roles.some((role) => role.id === editingRecord.role) && (
+                        <option value={editingRecord.role}>
+                          {getWorkRoleLabel(editingRecord.role, roles, editingRecord.roleName)}（已移除）
+                        </option>
+                      )}
+                      {roles.map((role) => (
+                        <option key={role.id} value={role.id}>
+                          {role.name} (NT$ {role.hourlyRate}/小時)
+                        </option>
+                      ))}
+                    </>
+                  )}
                 </select>
               </div>
 
@@ -796,12 +823,13 @@ export default function SalaryRecordList({
                 <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>修改身份 (選填)</label>
                 <select
                   value={batchEditData.role}
-                  onChange={(e) => setBatchEditData(prev => ({ ...prev, role: e.target.value as RoleType }))}
+                  onChange={(e) => setBatchEditData(prev => ({ ...prev, role: e.target.value }))}
                   style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
                 >
                   <option value="">-- 不修改 --</option>
-                  <option value="assistant">助教</option>
-                  <option value="instructor">講師</option>
+                  {roles.map((role) => (
+                    <option key={role.id} value={role.id}>{role.name}</option>
+                  ))}
                 </select>
               </div>
 

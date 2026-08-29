@@ -10,7 +10,7 @@ export interface ShiftTemplate {
   hourlyRate: number;
   isDefault: boolean;
   createdAt: number;
-  role?: 'assistant' | 'instructor';
+  role?: string;
 }
 
 export function generateShiftTemplateId(): string {

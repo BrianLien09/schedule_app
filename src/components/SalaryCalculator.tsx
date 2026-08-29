@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -8,9 +8,11 @@ import html2canvas from 'html2canvas';
 import { useScheduleData } from '@/hooks/useScheduleData';
 import { useSalaryData, type SalaryRecord } from '@/hooks/useSalaryData';
 import { useShiftTemplates } from '@/hooks/useShiftTemplates';
+import { useWorkRoles } from '@/hooks/useWorkRoles';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import { generateShiftTemplateId, type ShiftTemplate, type Weekday } from '@/data/shiftTemplates';
+import { getWorkRoleHourlyRate, getWorkRoleLabel, type RoleType } from '@/data/workRoles';
 import { parseExcelFile, convertToExportFormat, type ImportValidation } from '@/utils/excelParser';
 
 import SalaryHeaderStats from './salary/SalaryHeaderStats';
@@ -18,10 +20,8 @@ import SalaryRecordForm from './salary/SalaryRecordForm';
 import SalaryRecordList from './salary/SalaryRecordList';
 import SalaryAnalytics, { type MonthStats } from './salary/SalaryAnalytics';
 import ShiftTemplateManager from './salary/ShiftTemplateManager';
+import WorkRoleManager from './salary/WorkRoleManager';
 import styles from './SalaryCalculator.module.css';
-
-/** 身份類型 */
-type RoleType = 'assistant' | 'instructor';
 
 export default function SalaryCalculator() {
   const { shifts } = useScheduleData();
@@ -42,6 +42,14 @@ export default function SalaryCalculator() {
     updateTemplate,
     deleteTemplate,
   } = useShiftTemplates();
+  const {
+    roles,
+    loading: rolesLoading,
+    canEdit: canEditRoles,
+    addRole,
+    updateRole,
+    deleteRole,
+  } = useWorkRoles();
   const { toast } = useToast();
   const { confirm } = useConfirm();
   
@@ -50,15 +58,15 @@ export default function SalaryCalculator() {
   const router = useRouter();
   const pathname = usePathname();
   
-  // 標籤頁狀態：'records' | 'analytics' | 'templates'
-  const [activeTab, setActiveTab] = useState<'records' | 'analytics' | 'templates'>('records');
+  // 標籤頁狀態：'records' | 'analytics' | 'templates' | 'roles'
+  const [activeTab, setActiveTab] = useState<'records' | 'analytics' | 'templates' | 'roles'>('records');
 
   const [currentRecord, setCurrentRecord] = useState<Omit<SalaryRecord, 'id'>>({
     date: new Date().toISOString().split('T')[0],
     startTime: '09:00',
     endTime: '17:00',
     workHours: 8,
-    role: 'assistant' as RoleType,
+    role: 'assistant',
     hourlyRate: 200,
     shiftCategory: '',
   });
@@ -161,15 +169,10 @@ export default function SalaryCalculator() {
   }, [filterMonth, pathname, router, searchParams]);
 
   /** 根據日期自動帶入班別 */
-  const getWeekday = (dateStr: string): Weekday => {
-    const date = new Date(dateStr);
-    return date.getDay() as Weekday;
-  };
-
-  const pickTemplateForDate = (dateStr: string): ShiftTemplate | undefined => {
-    const weekday = getWeekday(dateStr);
+  const pickTemplateForDate = useCallback((dateStr: string): ShiftTemplate | undefined => {
+    const weekday = new Date(dateStr).getDay() as Weekday;
     return templates.find(t => t.weekday === weekday);
-  };
+  }, [templates]);
 
   const calculateWorkHoursFromTimes = (startTime: string, endTime: string): number => {
     const [startHour, startMin] = startTime.split(':').map(Number);
@@ -196,18 +199,20 @@ export default function SalaryCalculator() {
 
     const hours = template.workHours ?? calculateWorkHoursFromTimes(template.startTime, template.endTime);
     const normalizedHours = Number.isFinite(hours) ? hours : 0;
-    setCurrentRecord(prev => ({
-      ...prev,
-      startTime: template.startTime,
-      endTime: template.endTime,
-      hourlyRate: template.hourlyRate,
-    }));
+      setCurrentRecord(prev => ({
+        ...prev,
+        startTime: template.startTime,
+        endTime: template.endTime,
+        role: template.role ?? prev.role,
+        roleName: getWorkRoleLabel(template.role ?? prev.role, roles, prev.roleName),
+        hourlyRate: template.hourlyRate,
+      }));
     setWorkHours(normalizedHours.toString());
     setLastAppliedTemplateInfo({
       date: currentRecord.date,
       templateId: template.id,
     });
-  }, [currentRecord.date, lastAppliedTemplateInfo, templates]);
+  }, [currentRecord.date, lastAppliedTemplateInfo, pickTemplateForDate, roles]);
 
   const updateFilterMonth = (month: string) => {
     setFilterMonth(month);
@@ -284,6 +289,7 @@ export default function SalaryCalculator() {
     const hours = parseFloat(workHours) || 0;
     const newRecord: SalaryRecord = {
       ...currentRecord,
+      roleName: getWorkRoleLabel(currentRecord.role, roles, currentRecord.roleName),
       workHours: hours,
       id: Date.now().toString(),
     };
@@ -297,6 +303,8 @@ export default function SalaryCalculator() {
       ...prev,
       startTime: template.startTime,
       endTime: template.endTime,
+      role: template.role ?? prev.role,
+      roleName: getWorkRoleLabel(template.role ?? prev.role, roles, prev.roleName),
       hourlyRate: template.hourlyRate,
       shiftCategory: template.name,
     }));
@@ -418,6 +426,7 @@ export default function SalaryCalculator() {
       endTime: record.endTime,
       workHours: record.workHours,
       role: record.role,
+      roleName: record.roleName,
       hourlyRate: record.hourlyRate,
       shiftCategory: record.shiftCategory || '',
       workShiftId: record.workShiftId,
@@ -446,7 +455,8 @@ export default function SalaryCalculator() {
       const template = pickTemplateForDate(shift.date);
       const startTime = template?.startTime ?? shift.startTime;
       const endTime = template?.endTime ?? shift.endTime;
-      const hourlyRate = template?.hourlyRate ?? 200;
+      const role = shift.role ?? template?.role ?? 'assistant';
+      const hourlyRate = template?.hourlyRate ?? shift.hourlyRate ?? getWorkRoleHourlyRate(role, roles);
       const hours = template?.workHours ?? calculateWorkHoursFromTimes(startTime, endTime);
       const normalizedHours = Number.isFinite(hours) ? hours : 0;
       
@@ -456,7 +466,8 @@ export default function SalaryCalculator() {
         startTime,
         endTime,
         workHours: normalizedHours,
-        role: 'assistant' as RoleType,
+        role,
+        roleName: getWorkRoleLabel(role, roles, shift.roleName),
         hourlyRate,
         shiftCategory: template?.name || shift.note || '',
         workShiftId: shift.id,
@@ -540,8 +551,10 @@ export default function SalaryCalculator() {
     }
     if (batchEditData.role) {
       updateData.role = batchEditData.role;
+      const selectedRole = roles.find((role) => role.id === batchEditData.role);
+      updateData.roleName = selectedRole?.name;
       if (batchNewHourlyRate === 200) {
-        updateData.hourlyRate = batchEditData.role === 'assistant' ? 200 : 350;
+        updateData.hourlyRate = selectedRole?.hourlyRate ?? batchNewHourlyRate;
       }
     }
     if (batchEditData.startTime) {
@@ -688,7 +701,7 @@ export default function SalaryCalculator() {
       '工作時長 (時)': totalWorkHours,
       '時薪($)': 0,
       '應得薪資($)': totalPaySum,
-    } as any);
+    });
 
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
@@ -899,6 +912,7 @@ export default function SalaryCalculator() {
           <div className="no-print page-section-enter page-section-enter-delay-1" style={{
             display: 'flex',
             gap: '0.5rem',
+            flexWrap: 'wrap',
             marginBottom: 'var(--spacing-lg)',
             borderBottom: '2px solid rgba(220, 208, 194, 0.5)',
             paddingBottom: '0.25rem',
@@ -954,6 +968,23 @@ export default function SalaryCalculator() {
             >
               班別範本管理
             </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('roles')}
+              style={{
+                padding: '0.6rem 1.25rem',
+                borderRadius: '8px 8px 0 0',
+                border: 'none',
+                background: activeTab === 'roles' ? 'var(--color-primary)' : 'transparent',
+                color: activeTab === 'roles' ? '#f0ece1' : 'var(--text-secondary)',
+                fontWeight: '600',
+                fontSize: '0.95rem',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease, color 0.2s ease',
+              }}
+            >
+              身份與時薪
+            </button>
           </div>
         )}
 
@@ -967,6 +998,7 @@ export default function SalaryCalculator() {
               setCurrentRecord={setCurrentRecord}
               workHours={workHours}
               setWorkHours={setWorkHours}
+              roles={roles}
               shiftCategoryOptions={shiftCategoryOptions}
               templates={templates}
               importMonth={importMonth}
@@ -980,6 +1012,7 @@ export default function SalaryCalculator() {
             <SalaryRecordList
               records={records}
               filteredRecords={filteredRecords}
+              roles={roles}
               filterMonth={filterMonth}
               updateFilterMonth={updateFilterMonth}
               quickFilters={quickFilters}
@@ -1052,6 +1085,17 @@ export default function SalaryCalculator() {
             onSetDefaultTemplate={handleSetDefaultTemplate}
             onDeleteTemplate={handleDeleteTemplate}
             onResetTemplateForm={resetTemplateForm}
+          />
+        )}
+
+        {activeTab === 'roles' && (
+          <WorkRoleManager
+            roles={roles}
+            loading={rolesLoading}
+            canEdit={canEditRoles}
+            onAddRole={addRole}
+            onUpdateRole={updateRole}
+            onDeleteRole={deleteRole}
           />
         )}
         </div>
