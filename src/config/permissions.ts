@@ -57,6 +57,17 @@ export function getFamilyWebTitlePrefix(email: string | null | undefined): strin
   return null;
 }
 
+/**
+ * 取得 family-web 班表使用的家庭成員標籤。
+ */
+export function getFamilyWebScheduleCategory(email: string | null | undefined): string | null {
+  const normalizedEmail = email?.trim().toLowerCase();
+
+  if (normalizedEmail === 'brianlien09@gmail.com') return '阿弟排班';
+  if (normalizedEmail === 'lovesweet95170@gmail.com') return '布丁排班';
+  return null;
+}
+
 export function hasFamilyWebSyncAccess(email: string | null | undefined): boolean {
   return getFamilyWebTitlePrefix(email) !== null;
 }

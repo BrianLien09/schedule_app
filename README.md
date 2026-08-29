@@ -97,12 +97,12 @@ NEXT_PUBLIC_FAMILY_FIREBASE_APP_ID=...
 | --- | --- |
 | `/users/{自己的 UID}/courses`、`salaryRecords`、`workShifts`、`events`、`allowanceRecords`、`allowanceSourceTypes`、`shiftTemplates`、`courseNotes` | 只能讀寫自己的資料 |
 | `/shared/data/gameGuides` | 家庭成員可讀；只有管理帳號可寫入 |
-| family-web `/schedules` | 只同步 Brian 與 lovesweet 的班表摘要；標題分別加上「百頁」與「布丁」，不包含薪資欄位 |
+| family-web `/schedules` | 只同步 Brian 與 lovesweet 的班表摘要；Brian 標題加上「百頁」且標籤為「阿弟排班」，lovesweet 標題加上「布丁」且標籤為「布丁排班」，不包含薪資欄位 |
 | 其他所有路徑 | 禁止讀寫 |
 
 舊版 `/shared/data/courses` 等個人資料不會被程式自動刪除或複製；若要保留，請先手動遷移到對應使用者的 `/users/{uid}/{collection}` 路徑，再部署新規則。
 
-family-web 同步白名單如下：`brianlien09@gmail.com` →「百頁」、`lovesweet95170@gmail.com` →「布丁」。新增或編輯打工班表時會自動同步；打工月曆也提供按月重新同步按鈕，可用來補上既有班表的標題前綴。
+family-web 同步白名單如下：`brianlien09@gmail.com` →「百頁」／「阿弟排班」、`lovesweet95170@gmail.com` →「布丁」／「布丁排班」。新增或編輯打工班表時會自動同步；打工月曆也提供按月重新同步按鈕，可用來補上既有班表的標題前綴與標籤。
 
 ### 4. 遷移舊版共用資料
 

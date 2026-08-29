@@ -7,7 +7,10 @@
 
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { familyDb } from '@/lib/firebase';
-import { getFamilyWebTitlePrefix } from '@/config/permissions';
+import {
+  getFamilyWebScheduleCategory,
+  getFamilyWebTitlePrefix,
+} from '@/config/permissions';
 import type { WorkShift } from '@/data/schedule';
 
 type FamilySyncShift = WorkShift;
@@ -19,7 +22,8 @@ function getFamilyDocId(workShiftId: string, titlePrefix: string): string {
 
 function mapShiftToFamilySchedule(
   shift: FamilySyncShift,
-  titlePrefix: string
+  titlePrefix: string,
+  category: string
 ): Record<string, string> {
   const note = 'note' in shift && typeof shift.note === 'string' ? shift.note.trim() : '';
   const shiftCategory = typeof shift.shiftCategory === 'string'
@@ -40,7 +44,7 @@ function mapShiftToFamilySchedule(
     date: shift.date,
     startTime: shift.startTime,
     endTime: shift.endTime,
-    category: '阿弟排班',
+    category,
     description: descriptionParts.join(' | ') || title,
     source: 'schedule-app',
     workShiftId: shift.id,
@@ -50,8 +54,9 @@ function mapShiftToFamilySchedule(
 
 function getSyncContext(email: string | null | undefined) {
   const titlePrefix = getFamilyWebTitlePrefix(email);
-  if (!familyDb || !titlePrefix) return null;
-  return { db: familyDb, titlePrefix };
+  const category = getFamilyWebScheduleCategory(email);
+  if (!familyDb || !titlePrefix || !category) return null;
+  return { db: familyDb, titlePrefix, category };
 }
 
 /**
@@ -67,7 +72,11 @@ export async function syncWorkShiftToFamilyWeb(
 
   try {
     const docRef = doc(context.db, 'schedules', getFamilyDocId(shift.id, context.titlePrefix));
-    await setDoc(docRef, mapShiftToFamilySchedule(shift, context.titlePrefix), { merge: true });
+    await setDoc(
+      docRef,
+      mapShiftToFamilySchedule(shift, context.titlePrefix, context.category),
+      { merge: true }
+    );
   } catch (error) {
     console.error('[FamilySync] 同步至 family-web 失敗:', error);
   }
@@ -88,7 +97,7 @@ export async function updateWorkShiftInFamilyWeb(
     const docRef = doc(context.db, 'schedules', getFamilyDocId(id, context.titlePrefix));
     const updatePayload: Record<string, string> = {
       updatedAt: new Date().toISOString(),
-      category: '阿弟排班',
+      category: context.category,
       source: 'schedule-app',
       workShiftId: id,
     };
