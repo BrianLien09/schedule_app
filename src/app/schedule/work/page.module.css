@@ -11,11 +11,146 @@
 .calendarContainer {
   padding: 1.5rem;
   min-height: 600px;
+  box-sizing: border-box;
+}
+
+.calendarContent {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.calendarHeader {
+  display: grid;
+  grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr);
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.monthNavButton {
+  flex-shrink: 0;
+  background-color: var(--surface-soft);
+  color: var(--foreground);
+  border: 1px solid var(--line-strong);
+  white-space: nowrap;
+}
+
+.monthNavButton:hover {
+  background-color: var(--glass-bg-hover);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.previousMonthButton {
+  justify-self: start;
+}
+
+.nextMonthButton {
+  justify-self: end;
+}
+
+.monthHeadingGroup {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.monthTitle {
+  flex-shrink: 0;
+  margin: 0;
+  color: var(--foreground);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.monthActions {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.headerAction {
+  flex-shrink: 1;
+  background-color: var(--color-secondary);
+  color: var(--glass-bg);
+  border: none;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.syncButton {
+  background-color: var(--color-primary);
+}
+
+.headerAction:hover {
+  background-color: var(--color-secondary-light);
+}
+
+.syncButton:hover {
+  background-color: var(--color-primary-hover);
 }
 
 @media (max-width: 768px) {
   .calendarContainer {
-    padding: 0.5rem;
+    padding: 0.75rem;
+    min-height: 0;
+  }
+
+  .calendarHeader {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .monthHeadingGroup {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    flex-direction: column;
+    width: 100%;
+    gap: 0.75rem;
+  }
+
+  .monthTitle {
+    max-width: 100%;
+    font-size: clamp(1.25rem, 6vw, 1.5rem);
+  }
+
+  .monthActions {
+    width: 100%;
+  }
+
+  .headerAction,
+  .monthNavButton {
+    min-height: 44px;
+    padding: 0.65rem 0.5rem;
+  }
+
+  .headerAction {
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: normal;
+  }
+
+  .previousMonthButton {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: stretch;
+  }
+
+  .nextMonthButton {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: stretch;
   }
 }
 
@@ -538,6 +673,33 @@
   .hintInline {
     padding: 0.1rem 0.35rem;
     border-radius: 5px;
+  }
+
+  .detailsSummary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.75rem;
+  }
+
+  .sectionTitle {
+    display: block;
+    min-width: 0;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .detailsToggle {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .detailsHints {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    min-width: 0;
+    white-space: normal;
+    flex-wrap: wrap;
   }
 }
 .detailsToggle {

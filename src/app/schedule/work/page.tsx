@@ -376,77 +376,46 @@ export default function WorkSchedulePage() {
 
   return (
     <div className={styles.pageContainer}>
-      <div className={`glass ${styles.calendarContainer} page-section-enter`} style={{ padding: '1.5rem', minHeight: '600px' }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+      <div className={`glass ${styles.calendarContainer} page-section-enter`}>
+        <div className={styles.calendarContent}>
           {/* 月曆標題區 */}
-          <div
-            className="calendar-header"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '1rem',
-              marginBottom: '1rem',
-              flexWrap: 'wrap',
-            }}
-          >
+          <div className={styles.calendarHeader}>
             <button
               onClick={() => handleMonthChange(-1)}
-              className="btn"
-              style={{ flexShrink: 0 }}
+              className={`btn ${styles.monthNavButton} ${styles.previousMonthButton}`}
             >
               &larr; 上個月
             </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'center', flex: 1, minWidth: '200px' }}>
-              <h2 
-                style={{ 
-                  fontSize: '1.5rem', 
-                  fontWeight: 'bold', 
-                  margin: 0, 
-                  color: 'var(--foreground)',
-                  textAlign: 'center',
-                }}
-              >
+            <div className={styles.monthHeadingGroup}>
+              <h2 className={styles.monthTitle}>
                 {currentMonth.getFullYear()} 年 {currentMonth.getMonth() + 1} 月
               </h2>
-              {canSyncToFamilyWeb && (
+              <div className={styles.monthActions}>
+                {canSyncToFamilyWeb && (
+                  <button
+                    onClick={handleSyncMonthToFamily}
+                    disabled={isSyncing}
+                    className={`btn ${styles.headerAction} ${styles.syncButton}`}
+                    style={{
+                      cursor: isSyncing ? 'not-allowed' : 'pointer',
+                      opacity: isSyncing ? 0.7 : 1,
+                    }}
+                    title="將本月個人打工班表同步至 family-web 家庭月曆"
+                  >
+                    {isSyncing ? '同步中...' : '同步至家庭月曆'}
+                  </button>
+                )}
                 <button
-                  onClick={handleSyncMonthToFamily}
-                  disabled={isSyncing}
-                  className="btn"
-                  style={{
-                    backgroundColor: '#b87e6b',
-                    color: '#f0ece1',
-                    fontSize: '0.85rem',
-                    padding: '4px 12px',
-                    borderRadius: '9999px',
-                    border: 'none',
-                    cursor: isSyncing ? 'not-allowed' : 'pointer',
-                    opacity: isSyncing ? 0.7 : 1,
-                    flexShrink: 0,
-                  }}
-                  title="將本月個人打工班表同步至 family-web 家庭月曆"
+                  onClick={isMultiSelectMode ? handleCancelMultiSelect : handleStartMultiSelect}
+                  className={`btn ${styles.headerAction}`}
                 >
-                  {isSyncing ? '同步中...' : '同步至家庭月曆'}
+                  {isMultiSelectMode ? '取消多選' : '多選日期'}
                 </button>
-              )}
-              <button
-                onClick={isMultiSelectMode ? handleCancelMultiSelect : handleStartMultiSelect}
-                className="btn"
-                style={{
-                  fontSize: '0.85rem',
-                  padding: '4px 12px',
-                  borderRadius: '9999px',
-                  flexShrink: 0,
-                }}
-              >
-                {isMultiSelectMode ? '取消多選' : '多選日期'}
-              </button>
+              </div>
             </div>
             <button
               onClick={() => handleMonthChange(1)}
-              className="btn"
-              style={{ flexShrink: 0 }}
+              className={`btn ${styles.monthNavButton} ${styles.nextMonthButton}`}
             >
               下個月 &rarr;
             </button>
