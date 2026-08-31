@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   manifest: `${BASE_PATH}/manifest.json`,
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'black-translucent',
+    statusBarStyle: 'default',
     title: 'DayMate',
   },
 };
@@ -26,7 +26,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-  themeColor: '#0f111a',
+  themeColor: '#e6e2d8',
 };
 
 export default function RootLayout({
