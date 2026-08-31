@@ -180,12 +180,12 @@ export default function Navbar() {
           {!isMobile && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginLeft: '-0.75rem' }}>
               <img
-                src={`${BASE_PATH}/icon.png`}
+                src={`${BASE_PATH}/icon.png?v=2`}
                 alt="DayMate Logo"
                 style={{
                   width: '40px',
                   height: '40px',
-                  borderRadius: '50%',
+                  borderRadius: '12px',
                   objectFit: 'cover',
                   border: '2px solid rgba(255,255,255,0.2)'
                 }}

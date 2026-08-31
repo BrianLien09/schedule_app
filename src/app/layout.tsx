@@ -7,12 +7,13 @@ import PageTransition from "@/components/PageTransition";
 import "./globals.css";
 
 const BASE_PATH = process.env.NODE_ENV === "production" ? "/schedule_app" : "";
+const APP_ASSET_VERSION = "2";
 
 export const metadata: Metadata = {
-  title: "DayMate - 個人日程與薪資管理",
+  title: "DayMate",
   description: "課程表、打工班表、薪資計算與個人生活管理助手",
   icons: {
-    icon: `${BASE_PATH}/icon.png`,
+    icon: `${BASE_PATH}/icon.png?v=${APP_ASSET_VERSION}`,
   },
   manifest: `${BASE_PATH}/manifest.json`,
   appleWebApp: {
