@@ -1,9 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { ShiftTemplate, Weekday } from '@/data/shiftTemplates';
-
-const WEEKDAY_LABELS = ['日', '一', '二', '三', '四', '五', '六'] as const;
+import type { ShiftTemplate } from '@/data/shiftTemplates';
 
 interface ShiftTemplateManagerProps {
   templates: ShiftTemplate[];
@@ -14,7 +12,6 @@ interface ShiftTemplateManagerProps {
   editingTemplateId: string | null;
   onSaveTemplate: () => void;
   onStartEditTemplate: (template: ShiftTemplate) => void;
-  onSetDefaultTemplate: (template: ShiftTemplate) => void;
   onDeleteTemplate: (template: ShiftTemplate) => void;
   onResetTemplateForm: () => void;
 }
@@ -22,7 +19,7 @@ interface ShiftTemplateManagerProps {
 /**
  * 班別範本管理組件
  * 
- * 獨立管理常態工作班別設定（如名稱、星期、時間段、時薪、時數與預設設定）。
+ * 獨立管理常態工作班別設定（如名稱、時間段、時薪與工作時數）。
  */
 export default function ShiftTemplateManager({
   templates,
@@ -33,7 +30,6 @@ export default function ShiftTemplateManager({
   editingTemplateId,
   onSaveTemplate,
   onStartEditTemplate,
-  onSetDefaultTemplate,
   onDeleteTemplate,
   onResetTemplateForm,
 }: ShiftTemplateManagerProps) {
@@ -106,31 +102,6 @@ export default function ShiftTemplateManager({
               color: 'var(--foreground)',
             }}
           />
-        </div>
-
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
-            星期
-          </label>
-          <select
-            value={newTemplate.weekday}
-            onChange={(e) => setNewTemplate(prev => ({ ...prev, weekday: Number(e.target.value) as Weekday }))}
-            style={{
-              width: '100%',
-              padding: '0.5rem 0.75rem',
-              borderRadius: '8px',
-              border: '2px dashed rgba(220, 208, 194, 0.8)',
-              background: 'rgba(220, 208, 194, 0.35)',
-              color: 'var(--foreground)',
-              cursor: 'pointer',
-            }}
-          >
-            {WEEKDAY_LABELS.map((label, index) => (
-              <option key={label} value={index} style={{ background: '#f0ece1', color: '#3d3a36' }}>
-                {`星期${label}`}
-              </option>
-            ))}
-          </select>
         </div>
 
         <div>
@@ -211,21 +182,6 @@ export default function ShiftTemplateManager({
           />
         </div>
 
-        <label style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          fontSize: '0.9rem',
-          fontWeight: 600,
-          color: 'var(--foreground)',
-        }}>
-          <input
-            type="checkbox"
-            checked={newTemplate.isDefault}
-            onChange={(e) => setNewTemplate(prev => ({ ...prev, isDefault: e.target.checked }))}
-          />
-          設為該星期的預設範本
-        </label>
       </div>
 
       <button
@@ -258,7 +214,7 @@ export default function ShiftTemplateManager({
                 key={template.id}
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: '1.5fr 1fr 1.5fr 1fr auto',
+                  gridTemplateColumns: '1.5fr 1.5fr 1fr auto',
                   gap: 'var(--spacing-sm)',
                   alignItems: 'center',
                   padding: '0.75rem 1rem',
@@ -268,7 +224,6 @@ export default function ShiftTemplateManager({
                 }}
               >
                 <div style={{ fontWeight: 600 }}>{template.name}</div>
-                <div style={{ color: 'var(--muted)' }}>{`星期${WEEKDAY_LABELS[template.weekday]}`}</div>
                 <div>{template.startTime} - {template.endTime}</div>
                 <div>{template.workHours ?? '-'}h / ${template.hourlyRate}</div>
                 <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
@@ -287,22 +242,6 @@ export default function ShiftTemplateManager({
                     }}
                   >
                     編輯
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onSetDefaultTemplate(template)}
-                    disabled={!canEditTemplates}
-                    style={{
-                      padding: '0.4rem 0.8rem',
-                      borderRadius: '8px',
-                      border: '1px dashed rgba(184, 126, 107, 0.4)',
-                      background: template.isDefault ? 'var(--color-primary)' : 'rgba(184, 126, 107, 0.15)',
-                      color: template.isDefault ? '#f0ece1' : 'var(--color-primary)',
-                      fontWeight: '600',
-                      cursor: canEditTemplates ? 'pointer' : 'not-allowed',
-                    }}
-                  >
-                    {template.isDefault ? '預設中' : '設為預設'}
                   </button>
                   <button
                     type="button"

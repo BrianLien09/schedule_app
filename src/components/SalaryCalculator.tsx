@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -11,7 +11,7 @@ import { useShiftTemplates } from '@/hooks/useShiftTemplates';
 import { useWorkRoles } from '@/hooks/useWorkRoles';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
-import { generateShiftTemplateId, type ShiftTemplate, type Weekday } from '@/data/shiftTemplates';
+import { generateShiftTemplateId, type ShiftTemplate } from '@/data/shiftTemplates';
 import { getWorkRoleHourlyRate, getWorkRoleLabel, type RoleType } from '@/data/workRoles';
 import { parseExcelFile, convertToExportFormat, type ImportValidation } from '@/utils/excelParser';
 
@@ -96,13 +96,8 @@ export default function SalaryCalculator() {
     return `${year}-${month}`;
   });
 
-  // 薪資統計篩選狀態
-  const [statsFilter, setStatsFilter] = useState<string>(() => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    return `${year}-${month}`;
-  });
+  // 薪資統計篩選狀態；統計卡片與明細列表維持獨立資料範圍，預設統計全部資料。
+  const [statsFilter, setStatsFilter] = useState<string>('');
   
   // 匯入月份選擇
   const [importMonth, setImportMonth] = useState<string>(() => {
@@ -122,19 +117,12 @@ export default function SalaryCalculator() {
 
   const [newTemplate, setNewTemplate] = useState<Omit<ShiftTemplate, 'id' | 'createdAt'>>({
     name: '',
-    weekday: 1,
     startTime: '09:00',
     endTime: '17:00',
     workHours: 8,
     hourlyRate: 200,
-    isDefault: false,
   });
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
-
-  const [lastAppliedTemplateInfo, setLastAppliedTemplateInfo] = useState<{
-    date: string;
-    templateId: string;
-  } | null>(null);
   
   // 批量編輯多欄位狀態
   const [batchEditData, setBatchEditData] = useState({
@@ -154,26 +142,6 @@ export default function SalaryCalculator() {
   const [showAllImportRecords, setShowAllImportRecords] = useState(false); 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  /** 同步 filterMonth 與 URL Search Params */
-  useEffect(() => {
-    const currentMonth = searchParams.get('month');
-    if (filterMonth && filterMonth !== currentMonth) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set('month', filterMonth);
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    } else if (!filterMonth && currentMonth) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.delete('month');
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    }
-  }, [filterMonth, pathname, router, searchParams]);
-
-  /** 根據日期自動帶入班別 */
-  const pickTemplateForDate = useCallback((dateStr: string): ShiftTemplate | undefined => {
-    const weekday = new Date(dateStr).getDay() as Weekday;
-    return templates.find(t => t.weekday === weekday);
-  }, [templates]);
-
   const calculateWorkHoursFromTimes = (startTime: string, endTime: string): number => {
     const [startHour, startMin] = startTime.split(':').map(Number);
     const [endHour, endMin] = endTime.split(':').map(Number);
@@ -182,82 +150,70 @@ export default function SalaryCalculator() {
     return Math.max(0, (endMinutes - startMinutes) / 60);
   };
 
-  useEffect(() => {
-    const template = pickTemplateForDate(currentRecord.date);
-    if (!template) {
-      setLastAppliedTemplateInfo(null);
-      return;
-    }
-
-    if (
-      lastAppliedTemplateInfo &&
-      lastAppliedTemplateInfo.date === currentRecord.date &&
-      lastAppliedTemplateInfo.templateId === template.id
-    ) {
-      return;
-    }
-
-    const hours = template.workHours ?? calculateWorkHoursFromTimes(template.startTime, template.endTime);
-    const normalizedHours = Number.isFinite(hours) ? hours : 0;
-      setCurrentRecord(prev => ({
-        ...prev,
-        startTime: template.startTime,
-        endTime: template.endTime,
-        role: template.role ?? prev.role,
-        roleName: getWorkRoleLabel(template.role ?? prev.role, roles, prev.roleName),
-        hourlyRate: template.hourlyRate,
-      }));
-    setWorkHours(normalizedHours.toString());
-    setLastAppliedTemplateInfo({
-      date: currentRecord.date,
-      templateId: template.id,
-    });
-  }, [currentRecord.date, lastAppliedTemplateInfo, pickTemplateForDate, roles]);
-
   const updateFilterMonth = (month: string) => {
     setFilterMonth(month);
   };
 
+  const monthRange = useMemo(() => {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonthNumber = today.getMonth() + 1;
+    const currentMonth = `${currentYear}-${String(currentMonthNumber).padStart(2, '0')}`;
+    const previousMonthDate = new Date(currentYear, today.getMonth() - 1, 1);
+    const previousMonth = `${previousMonthDate.getFullYear()}-${String(previousMonthDate.getMonth() + 1).padStart(2, '0')}`;
+
+    return { currentMonth, previousMonth };
+  }, []);
+
+  const detailFilterMonth = useMemo(() => {
+    const hasCurrentMonthRecords = records.some((record) => record.date.startsWith(monthRange.currentMonth));
+
+    // 明細預設看本月；本月沒有資料時，改看上月並同步更新顯示中的篩選狀態。
+    if (
+      filterMonth === monthRange.currentMonth &&
+      records.length > 0 &&
+      !hasCurrentMonthRecords
+    ) {
+      return monthRange.previousMonth;
+    }
+
+    return filterMonth;
+  }, [filterMonth, monthRange, records]);
+
+  /** 同步明細實際顯示月份與 URL Search Params */
+  useEffect(() => {
+    const currentMonth = searchParams.get('month');
+    if (detailFilterMonth && detailFilterMonth !== currentMonth) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('month', detailFilterMonth);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    } else if (!detailFilterMonth && currentMonth) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('month');
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }
+  }, [detailFilterMonth, pathname, router, searchParams]);
+
   const filteredRecords = useMemo(() => {
-    if (!filterMonth) return records;
-    return records.filter(record => record.date.startsWith(filterMonth));
-  }, [records, filterMonth]);
+    if (!detailFilterMonth) return records;
+    return records.filter(record => record.date.startsWith(detailFilterMonth));
+  }, [records, detailFilterMonth]);
 
   const quickFilters = useMemo(() => {
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonthNum = today.getMonth() + 1;
-    const currentMonth = `${currentYear}-${String(currentMonthNum).padStart(2, '0')}`;
-    
-    const lastMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    const lastYear = lastMonthDate.getFullYear();
-    const lastMonthNum = lastMonthDate.getMonth() + 1;
-    const lastMonth = `${lastYear}-${String(lastMonthNum).padStart(2, '0')}`;
-    
     return [
       { label: '全部', value: '', description: '顯示所有記錄' },
-      { label: '本月', value: currentMonth, description: '僅顯示本月記錄' },
-      { label: '上月', value: lastMonth, description: '僅顯示上個月記錄' },
+      { label: '本月', value: monthRange.currentMonth, description: '僅顯示本月記錄' },
+      { label: '上月', value: monthRange.previousMonth, description: '僅顯示上個月記錄' },
     ];
-  }, []);
+  }, [monthRange]);
 
   const statsQuickFilters = useMemo(() => {
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonthNum = today.getMonth() + 1;
-    const currentMonth = `${currentYear}-${String(currentMonthNum).padStart(2, '0')}`;
-
-    const lastMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    const lastYear = lastMonthDate.getFullYear();
-    const lastMonthNum = lastMonthDate.getMonth() + 1;
-    const lastMonth = `${lastYear}-${String(lastMonthNum).padStart(2, '0')}`;
-
     return [
       { label: '全部', value: '', description: '顯示所有統計' },
-      { label: '本月', value: currentMonth, description: '僅顯示本月統計' },
-      { label: '上月', value: lastMonth, description: '僅顯示上月統計' },
+      { label: '本月', value: monthRange.currentMonth, description: '僅顯示本月統計' },
+      { label: '上月', value: monthRange.previousMonth, description: '僅顯示上月統計' },
     ];
-  }, []);
+  }, [monthRange]);
 
   const statsRecords = useMemo(() => {
     if (!statsFilter) return records;
@@ -316,12 +272,10 @@ export default function SalaryCalculator() {
     setEditingTemplateId(null);
     setNewTemplate({
       name: '',
-      weekday: 1,
       startTime: '09:00',
       endTime: '17:00',
       workHours: 8,
       hourlyRate: 200,
-      isDefault: false,
     });
   };
 
@@ -333,12 +287,10 @@ export default function SalaryCalculator() {
     setEditingTemplateId(template.id);
     setNewTemplate({
       name: template.name,
-      weekday: template.weekday,
       startTime: template.startTime,
       endTime: template.endTime,
       workHours: template.workHours ?? 0,
       hourlyRate: template.hourlyRate,
-      isDefault: template.isDefault,
     });
   };
 
@@ -350,17 +302,6 @@ export default function SalaryCalculator() {
     if (!canEditTemplates) {
       toast.warning('目前沒有編輯班別的權限');
       return;
-    }
-
-    if (newTemplate.isDefault) {
-      const sameWeekdayDefaults = templates.filter(
-        template => template.weekday === newTemplate.weekday && template.isDefault
-      );
-      for (const template of sameWeekdayDefaults) {
-        if (template.id !== editingTemplateId) {
-          await updateTemplate(template.id, { isDefault: false });
-        }
-      }
     }
 
     if (editingTemplateId) {
@@ -378,24 +319,6 @@ export default function SalaryCalculator() {
     await addTemplate(template);
     toast.success('已新增班別範本');
     resetTemplateForm();
-  };
-
-  const handleSetDefaultTemplate = async (template: ShiftTemplate) => {
-    if (!canEditTemplates) {
-      toast.warning('目前沒有編輯班別的權限');
-      return;
-    }
-    if (template.isDefault) return;
-
-    const sameWeekdayDefaults = templates.filter(
-      item => item.weekday === template.weekday && item.isDefault
-    );
-    for (const item of sameWeekdayDefaults) {
-      await updateTemplate(item.id, { isDefault: false });
-    }
-
-    await updateTemplate(template.id, { isDefault: true });
-    toast.success(`已將「${template.name}」設為預設班別`);
   };
 
   const handleDeleteTemplate = async (template: ShiftTemplate) => {
@@ -452,12 +375,11 @@ export default function SalaryCalculator() {
     }
 
     const newRecords: SalaryRecord[] = monthShifts.map(shift => {
-      const template = pickTemplateForDate(shift.date);
-      const startTime = template?.startTime ?? shift.startTime;
-      const endTime = template?.endTime ?? shift.endTime;
-      const role = shift.role ?? template?.role ?? 'assistant';
-      const hourlyRate = template?.hourlyRate ?? shift.hourlyRate ?? getWorkRoleHourlyRate(role, roles);
-      const hours = template?.workHours ?? calculateWorkHoursFromTimes(startTime, endTime);
+      const startTime = shift.startTime;
+      const endTime = shift.endTime;
+      const role = shift.role ?? 'assistant';
+      const hourlyRate = shift.hourlyRate ?? getWorkRoleHourlyRate(role, roles);
+      const hours = shift.workHours ?? calculateWorkHoursFromTimes(startTime, endTime);
       const normalizedHours = Number.isFinite(hours) ? hours : 0;
       
       return {
@@ -469,7 +391,7 @@ export default function SalaryCalculator() {
         role,
         roleName: getWorkRoleLabel(role, roles, shift.roleName),
         hourlyRate,
-        shiftCategory: template?.name || shift.note || '',
+        shiftCategory: shift.shiftCategory || shift.note || '',
         workShiftId: shift.id,
       };
     });
@@ -620,19 +542,6 @@ export default function SalaryCalculator() {
     }, 100);
   };
 
-  const totalPay = useMemo(() => {
-    return filteredRecords.reduce((sum, record) => sum + calculatePay(record), 0);
-  }, [filteredRecords]);
-
-  const totalHours = useMemo(() => {
-    return filteredRecords.reduce((sum, r) => sum + calculateHours(r), 0);
-  }, [filteredRecords]);
-
-  const avgHourlyRate = useMemo(() => {
-    if (totalHours === 0) return 0;
-    return Math.round(totalPay / totalHours);
-  }, [totalPay, totalHours]);
-
   const statsTotalPay = useMemo(() => {
     return statsRecords.reduce((sum, record) => sum + calculatePay(record), 0);
   }, [statsRecords]);
@@ -664,7 +573,7 @@ export default function SalaryCalculator() {
       stats.recordCount += 1;
     });
 
-    const anchorMonthStr = statsFilter || filterMonth || '';
+    const anchorMonthStr = statsFilter || monthRange.currentMonth;
     let anchorDate = new Date();
     if (anchorMonthStr && /^\d{4}-\d{2}$/.test(anchorMonthStr)) {
       const [year, month] = anchorMonthStr.split('-').map(Number);
@@ -707,7 +616,7 @@ export default function SalaryCalculator() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, '薪資明細');
     
-    const monthStr = filterMonth || '全部';
+    const monthStr = detailFilterMonth || '全部';
     const fileName = `薪資表_${monthStr}_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(wb, fileName);
     toast.success('已下載 Excel 檔案');
@@ -899,10 +808,10 @@ export default function SalaryCalculator() {
           {/* 四大核心 KPI 速覽 */}
           {!isPrintMode && (
             <SalaryHeaderStats
-              totalPay={totalPay}
-              totalHours={totalHours}
-              avgHourlyRate={avgHourlyRate}
-              workDays={filteredRecords.length}
+              totalPay={statsTotalPay}
+              totalHours={statsTotalHours}
+              avgHourlyRate={statsAvgHourlyRate}
+              workDays={statsWorkDays}
             />
           )}
         </div>
@@ -1013,7 +922,7 @@ export default function SalaryCalculator() {
               records={records}
               filteredRecords={filteredRecords}
               roles={roles}
-              filterMonth={filterMonth}
+              filterMonth={detailFilterMonth}
               updateFilterMonth={updateFilterMonth}
               quickFilters={quickFilters}
               selectedRecordIds={selectedRecordIds}
@@ -1082,7 +991,6 @@ export default function SalaryCalculator() {
             editingTemplateId={editingTemplateId}
             onSaveTemplate={handleSaveTemplate}
             onStartEditTemplate={handleStartEditTemplate}
-            onSetDefaultTemplate={handleSetDefaultTemplate}
             onDeleteTemplate={handleDeleteTemplate}
             onResetTemplateForm={resetTemplateForm}
           />

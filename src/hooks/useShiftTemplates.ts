@@ -7,8 +7,7 @@ import {
   subscribeToCollection,
 } from '@/services/firestoreService';
 import { hasWriteAccess } from '@/config/permissions';
-import type { ShiftTemplate } from '@/data/shiftTemplates';
-import { sortShiftTemplatesByPriority } from '@/data/shiftTemplates';
+import { sortShiftTemplates, type ShiftTemplate } from '@/data/shiftTemplates';
 
 const SHIFT_TEMPLATES_COLLECTION = 'shiftTemplates';
 
@@ -42,7 +41,7 @@ export function useShiftTemplates() {
   }, [user]);
 
   const sortedTemplates = useMemo(() => {
-    return sortShiftTemplatesByPriority(templates);
+    return sortShiftTemplates(templates);
   }, [templates]);
 
   const addTemplate = async (template: ShiftTemplate) => {
