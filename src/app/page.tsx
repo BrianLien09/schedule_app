@@ -436,7 +436,7 @@ export default function Home() {
               }}>
                 <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginBottom: '4px' }}>總工時</div>
                 <div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--color-secondary)' }}>
-                  {thisMonthSalaryStats.totalHours.toFixed(1)} h
+                  {thisMonthSalaryStats.totalHours.toFixed(2)} h
                 </div>
               </div>
               <div style={{

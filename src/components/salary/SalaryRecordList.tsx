@@ -473,7 +473,7 @@ export default function SalaryRecordList({
                             {record.startTime} - {record.endTime}
                           </td>
                           <td style={{ textAlign: 'center' }}>
-                            {calculateHours(record).toFixed(1)}h
+                            {calculateHours(record).toFixed(2)}h
                           </td>
                           <td style={{ textAlign: 'right' }}>
                             ${record.hourlyRate}
@@ -544,7 +544,7 @@ export default function SalaryRecordList({
                       合計 ({filteredRecords.length} 筆記錄)：
                     </td>
                     <td style={{ padding: '0.85rem 0.75rem', textAlign: 'center', color: 'var(--color-secondary)' }}>
-                      {totalWorkHours.toFixed(1)}h
+                      {totalWorkHours.toFixed(2)}h
                     </td>
                     <td style={{ padding: '0.85rem 0.75rem', textAlign: 'right' }}>
                       --
@@ -610,7 +610,7 @@ export default function SalaryRecordList({
                         </div>
                         <div className={styles.timeInfo}>
                           <span>⏰ {record.startTime} - {record.endTime}</span>
-                          <span className={styles.hoursText}>{hours.toFixed(1)}h</span>
+                          <span className={styles.hoursText}>{hours.toFixed(2)}h</span>
                         </div>
                       </div>
 
@@ -649,7 +649,7 @@ export default function SalaryRecordList({
               <div className={styles.mobileTotalCard}>
                 <span>合計 ({filteredRecords.length} 筆記錄)</span>
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                  <span style={{ color: 'var(--color-secondary)' }}>{totalWorkHours.toFixed(1)}h</span>
+                  <span style={{ color: 'var(--color-secondary)' }}>{totalWorkHours.toFixed(2)}h</span>
                   <span style={{ color: 'var(--color-primary)', fontSize: '1.15rem', fontWeight: '800' }}>
                     ${totalSalary.toLocaleString()}
                   </span>
@@ -751,7 +751,7 @@ export default function SalaryRecordList({
                 <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>工作時數</label>
                 <input
                   type="number"
-                  step="0.5"
+                  step="0.01"
                   value={editingWorkHours}
                   onChange={(e) => onEditWorkHoursChange(e.target.value)}
                   style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}

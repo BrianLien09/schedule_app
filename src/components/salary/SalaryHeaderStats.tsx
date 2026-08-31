@@ -57,7 +57,7 @@ export default function SalaryHeaderStats({
           總工時
         </div>
         <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--color-secondary)' }}>
-          {totalHours.toFixed(1)} 小時
+          {totalHours.toFixed(2)} 小時
         </div>
       </div>
 

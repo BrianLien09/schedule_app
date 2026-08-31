@@ -13,6 +13,18 @@ export interface ShiftTemplate {
   role?: string;
 }
 
+/**
+ * 取得範本的計薪工時；只有舊範本沒有保存工作時數時，才使用時間差兜底。
+ */
+export function getShiftTemplateWorkHours(
+  template: Pick<ShiftTemplate, 'workHours'>,
+  fallbackWorkHours: number
+): number {
+  return typeof template.workHours === 'number' && Number.isFinite(template.workHours)
+    ? template.workHours
+    : fallbackWorkHours;
+}
+
 export function generateShiftTemplateId(): string {
   return `shift-template-${Date.now()}`;
 }

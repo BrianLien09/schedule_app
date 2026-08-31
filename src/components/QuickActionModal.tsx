@@ -5,6 +5,7 @@ import { useAllowanceData } from '@/hooks/useAllowanceData';
 import { useScheduleData } from '@/hooks/useScheduleData';
 import { calculateWorkHours } from '@/data/workRecords';
 import { getWorkRoleHourlyRate, getWorkRoleLabel, type RoleType } from '@/data/workRoles';
+import { getShiftTemplateWorkHours } from '@/data/shiftTemplates';
 import { useShiftTemplates } from '@/hooks/useShiftTemplates';
 import { useWorkRoles } from '@/hooks/useWorkRoles';
 import { useToast } from '@/context/ToastContext';
@@ -140,8 +141,11 @@ export default function QuickActionModal({
   const [hourlyRate, setHourlyRate] = useState(200);
   const [shiftCategory, setShiftCategory] = useState('');
 
-  // 計算工作時數（自動從開始/結束時間算出）
-  const workHours = calculateWorkHours(startTime, endTime);
+  const selectedTemplate = templates.find((template) => template.name === shiftCategory);
+  const calculatedWorkHours = calculateWorkHours(startTime, endTime);
+  const workHours = selectedTemplate
+    ? getShiftTemplateWorkHours(selectedTemplate, calculatedWorkHours)
+    : calculatedWorkHours;
 
   if (!isOpen) return null;
 
@@ -425,7 +429,9 @@ export default function QuickActionModal({
               {/* 第四行：工作時數（唯讀自動計算）+ 時薪 */}
               <div className={styles.grid2}>
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>工作時數（自動計算）</label>
+                  <label className={styles.label}>
+                    工作時數（{selectedTemplate ? '依班別範本' : '依時間自動計算'}）
+                  </label>
                   <input
                     type="text"
                     className={styles.input}

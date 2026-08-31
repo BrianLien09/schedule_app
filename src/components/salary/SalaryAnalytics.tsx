@@ -138,7 +138,7 @@ export default function SalaryAnalytics({
                 總工時
               </div>
               <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-secondary)' }}>
-                {statsTotalHours.toFixed(1)}h
+                {statsTotalHours.toFixed(2)}h
               </div>
             </div>
 
@@ -245,7 +245,7 @@ export default function SalaryAnalytics({
                         cursor: 'pointer',
                         boxShadow: '0 4px 12px rgba(184, 126, 107, 0.2)',
                       }}
-                      title={`${stat.month}: $${stat.totalPay.toLocaleString()} (${stat.totalHours.toFixed(1)}h, ${stat.recordCount}天)`}
+                      title={`${stat.month}: $${stat.totalPay.toLocaleString()} (${stat.totalHours.toFixed(2)}h, ${stat.recordCount}天)`}
                     />
                     
                     {/* 月份標籤 */}

@@ -4,6 +4,7 @@ import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import { generateWorkShiftId, type Course, type WorkShift } from '../data/schedule';
 import { getWorkRoleHourlyRate, getWorkRoleLabel, type RoleType } from '@/data/workRoles';
+import { getShiftTemplateWorkHours } from '@/data/shiftTemplates';
 import Modal, { ModalContent } from './Modal';
 import styles from './WorkShiftEditor.module.css';
 
@@ -67,12 +68,15 @@ export default function WorkShiftEditor({
     if (shift && mode === 'edit') {
       const calculatedH = calculateHours(shift.startTime, shift.endTime);
       const cat = shift.shiftCategory || shift.note || '';
+      const matchedTemplate = templates.find((template) => template.name === cat);
       setFormData({
         ...shift,
         role: shift.role || roles[0]?.id || 'assistant',
         roleName: shift.roleName || getWorkRoleLabel(shift.role || roles[0]?.id || 'assistant', roles),
         hourlyRate: shift.hourlyRate ?? getWorkRoleHourlyRate(shift.role || roles[0]?.id || 'assistant', roles),
-        workHours: shift.workHours ?? calculatedH,
+        workHours: matchedTemplate
+          ? getShiftTemplateWorkHours(matchedTemplate, calculatedH)
+          : shift.workHours ?? calculatedH,
         shiftCategory: cat,
         note: shift.note || shift.shiftCategory || '',
       });
@@ -85,6 +89,7 @@ export default function WorkShiftEditor({
       const endT = shift?.endTime ?? '18:00';
       const cat = shift?.shiftCategory || shift?.note || '';
       const role = shift?.role || roles[0]?.id || 'assistant';
+      const matchedTemplate = templates.find((template) => template.name === cat);
       setFormData({
         date: startDate,
         startTime: startT,
@@ -92,7 +97,9 @@ export default function WorkShiftEditor({
         role,
         roleName: shift?.roleName || getWorkRoleLabel(role, roles),
         hourlyRate: shift?.hourlyRate ?? getWorkRoleHourlyRate(role, roles),
-        workHours: calculateHours(startT, endT),
+        workHours: matchedTemplate
+          ? getShiftTemplateWorkHours(matchedTemplate, calculateHours(startT, endT))
+          : shift?.workHours ?? calculateHours(startT, endT),
         shiftCategory: cat,
         note: shift?.note || '',
       });
@@ -101,12 +108,17 @@ export default function WorkShiftEditor({
   }, [shift, mode, roles, templates]);
 
   /**
-   * 當使用者選擇下拉選單範本時，自動將該範本的欄位 (時間/身份/時薪) 帶入表單
+   * 當使用者選擇下拉選單範本時，自動將該範本的欄位 (時間/身份/工時/時薪) 帶入表單
    */
   const handleSelectTemplate = (selectedName: string) => {
     if (selectedName === '__custom__') {
       setIsCustomCategory(true);
-      setFormData((prev) => ({ ...prev, shiftCategory: '', note: '' }));
+      setFormData((prev) => ({
+        ...prev,
+        shiftCategory: '',
+        note: '',
+        workHours: calculateHours(prev.startTime || '09:00', prev.endTime || '18:00'),
+      }));
       return;
     }
 
@@ -128,13 +140,14 @@ export default function WorkShiftEditor({
         role,
         roleName: getWorkRoleLabel(role, roles),
         hourlyRate,
-        workHours: calculatedH > 0 ? calculatedH : prev.workHours,
+        workHours: getShiftTemplateWorkHours(selectedTpl, calculatedH),
       }));
     } else {
       setFormData((prev) => ({
         ...prev,
         shiftCategory: selectedName,
         note: selectedName,
+        workHours: calculateHours(prev.startTime || '09:00', prev.endTime || '18:00'),
       }));
     }
   };
@@ -155,8 +168,15 @@ export default function WorkShiftEditor({
     const role = formData.role || roles[0]?.id || 'assistant';
     const hourlyRate = formData.hourlyRate ?? getWorkRoleHourlyRate(role, roles);
     const autoHours = calculateHours(formData.startTime, formData.endTime);
-    const workHours = formData.workHours !== undefined ? formData.workHours : autoHours;
     const category = formData.shiftCategory?.trim() || formData.note?.trim() || '';
+    const matchedTemplate = !isCustomCategory
+      ? templates.find((template) => template.name === category)
+      : undefined;
+    const workHours = matchedTemplate
+      ? getShiftTemplateWorkHours(matchedTemplate, autoHours)
+      : formData.workHours !== undefined
+        ? formData.workHours
+        : autoHours;
 
     const newShift: WorkShift = {
       id: shift?.id || generateWorkShiftId(),
@@ -205,7 +225,15 @@ export default function WorkShiftEditor({
     setFormData((prev) => {
       const next = { ...prev, [field]: value };
       const hours = calculateHours(next.startTime || '09:00', next.endTime || '18:00');
-      return { ...next, workHours: hours };
+      const matchedTemplate = !isCustomCategory
+        ? templates.find((template) => template.name === next.shiftCategory)
+        : undefined;
+      return {
+        ...next,
+        workHours: matchedTemplate
+          ? getShiftTemplateWorkHours(matchedTemplate, hours)
+          : hours,
+      };
     });
   };
 
@@ -215,6 +243,10 @@ export default function WorkShiftEditor({
       closeModal();
     }
   };
+
+  const selectedTemplate = !isCustomCategory
+    ? templates.find((template) => template.name === formData.shiftCategory)
+    : undefined;
 
   return (
     <Modal
@@ -313,13 +345,16 @@ export default function WorkShiftEditor({
           </div>
 
           <div className={styles.formGroup}>
-            <label htmlFor="workHours">計薪工時 (小時)</label>
+            <label htmlFor="workHours">
+              計薪工時（{selectedTemplate ? '依班別範本' : '小時'}）
+            </label>
             <input
               id="workHours"
               type="number"
               min="0"
-              step="0.5"
+              step="0.01"
               value={formData.workHours ?? 0}
+              readOnly={Boolean(selectedTemplate)}
               onChange={(e) => setFormData((prev) => ({ ...prev, workHours: Number(e.target.value) }))}
             />
           </div>

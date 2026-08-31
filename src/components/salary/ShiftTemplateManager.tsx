@@ -196,7 +196,7 @@ export default function ShiftTemplateManager({
           </label>
           <input
             type="number"
-            step="0.5"
+            step="0.01"
             min="0"
             value={newTemplate.workHours ?? 0}
             onChange={(e) => setNewTemplate(prev => ({ ...prev, workHours: Number(e.target.value) }))}
