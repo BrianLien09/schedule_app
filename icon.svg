@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">DayMate 圓角矩形圖標</title>
+  <desc id="desc">暖棕色圓角矩形裡的筆記本與時鐘圖案</desc>
+  <rect width="512" height="512" fill="none"/>
+  <rect x="24" y="24" width="464" height="464" rx="80" fill="#b87e6b" stroke="#f0ece1" stroke-width="14"/>
+
+  <g transform="translate(5 -19)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M130 132h242c25 0 44 20 44 44v198c0 25-19 44-44 44H130c-25 0-44-19-44-44V176c0-24 19-44 44-44Z" fill="#f0ece1" stroke="#dcd0c2" stroke-width="10"/>
+    <path d="M130 132c-25 0-44 20-44 44v198c0 25 19 44 44 44h35V132Z" fill="#e6e2d8" stroke="#dcd0c2" stroke-width="10"/>
+    <path d="M165 132v286" fill="none" stroke="#dcd0c2" stroke-width="10"/>
+    <path d="M108 180h-19M108 232h-19M108 284h-19M108 336h-19" fill="none" stroke="#5f7186" stroke-width="12"/>
+
+    <circle cx="274" cy="274" r="86" fill="#e6e2d8" stroke="#5f7186" stroke-width="12"/>
+    <path d="M274 274 317 231M274 274l-42-30" fill="none" stroke="#b87e6b" stroke-width="14"/>
+    <circle cx="274" cy="274" r="12" fill="#b87e6b" stroke="none"/>
+    <path d="M274 197v12M274 339v12M197 274h12M339 274h12" fill="none" stroke="#5f7186" stroke-width="8"/>
+    <circle cx="274" cy="274" r="4" fill="#5f7186" stroke="none"/>
+  </g>
+</svg>

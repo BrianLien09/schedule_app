@@ -1,5 +1,5 @@
 // Service Worker for PWA offline support
-const CACHE_NAME = 'daymate-cache-v3';
+const CACHE_NAME = 'daymate-cache-v6';
 
 // Install event - 預先快取應用程式首頁，確保首次離線時仍有可載入的內容
 self.addEventListener('install', (event) => {
