@@ -5,7 +5,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import { useCourseNotes } from '../../../hooks/useCourseNotes';
-import { Course } from '../../../data/schedule';
+import { Course, DEFAULT_COURSE_SEMESTER } from '../../../data/schedule';
 import type { CourseNote } from '../../../data/courseNotes';
 import LoginPrompt from '../../../components/LoginPrompt';
 import CourseEditor from '../../../components/CourseEditor';
@@ -17,27 +17,6 @@ import styles from './page.module.css';
 
 export default function SchoolSchedulePage() {
   const { user, loading: authLoading } = useAuth();
-  
-  // 使用新的資料管理 hook
-  const { courses, shifts, addCourse, deleteCourse, updateCourse, canEdit } = useScheduleData();
-  const { toast } = useToast();
-  const { confirm } = useConfirm();
-  
-  // 筆記管理
-  const {
-    notes,
-    loading: notesLoading,
-    addNote,
-    updateNote,
-    deleteNote,
-    toggleCompletion,
-  } = useCourseNotes();
-  
-  // 編輯器狀態
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
-  const [editorMode, setEditorMode] = useState<'add' | 'edit'>('add');
-  const [hoveredCourse, setHoveredCourse] = useState<string | null>(null);
 
   // 學期管理狀態
   // 預設學期清單（年份往後移一年：大一 2025、大二 2026、大三 2027、大四 2028）
@@ -51,12 +30,40 @@ export default function SchoolSchedulePage() {
     { value: '2028-1', label: '大四上學期 (2028-1)' },
     { value: '2028-2', label: '大四下學期 (2028-2)' },
   ];
-  // 預設選取當前學期（大二上學期 2026-1）
-  const [selectedSemester, setSelectedSemester] = useState<string>('2026-1');
+  const [selectedSemester, setSelectedSemester] = useState<string>(DEFAULT_COURSE_SEMESTER);
+
+  // Brian 所有學期讀取個人路徑；其他帳戶讀取 shared 課表。
+  const {
+    courses,
+    shifts,
+    addCourse,
+    deleteCourse,
+    updateCourse,
+    canEditCourses,
+  } = useScheduleData(selectedSemester);
+  const { toast } = useToast();
+  const { confirm } = useConfirm();
+
+  // 筆記管理
+  const {
+    notes,
+    loading: notesLoading,
+    addNote,
+    updateNote,
+    deleteNote,
+    toggleCompletion,
+  } = useCourseNotes();
+
+  // 編輯器狀態
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [editorMode, setEditorMode] = useState<'add' | 'edit'>('add');
+  const [hoveredCourse, setHoveredCourse] = useState<string | null>(null);
   
-  // 依學期篩選課程（若課程沒有 semester 欄位視為舊版課程，全部顯示在目前選中學期）
-  const filteredCourses = courses.filter(
-    (c) => !c.semester || c.semester === selectedSemester
+  // Hook 已依選定學期完成路徑選擇與舊文件的學期補值。
+  const filteredCourses = courses;
+  const visibleNotes = notes.filter((note) =>
+    filteredCourses.some((course) => course.id === note.courseId)
   );
   
   // 筆記編輯器狀態
@@ -111,7 +118,7 @@ export default function SchoolSchedulePage() {
 
   // 處理新增課程
   const handleAddCourse = () => {
-    if (!canEdit) {
+    if (!canEditCourses) {
       toast.warning('您沒有編輯權限');
       return;
     }
@@ -123,7 +130,7 @@ export default function SchoolSchedulePage() {
   // 處理編輯課程
   const handleEditCourse = (course: Course, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!canEdit) {
+    if (!canEditCourses) {
       toast.warning('您沒有編輯權限');
       return;
     }
@@ -135,7 +142,7 @@ export default function SchoolSchedulePage() {
   // 處理刪除課程
   const handleDeleteCourse = async (course: Course, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!canEdit) {
+    if (!canEditCourses) {
       toast.warning('您沒有編輯權限');
       return;
     }
@@ -190,7 +197,7 @@ export default function SchoolSchedulePage() {
 
   // 取得特定課程的筆記數量
   const getCourseNoteCount = (courseId: string) => {
-    return notes.filter((note) => note.courseId === courseId).length;
+    return visibleNotes.filter((note) => note.courseId === courseId).length;
   };
 
   // 匯出 .ics 行事曆
@@ -264,7 +271,7 @@ export default function SchoolSchedulePage() {
                 </select>
 
                 {/* 新增課程按鈕 */}
-                {canEdit && (
+                {canEditCourses && (
                   <button
                     onClick={handleAddCourse}
                     style={{
@@ -305,7 +312,7 @@ export default function SchoolSchedulePage() {
             </div>
             
             {/* 提示訊息 */}
-            {canEdit && (
+            {canEditCourses && (
               <div className={styles.hint}>
                 💡 滑鼠移到課程上可編輯或刪除
               </div>
@@ -379,7 +386,7 @@ export default function SchoolSchedulePage() {
                               position: 'relative',
                               transform: isHovered ? 'scale(1.05)' : 'scale(1)',
                               transition: 'all 0.2s ease',
-                              cursor: canEdit ? 'pointer' : 'default'
+                              cursor: canEditCourses ? 'pointer' : 'default'
                             }}
                           >
                             <div style={{ 
@@ -418,7 +425,7 @@ export default function SchoolSchedulePage() {
                                 >
                                   📝
                                 </button>
-                                {canEdit && (
+                                {canEditCourses && (
                                   <>
                                     <button 
                                       className={styles.editButton}
@@ -462,9 +469,9 @@ export default function SchoolSchedulePage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <h3 style={{ fontSize: '1.3rem', margin: 0 }}>
             📝 課程筆記
-            {notes.length > 0 && (
+            {visibleNotes.length > 0 && (
               <span style={{ fontSize: '0.9rem', marginLeft: '8px', opacity: 0.7 }}>
-                ({notes.length})
+                ({visibleNotes.length})
               </span>
             )}
           </h3>
@@ -484,7 +491,7 @@ export default function SchoolSchedulePage() {
               </div>
             ) : (
               <CourseNoteList
-                notes={notes}
+                notes={visibleNotes}
                 onEdit={handleEditNote}
                 onDelete={deleteNote}
                 onToggleComplete={toggleCompletion}

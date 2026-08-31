@@ -10,6 +10,15 @@ export interface Course {
   semester?: string; // 學期標識，如 "2025-1"（大一上）, "2025-2"（大一下）
 }
 
+/** 目前學校課表預設顯示的學期。 */
+export const DEFAULT_COURSE_SEMESTER = '2026-1';
+
+/** 大二上學期仍沿用的共用課表路徑。 */
+export const SHARED_COURSE_SEMESTER = '2026-1';
+
+/** users/{uid}/courses 內未標註 semester 的既有課表所屬學期。 */
+export const LEGACY_PERSONAL_COURSE_SEMESTER = '2025-2';
+
 export interface WorkShift {
   id: string;
   date: string; // YYYY-MM-DD

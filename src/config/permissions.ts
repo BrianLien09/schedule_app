@@ -38,6 +38,11 @@ export function hasWriteAccess(email: string | null | undefined): boolean {
   return isAuthenticated(email);
 }
 
+/** 判斷是否為 Brian 的個人課表帳戶。 */
+export function isBrianAccount(email: string | null | undefined): boolean {
+  return email?.trim().toLowerCase() === 'brianlien09@gmail.com';
+}
+
 /**
  * 遊戲攻略由管理帳號維護，其他家庭成員保留共用讀取權限。
  * 這只控制前端介面；真正的寫入限制必須同步設定在 Firestore Rules。

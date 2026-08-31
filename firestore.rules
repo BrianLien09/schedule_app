@@ -38,6 +38,12 @@ service cloud.firestore {
         isPersonalCollection(collectionName);
     }
 
+    // 其他帳戶閱讀共享課表；只有 Brian 可維護 shared 來源資料。
+    match /shared/data/courses/{courseId} {
+      allow read: if isFamilyMember();
+      allow create, update, delete: if isGuideEditor();
+    }
+
     // 遊戲攻略是唯一的家庭共用資料；家人可讀，管理帳號可維護。
     match /shared/data/gameGuides/{guideId} {
       allow read: if isFamilyMember();

@@ -8,6 +8,7 @@
  * - 必須明確提供 target UID，避免把資料誤分給錯誤帳號。
  * - 只複製文件，不刪除來源資料。
  * - 預設跳過目的地已存在的文件，避免覆蓋新資料。
+ * - 不處理 courses；課表必須使用 sync-course-schedule.mjs，才能保留學期與 ID 衝突處理。
  * - 不處理 shared/data/gameGuides，遊戲攻略應維持共用路徑。
  *
  * 此腳本使用 Google Cloud service account 呼叫 Firestore REST API，
@@ -20,7 +21,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const DEFAULT_COLLECTIONS = [
-  'courses',
   'workShifts',
   'salaryRecords',
   'events',
@@ -341,7 +341,7 @@ function validateOptions(options) {
   );
   if (invalidCollections.length > 0) {
     throw new Error(
-      `不允許遷移的集合：${invalidCollections.join(', ')}。遊戲攻略必須留在 shared/data/gameGuides。`
+      `不允許遷移的集合：${invalidCollections.join(', ')}。課表請使用 sync-course-schedule.mjs。`
     );
   }
 }

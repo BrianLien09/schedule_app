@@ -16,6 +16,7 @@
  * /users/{userId}/courseNotes/{noteId}
  *
  * 共用資料結構：
+ * /shared/data/courses/{courseId}
  * /shared/data/gameGuides/{guideId}
  */
 
@@ -69,16 +70,38 @@ export function getUserCollection(userId: string, collectionName: string) {
   return collection(db, 'users', userId, collectionName);
 }
 
-/**
- * 取得遊戲攻略的共用 Collection 參考
- *
- * 只有遊戲攻略使用 shared 路徑，避免一般個人資料意外共用。
- */
+/** 取得 shared/data 下的共用 Collection 參考。 */
 function getSharedCollection(collectionName: string) {
   if (!isFirebaseConfigured || !db) {
     throw new Error('Firebase 未設定，請檢查環境變數');
   }
   return collection(db, 'shared', 'data', collectionName);
+}
+
+/**
+ * 訂閱共用 Collection 的即時變更。
+ */
+export function subscribeToSharedCollection<T>(
+  collectionName: string,
+  callback: (data: T[]) => void,
+  ...constraints: QueryConstraint[]
+): Unsubscribe {
+  const colRef = getSharedCollection(collectionName);
+  const q = constraints.length > 0 ? query(colRef, ...constraints) : colRef;
+
+  return onSnapshot(
+    q,
+    (querySnapshot) => {
+      const data = querySnapshot.docs.map((documentSnapshot) => ({
+        id: documentSnapshot.id,
+        ...documentSnapshot.data(),
+      })) as T[];
+      callback(data);
+    },
+    (error) => {
+      console.error(`[Firestore] 讀取共用 ${collectionName} 失敗:`, error);
+    }
+  );
 }
 
 /**

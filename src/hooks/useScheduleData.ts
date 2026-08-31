@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import {
-  schoolSchedule,
   workShifts as defaultWorkShifts,
   importantEvents,
+  DEFAULT_COURSE_SEMESTER,
+  LEGACY_PERSONAL_COURSE_SEMESTER,
+  SHARED_COURSE_SEMESTER,
   Course,
   WorkShift,
   Event,
@@ -14,9 +16,14 @@ import {
   updateDocument,
   deleteDocument,
   subscribeToCollection,
+  subscribeToSharedCollection,
   batchSetDocuments,
 } from '@/services/firestoreService';
-import { hasFamilyWebSyncAccess, hasWriteAccess } from '@/config/permissions';
+import {
+  hasFamilyWebSyncAccess,
+  hasWriteAccess,
+  isBrianAccount,
+} from '@/config/permissions';
 import {
   createSalaryRecordFromWorkShift,
   isSalaryRecordLinkedToShift,
@@ -30,7 +37,31 @@ import {
   updateWorkShiftInFamilyWeb,
 } from '@/services/familySyncService';
 
-export function useScheduleData() {
+type CourseCollectionSource = 'personal' | 'shared';
+
+function getCourseCollectionSource(email: string | null | undefined): CourseCollectionSource {
+  return isBrianAccount(email) ? 'personal' : 'shared';
+}
+
+function normalizeCourses(
+  courses: Course[],
+  semester: string,
+  collectionSource: CourseCollectionSource
+): Course[] {
+  const legacySemester = collectionSource === 'shared'
+    ? SHARED_COURSE_SEMESTER
+    : LEGACY_PERSONAL_COURSE_SEMESTER;
+
+  return courses
+    .filter((course) => (course.semester ?? legacySemester) === semester)
+    .map((course) => ({
+      ...course,
+      // 舊路徑文件沒有 semester 欄位時，依資料庫路徑補上既有學期。
+      semester: course.semester ?? legacySemester,
+    }));
+}
+
+export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
   const { user } = useAuth();
 
   const [courses, setCourses] = useState<Course[]>([]);
@@ -39,6 +70,8 @@ export function useScheduleData() {
   const [loading, setLoading] = useState(true);
   const [canEdit, setCanEdit] = useState(false);
   const canSyncToFamilyWeb = hasFamilyWebSyncAccess(user?.email);
+  const courseCollectionSource = getCourseCollectionSource(user?.email);
+  const canEditCourses = canEdit && isBrianAccount(user?.email);
 
   /**
    * 舊版 workShifts 仍可能留在資料庫，這裡先補成薪資格式，避免切換來源後資料消失。
@@ -67,7 +100,6 @@ export function useScheduleData() {
 
   const initializeDefaultData = async (userId: string) => {
     try {
-      const existingCourses = await getDocuments<Course>(userId, 'courses');
       const existingLegacyShifts = await getDocuments<WorkShift>(
         userId,
         'workShifts'
@@ -77,10 +109,6 @@ export function useScheduleData() {
         'salaryRecords'
       );
       const existingEvents = await getDocuments<Event>(userId, 'events');
-
-      if (existingCourses.length === 0) {
-        await batchSetDocuments(userId, 'courses', schoolSchedule);
-      }
 
       if (existingSalaryRecords.length === 0 && existingLegacyShifts.length === 0) {
         const seededSalaryRecords = defaultWorkShifts.map((shift) =>
@@ -119,11 +147,13 @@ export function useScheduleData() {
       setLoading(false);
     });
 
-    const unsubscribeCourses = subscribeToCollection<Course>(
-      user.uid,
-      'courses',
-      (data) => setCourses(data)
-    );
+    const handleCourses = (data: Course[]) => {
+      setCourses(normalizeCourses(data, selectedSemester, courseCollectionSource));
+    };
+
+    const unsubscribeCourses = courseCollectionSource === 'shared'
+      ? subscribeToSharedCollection<Course>('courses', handleCourses)
+      : subscribeToCollection<Course>(user.uid, 'courses', handleCourses);
 
     const unsubscribeShifts = subscribeToCollection<SalaryRecord>(
       user.uid,
@@ -150,28 +180,30 @@ export function useScheduleData() {
       unsubscribeShifts();
       unsubscribeEvents();
     };
-  }, [user]);
+  }, [courseCollectionSource, selectedSemester, user]);
 
   const addCourse = async (course: Course) => {
-    if (!user || !canEdit) {
+    if (!user || !canEditCourses) {
       console.warn('目前沒有寫入權限');
       return;
     }
 
-    await setDocument(user.uid, 'courses', course.id, course);
+    const courseData = { ...course, semester: course.semester ?? selectedSemester };
+    await setDocument(user.uid, 'courses', course.id, courseData);
   };
 
   const updateCourse = async (id: string, updatedCourse: Partial<Course>) => {
-    if (!user || !canEdit) {
+    if (!user || !canEditCourses) {
       console.warn('目前沒有寫入權限');
       return;
     }
 
-    await updateDocument(user.uid, 'courses', id, updatedCourse);
+    const courseData = { ...updatedCourse, semester: selectedSemester };
+    await updateDocument(user.uid, 'courses', id, courseData);
   };
 
   const deleteCourse = async (id: string) => {
-    if (!user || !canEdit) {
+    if (!user || !canEditCourses) {
       console.warn('目前沒有寫入權限');
       return;
     }
@@ -271,6 +303,7 @@ export function useScheduleData() {
     events,
     loading,
     canEdit,
+    canEditCourses,
     addCourse,
     updateCourse,
     deleteCourse,

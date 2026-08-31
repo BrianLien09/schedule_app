@@ -11,7 +11,14 @@ import styles from './CourseManager.module.css';
  * 管理課程的新增、編輯、刪除
  */
 export default function CourseManager() {
-  const { courses, shifts, addCourse, updateCourse, deleteCourse } = useScheduleData();
+  const {
+    courses,
+    shifts,
+    addCourse,
+    updateCourse,
+    deleteCourse,
+    canEditCourses,
+  } = useScheduleData();
   const { confirm } = useConfirm();
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
@@ -20,18 +27,21 @@ export default function CourseManager() {
   const dayNames = ['', '一', '二', '三', '四', '五', '六', '日'];
 
   const handleAddCourse = () => {
+    if (!canEditCourses) return;
     setEditingCourse(null);
     setEditorMode('add');
     setIsEditorOpen(true);
   };
 
   const handleEditCourse = (course: Course) => {
+    if (!canEditCourses) return;
     setEditingCourse(course);
     setEditorMode('edit');
     setIsEditorOpen(true);
   };
 
   const handleDeleteCourse = async (course: Course) => {
+    if (!canEditCourses) return;
     const confirmed = await confirm({
       title: '刪除課程',
       message: `確定要刪除「${course.name}」嗎？`,
@@ -60,9 +70,11 @@ export default function CourseManager() {
     <div className={styles.container}>
       <div className={styles.header}>
         <h2>課程管理</h2>
-        <button className={`btn ${styles.addButton}`} onClick={handleAddCourse}>
-          + 新增課程
-        </button>
+        {canEditCourses && (
+          <button className={`btn ${styles.addButton}`} onClick={handleAddCourse}>
+            + 新增課程
+          </button>
+        )}
       </div>
 
       <div className={styles.courseList}>
@@ -70,9 +82,11 @@ export default function CourseManager() {
           <div className={styles.emptyState}>
             <div className={styles.emptyIcon}>📚</div>
             <p>尚未新增任何課程</p>
-            <button className="btn" onClick={handleAddCourse}>
-              新增第一堂課
-            </button>
+            {canEditCourses && (
+              <button className="btn" onClick={handleAddCourse}>
+                新增第一堂課
+              </button>
+            )}
           </div>
         ) : (
           sortedCourses.map((course) => (
@@ -91,7 +105,8 @@ export default function CourseManager() {
                   {course.location && <span>{course.location}</span>}
                 </div>
               </div>
-              <div className={styles.courseActions}>
+              {canEditCourses && (
+                <div className={styles.courseActions}>
                 <button
                   className={styles.editButton}
                   onClick={() => handleEditCourse(course)}
@@ -112,7 +127,8 @@ export default function CourseManager() {
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                   </svg>
                 </button>
-              </div>
+                </div>
+              )}
             </div>
           ))
         )}
