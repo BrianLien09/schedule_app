@@ -40,6 +40,11 @@
   position: relative;
 }
 
+.courseCell:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 /* 筆記數量標記 */
 .noteBadge {
   position: absolute;
@@ -131,15 +136,17 @@
   .noteButton,
   .editButton,
   .deleteButton {
-    width: 24px;
-    height: 24px;
-    font-size: 0.85rem;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    font-size: 1rem;
+    touch-action: manipulation;
   }
 
   .editButton svg,
   .deleteButton svg {
-    width: 12px;
-    height: 12px;
+    width: 16px;
+    height: 16px;
   }
 
   .noteBadge {

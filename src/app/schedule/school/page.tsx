@@ -59,6 +59,7 @@ export default function SchoolSchedulePage() {
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [editorMode, setEditorMode] = useState<'add' | 'edit'>('add');
   const [hoveredCourse, setHoveredCourse] = useState<string | null>(null);
+  const [activeCourseId, setActiveCourseId] = useState<string | null>(null);
   
   // Hook 已依選定學期完成路徑選擇與舊文件的學期補值。
   const filteredCourses = courses;
@@ -314,7 +315,7 @@ export default function SchoolSchedulePage() {
             {/* 提示訊息 */}
             {canEditCourses && (
               <div className={styles.hint}>
-                💡 滑鼠移到課程上可編輯或刪除
+                💡 滑鼠移到或點選課程，可顯示筆記、編輯與刪除操作
               </div>
             )}
             
@@ -361,7 +362,7 @@ export default function SchoolSchedulePage() {
                       
                       if (course) {
                          const duration = getPeriodSpan(course.startTime, course.endTime);
-                         const isHovered = hoveredCourse === course.id;
+                         const isCourseActive = hoveredCourse === course.id || activeCourseId === course.id;
                          
                          return (
                           <div 
@@ -369,6 +370,23 @@ export default function SchoolSchedulePage() {
                             className={styles.courseCell}
                             onMouseEnter={() => setHoveredCourse(course.id)}
                             onMouseLeave={() => setHoveredCourse(null)}
+                            onFocus={() => setHoveredCourse(course.id)}
+                            onBlur={(e) => {
+                              const nextTarget = e.relatedTarget;
+                              if (!(nextTarget instanceof Node) || !e.currentTarget.contains(nextTarget)) {
+                                setHoveredCourse(null);
+                              }
+                            }}
+                            onClick={() => setActiveCourseId((currentId) => currentId === course.id ? null : course.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setActiveCourseId((currentId) => currentId === course.id ? null : course.id);
+                              }
+                            }}
+                            tabIndex={0}
+                            aria-expanded={isCourseActive}
+                            aria-label={`${course.name} 課程操作`}
                             style={{ 
                               gridRow: `span ${duration}`,
                               backgroundColor: course.color,
@@ -381,10 +399,10 @@ export default function SchoolSchedulePage() {
                               flexDirection: 'column', 
                               justifyContent: 'center', 
                               alignItems: 'center',
-                              boxShadow: isHovered ? '0 4px 12px rgba(0,0,0,0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
-                              zIndex: isHovered ? 10 : 1,
+                              boxShadow: isCourseActive ? '0 4px 12px rgba(0,0,0,0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
+                              zIndex: isCourseActive ? 10 : 1,
                               position: 'relative',
-                              transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+                              transform: isCourseActive ? 'scale(1.05)' : 'scale(1)',
                               transition: 'all 0.2s ease',
                               cursor: canEditCourses ? 'pointer' : 'default'
                             }}
@@ -415,22 +433,26 @@ export default function SchoolSchedulePage() {
                               </div>
                             )}
                             
-                            {/* Hover 時顯示操作按鈕 */}
-                            {isHovered && (
+                            {/* 桌面以 hover 顯示；手機可點選課程保留操作列 */}
+                            {isCourseActive && (
                               <div className={styles.courseActions}>
                                 <button 
+                                  type="button"
                                   className={styles.noteButton}
                                   onClick={(e) => handleOpenNoteEditor(course, e)}
                                   title="筆記"
+                                  aria-label={`${course.name} 筆記`}
                                 >
                                   📝
                                 </button>
                                 {canEditCourses && (
                                   <>
                                     <button 
+                                      type="button"
                                       className={styles.editButton}
                                       onClick={(e) => handleEditCourse(course, e)}
                                       title="編輯"
+                                      aria-label={`編輯${course.name}`}
                                     >
                                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -438,9 +460,11 @@ export default function SchoolSchedulePage() {
                                       </svg>
                                     </button>
                                     <button 
+                                      type="button"
                                       className={styles.deleteButton}
                                       onClick={(e) => handleDeleteCourse(course, e)}
                                       title="刪除"
+                                      aria-label={`刪除${course.name}`}
                                     >
                                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                         <polyline points="3 6 5 6 21 6" />
