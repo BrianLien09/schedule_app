@@ -17,15 +17,19 @@ export default function FloatingQuickActions({
   return (
     <div className={styles.floatingContainer}>
       <button
+        type="button"
         className={`${styles.mainFab} ${isOpen ? styles.mainFabActive : ''}`}
         onClick={() => setIsOpen(!isOpen)}
         title="快捷動作選單"
+        aria-label={isOpen ? '關閉快捷動作選單' : '開啟快捷動作選單'}
+        aria-expanded={isOpen}
+        aria-controls="quick-actions-menu"
       >
         +
       </button>
 
       {isOpen && (
-        <div className={styles.menuList}>
+        <div id="quick-actions-menu" className={styles.menuList}>
           <button
             className={styles.menuItem}
             onClick={() => {

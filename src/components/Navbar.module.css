@@ -40,8 +40,8 @@
   justify-content: center;
   align-items: center;
   gap: 5px;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   padding: 6px;
   background: none;
   border: 1.5px solid var(--glass-border);
@@ -83,18 +83,30 @@
 
 /* ===== 行動裝置選單 ===== */
 .mobileMenu {
-  /* 預設收合狀態 */
+  /* 選單獨立承載，避免展開時把頁面內容往下推 */
+  position: absolute;
+  top: calc(100% + var(--spacing-xs));
+  left: var(--spacing-md);
+  right: var(--spacing-md);
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 0.65rem !important;
-  width: 100%;
+  width: auto;
   max-height: 0;
   overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
   opacity: 0;
+  padding-inline: var(--spacing-sm);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
   transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1),
               opacity 0.3s ease,
-              padding 0.3s ease;
+              padding 0.3s ease,
+              visibility 0s linear 0.4s;
   padding-top: 0;
   padding-bottom: 0;
   list-style: none;
@@ -103,12 +115,15 @@
 }
 
 .mobileMenuOpen {
-  max-height: 650px; /* 足夠容納所有項目 */
+  max-height: min(650px, calc(100dvh - 6.5rem));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  visibility: visible;
+  pointer-events: auto;
   opacity: 1;
   padding-top: var(--spacing-md);
   padding-bottom: var(--spacing-xs);
-  border-top: 1px dashed rgba(220, 208, 194, 0.8);
-  margin-top: var(--spacing-md);
+  transition-delay: 0s;
 }
 
 .mobileMenuItem {
@@ -133,6 +148,62 @@
   box-sizing: border-box !important;
   transition: all 0.2s ease !important;
   text-decoration: none !important;
+}
+
+/* 有子選單的項目：連結與展開動作分開，避免同一次點擊承擔兩種含義 */
+.mobileMenuLinkRow {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-height: 44px;
+  color: #3d3a36;
+  background: rgba(240, 236, 225, 0.7);
+  border: 1.5px dashed rgba(220, 208, 194, 0.85);
+  border-radius: 12px;
+  box-sizing: border-box;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.mobileMenuLinkRowActive,
+.dropdownOpen > .mobileMenuLinkRow {
+  background: rgba(184, 126, 107, 0.14);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.mobileMenuLinkTarget {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  padding: 11px 12px 11px 16px;
+  color: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 10px 0 0 10px;
+}
+
+.mobileMenuLinkTarget:hover,
+.mobileMenuLinkTarget:focus-visible {
+  background: rgba(184, 126, 107, 0.1);
+}
+
+.mobileMenuDisclosure {
+  flex: 0 0 44px;
+  min-height: 44px;
+  padding: 0;
+  color: var(--color-primary);
+  background: transparent;
+  border: 0;
+  border-left: 1px dashed rgba(184, 126, 107, 0.32);
+  border-radius: 0 10px 10px 0;
+  cursor: pointer;
+}
+
+.mobileMenuDisclosure:hover,
+.mobileMenuDisclosure:focus-visible {
+  background: rgba(184, 126, 107, 0.1);
 }
 
 .mobileMenuLink:hover,

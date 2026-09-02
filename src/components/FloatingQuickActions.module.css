@@ -1,6 +1,6 @@
 .floatingContainer {
   position: fixed;
-  bottom: 28px;
+  bottom: calc(28px + env(safe-area-inset-bottom));
   right: 28px;
   z-index: 990;
   display: flex;

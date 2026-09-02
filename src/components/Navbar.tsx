@@ -82,9 +82,10 @@ export default function Navbar() {
   // 捲動時自動隱藏/顯示 Navbar（選單開啟時絕不隱藏）
   useEffect(() => {
     const handleScroll = () => {
-      // 若行動選單處於開啟狀態，維持顯示不處理捲動隱藏
-      if (menuOpenRef.current) {
+      // 手機端保留頂部入口，避免下滑後失去重新開啟導航的路徑
+      if (menuOpenRef.current || window.matchMedia('(max-width: 767px)').matches) {
         setIsVisible(true);
+        lastScrollYRef.current = window.scrollY;
         return;
       }
 
@@ -164,10 +165,12 @@ export default function Navbar() {
               </div>
               
               <button
+                type="button"
                 className={`${styles.hamburger} ${menuOpen ? styles.hamburgerActive : ''}`}
                 onClick={() => setMenuOpen(prev => !prev)}
                 aria-label={menuOpen ? '關閉選單' : '開啟選單'}
                 aria-expanded={menuOpen}
+                aria-controls="mobile-navigation"
               >
                 <span className={styles.hamburgerLine} />
                 <span className={styles.hamburgerLine} />
@@ -279,7 +282,9 @@ export default function Navbar() {
           {/* 行動版：導航連結列表 */}
           {isMobile && (
             <ul
+              id="mobile-navigation"
               className={`navbar-links ${styles.mobileMenu} ${menuOpen ? styles.mobileMenuOpen : ''}`}
+              aria-hidden={!menuOpen}
             >
               <li className={styles.mobileMenuItem}>
                 <Link
@@ -295,22 +300,29 @@ export default function Navbar() {
 
               {/* 日程表 Dropdown */}
               <li className={`${styles.mobileMenuItem} dropdown ${isMobile && openDropdown === 'schedule' ? styles.dropdownOpen : ''}`}>
-                <Link
-                  href="/schedule/school"
-                  className={`${styles.mobileMenuLink} ${pathname.startsWith('/schedule') ? styles.mobileMenuLinkActive : ''}`}
-                  onClick={(e) => {
-                    if (isMobile) {
-                      toggleDropdown('schedule', e);
-                    }
-                  }}
-                >
-                  <div className={styles.linkContentGroup}>
-                    <SchoolIcon size={18} />
-                    <span>日程表</span>
-                  </div>
-                  <span className={styles.dropdownArrow}>{openDropdown === 'schedule' ? '▴' : '▾'}</span>
-                </Link>
-                <div className={`dropdown-content ${isMobile && openDropdown === 'schedule' ? styles.dropdownContentOpen : ''}`}>
+                <div className={`${styles.mobileMenuLinkRow} ${pathname.startsWith('/schedule') ? styles.mobileMenuLinkRowActive : ''}`}>
+                  <Link
+                    href="/schedule/school"
+                    className={styles.mobileMenuLinkTarget}
+                    onClick={closeMenu}
+                  >
+                    <span className={styles.linkContentGroup}>
+                      <SchoolIcon size={18} />
+                      <span>日程表</span>
+                    </span>
+                  </Link>
+                  <button
+                    type="button"
+                    className={styles.mobileMenuDisclosure}
+                    onClick={(e) => toggleDropdown('schedule', e)}
+                    aria-label={openDropdown === 'schedule' ? '收合日程表子選單' : '展開日程表子選單'}
+                    aria-expanded={openDropdown === 'schedule'}
+                    aria-controls="mobile-schedule-menu"
+                  >
+                    <span className={styles.dropdownArrow} aria-hidden="true">{openDropdown === 'schedule' ? '▴' : '▾'}</span>
+                  </button>
+                </div>
+                <div id="mobile-schedule-menu" className={`dropdown-content ${isMobile && openDropdown === 'schedule' ? styles.dropdownContentOpen : ''}`} aria-hidden={openDropdown !== 'schedule'}>
                   <Link href="/schedule/school" className="dropdown-item" onClick={closeMenu}>
                     <SchoolIcon size={18} />
                     <span>學校課表</span>
@@ -331,22 +343,29 @@ export default function Navbar() {
 
               {/* 工具箱 Dropdown */}
               <li className={`${styles.mobileMenuItem} dropdown ${isMobile && openDropdown === 'tools' ? styles.dropdownOpen : ''}`}>
-                <Link
-                  href="/tools/salary"
-                  className={`${styles.mobileMenuLink} ${pathname.startsWith('/tools') ? styles.mobileMenuLinkActive : ''}`}
-                  onClick={(e) => {
-                    if (isMobile) {
-                      toggleDropdown('tools', e);
-                    }
-                  }}
-                >
-                  <div className={styles.linkContentGroup}>
-                    <ToolboxIcon size={18} />
-                    <span>工具箱</span>
-                  </div>
-                  <span className={styles.dropdownArrow}>{openDropdown === 'tools' ? '▴' : '▾'}</span>
-                </Link>
-                <div className={`dropdown-content ${isMobile && openDropdown === 'tools' ? styles.dropdownContentOpen : ''}`}>
+                <div className={`${styles.mobileMenuLinkRow} ${pathname.startsWith('/tools') ? styles.mobileMenuLinkRowActive : ''}`}>
+                  <Link
+                    href="/tools/salary"
+                    className={styles.mobileMenuLinkTarget}
+                    onClick={closeMenu}
+                  >
+                    <span className={styles.linkContentGroup}>
+                      <ToolboxIcon size={18} />
+                      <span>工具箱</span>
+                    </span>
+                  </Link>
+                  <button
+                    type="button"
+                    className={styles.mobileMenuDisclosure}
+                    onClick={(e) => toggleDropdown('tools', e)}
+                    aria-label={openDropdown === 'tools' ? '收合工具箱子選單' : '展開工具箱子選單'}
+                    aria-expanded={openDropdown === 'tools'}
+                    aria-controls="mobile-tools-menu"
+                  >
+                    <span className={styles.dropdownArrow} aria-hidden="true">{openDropdown === 'tools' ? '▴' : '▾'}</span>
+                  </button>
+                </div>
+                <div id="mobile-tools-menu" className={`dropdown-content ${isMobile && openDropdown === 'tools' ? styles.dropdownContentOpen : ''}`} aria-hidden={openDropdown !== 'tools'}>
                   <Link href="/tools/salary" className="dropdown-item" onClick={closeMenu}>
                     <CalculatorIcon size={18} />
                     <span>薪資計算</span>

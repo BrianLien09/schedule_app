@@ -46,7 +46,8 @@
 /* 手機上稍微往內縮 */
 @media (max-width: 640px) {
   .backToTop {
-    bottom: var(--spacing-lg);
+    /* 與首頁 56px 快捷 FAB 保持固定間距，避免兩個按鈕互相覆蓋 */
+    bottom: calc(96px + env(safe-area-inset-bottom));
     right: var(--spacing-lg);
     width: 40px;
     height: 40px;

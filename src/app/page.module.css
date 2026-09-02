@@ -606,7 +606,8 @@
   }
 
   .quickActionBar {
-    width: 100%;
+    /* 手機端保留右下角快捷入口，避免同一動作在首屏重複出現 */
+    display: none;
   }
 
   .quickBtn {
