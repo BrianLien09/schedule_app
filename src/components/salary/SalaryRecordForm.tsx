@@ -55,7 +55,7 @@ export default function SalaryRecordForm({
   };
 
   return (
-    <div id="add-record-form" className="glass no-print" style={{ padding: 'var(--spacing-lg)', marginBottom: 'var(--spacing-lg)' }}>
+    <div id="add-record-form" className={`glass no-print ${styles.cardContainer}`}>
       {/* 標頭與工具列 */}
       <div style={{
         display: 'flex',
@@ -170,7 +170,7 @@ export default function SalaryRecordForm({
             display: 'grid',
             gridTemplateColumns: 'minmax(0, 1fr) auto',
             alignItems: 'center',
-            gap: '0.75rem',
+            gap: '0.35rem',
           }}>
             <input 
               type="date"
@@ -181,7 +181,7 @@ export default function SalaryRecordForm({
               style={{
                 width: '100%',
                 minWidth: 0,
-                padding: '0.5rem 0.75rem',
+                padding: '0.5rem 0.5rem',
                 borderRadius: '8px',
                 border: '2px dashed rgba(220, 208, 194, 0.8)',
                 background: 'rgba(220, 208, 194, 0.35)',
@@ -191,12 +191,13 @@ export default function SalaryRecordForm({
             <span style={{
               display: 'inline-flex',
               alignItems: 'center',
-              minHeight: '2.5rem',
-              padding: '0.5rem 0.75rem',
+              justifyContent: 'center',
+              alignSelf: 'stretch',
+              padding: '0.35rem 0.45rem',
               borderRadius: '8px',
               border: '1px solid rgba(95, 113, 134, 0.24)',
               background: 'rgba(95, 113, 134, 0.1)',
-              fontSize: '0.9rem',
+              fontSize: '0.8rem',
               color: 'var(--color-secondary)',
               whiteSpace: 'nowrap',
               fontWeight: 600,
@@ -337,7 +338,7 @@ export default function SalaryRecordForm({
         </div>
 
         {/* 班別 */}
-        <div>
+        <div className={styles.fullWidth}>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
             班別 (選填)
           </label>

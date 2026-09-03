@@ -130,9 +130,14 @@
   }
 
   .dialog {
-    width: 95%;
+    width: 96%;
     max-height: calc(100dvh - 1rem);
-    padding: 1rem;
+    padding: 0.85rem;
+  }
+
+  .header {
+    margin-bottom: 0.65rem;
+    padding-bottom: 0.5rem;
   }
 }
 

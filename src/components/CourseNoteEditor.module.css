@@ -220,23 +220,47 @@
 /* 響應式設計 */
 @media (max-width: 768px) {
   .editorForm {
-    padding: 16px;
+    padding: 14px;
+  }
+
+  .formGroup {
+    margin-bottom: 14px;
   }
 
   .typeSelector,
   .prioritySelector {
-    flex-direction: column;
+    flex-direction: row;
+    gap: 6px;
+  }
+
+  .typeButton,
+  .priorityButton {
+    padding: 8px 4px;
+    font-size: 0.85rem;
+    white-space: nowrap;
   }
 
   .markdownToolbar {
     flex-wrap: wrap;
+    gap: 2px;
+    padding: 6px;
+  }
+
+  .markdownToolbar button {
+    padding: 4px 8px;
+    font-size: 0.8rem;
   }
 
   .formActions {
-    flex-direction: column-reverse;
+    flex-direction: row;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 14px;
   }
 
   .formActions button {
-    width: 100%;
+    flex: 1;
+    padding: 8px 16px;
+    font-size: 0.9rem;
   }
 }

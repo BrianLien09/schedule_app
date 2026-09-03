@@ -29,29 +29,13 @@ function getCourseLabel(course: Course): string {
 
 export function findWorkShiftConflicts(
   candidate: WorkShift,
-  courses: Course[],
+  _courses: Course[],
   shifts: WorkShift[],
   excludedShiftId?: string
 ): ScheduleConflict[] {
   const conflicts: ScheduleConflict[] = [];
-  const courseDay = getCourseDayForDate(candidate.date);
 
-  courses
-    .filter(
-      (course) =>
-        course.day === courseDay &&
-        isTimeOverlapping(candidate.startTime, candidate.endTime, course.startTime, course.endTime)
-    )
-    .forEach((course) => {
-      conflicts.push({
-        sourceType: 'course',
-        title: getCourseLabel(course),
-        dateLabel: candidate.date,
-        startTime: course.startTime,
-        endTime: course.endTime,
-      });
-    });
-
+  // 依需求僅比對打工班表之間的重疊，不與上學課程產生衝突提醒
   shifts
     .filter(
       (shift) =>
@@ -75,11 +59,12 @@ export function findWorkShiftConflicts(
 export function findCourseConflicts(
   candidate: Course,
   courses: Course[],
-  shifts: WorkShift[],
+  _shifts: WorkShift[],
   excludedCourseId?: string
 ): ScheduleConflict[] {
   const conflicts: ScheduleConflict[] = [];
 
+  // 依需求僅比對同一天的課程重疊，不與打工班表產生衝突提醒
   courses
     .filter(
       (course) =>
@@ -94,22 +79,6 @@ export function findCourseConflicts(
         dateLabel: `星期${candidate.day}`,
         startTime: course.startTime,
         endTime: course.endTime,
-      });
-    });
-
-  shifts
-    .filter(
-      (shift) =>
-        getCourseDayForDate(shift.date) === candidate.day &&
-        isTimeOverlapping(candidate.startTime, candidate.endTime, shift.startTime, shift.endTime)
-    )
-    .forEach((shift) => {
-      conflicts.push({
-        sourceType: 'work',
-        title: shift.shiftCategory || shift.note || '打工班表',
-        dateLabel: shift.date,
-        startTime: shift.startTime,
-        endTime: shift.endTime,
       });
     });
 
