@@ -29,7 +29,7 @@ export default function GlassRadioNav() {
    */
   const getGliderPosition = useCallback((path: string): number => {
     if (path === '/') return 0;
-    if (path.startsWith('/schedule/school') || path === '/manage') return 1;
+    if (path.startsWith('/schedule/school')) return 1;
     if (path.startsWith('/schedule/work')) return 2;
     if (path.startsWith('/tools/salary')) return 3;
     if (path.startsWith('/tools/allowance')) return 4;
@@ -79,7 +79,7 @@ export default function GlassRadioNav() {
         type="radio"
         name="nav"
         id="nav-school"
-        checked={pathname.startsWith('/schedule/school') || pathname === '/manage'}
+        checked={pathname.startsWith('/schedule/school')}
         readOnly
       />
       <label 
