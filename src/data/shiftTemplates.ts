@@ -7,6 +7,7 @@ export interface ShiftTemplate {
   hourlyRate: number;
   createdAt: number;
   role?: string;
+  roleName?: string;
 }
 
 /**

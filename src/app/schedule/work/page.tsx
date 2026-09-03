@@ -196,13 +196,13 @@ export default function WorkSchedulePage() {
         setSelectedDays([...selectedDays, day]);
       }
     }
-    // 一般點擊有班次的日期：捲動到下方列表並標記選擇
-    else if (dayShifts.length > 0) {
-      handleDateClick(day);
-    }
-    // 點擊空白日期：開啟新增彈窗
+    // 一般點擊日期（無論有無班次）：
+    // 若該天已有班次，同步標記選擇該日期，並開啟該日期的「新增打工班表」彈窗！
     else {
       const dateStr = formatDate(day);
+      if (dayShifts.length > 0) {
+        handleDateClick(day);
+      }
       setEditingShift({
         id: '',
         date: dateStr,
@@ -501,12 +501,44 @@ export default function WorkSchedulePage() {
                   } ${hasShifts ? 'card' : ''}`}
                   style={{ cursor: 'pointer' }}
                 >
-                  <div
-                    className={`${styles.dayNumber} ${
-                      hasShifts ? styles.dayNumberWithShift : styles.dayNumberEmpty
-                    }`}
-                  >
-                    {day}
+                  <div className={styles.dayCellHeader}>
+                    <div
+                      className={`${styles.dayNumber} ${
+                        hasShifts ? styles.dayNumberWithShift : styles.dayNumberEmpty
+                      }`}
+                    >
+                      {day}
+                    </div>
+                    {hasShifts && (
+                      <button
+                        type="button"
+                        className={styles.addShiftIconBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const dateStr = formatDate(day);
+                          handleDateClick(day);
+                          setEditingShift({
+                            id: '',
+                            date: dateStr,
+                            startTime: '09:00',
+                            endTime: '18:00',
+                            role: roles[0]?.id || 'assistant',
+                            roleName: getWorkRoleLabel(roles[0]?.id || 'assistant', roles),
+                            hourlyRate: getWorkRoleHourlyRate(roles[0]?.id || 'assistant', roles),
+                            note: '',
+                          } as WorkShift);
+                          setEditorMode('add');
+                          setIsEditorOpen(true);
+                        }}
+                        title={`為 ${day} 日新增另一個排班`}
+                        aria-label={`為 ${day} 日新增排班`}
+                      >
+                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                          <line x1="6" y1="2" x2="6" y2="10" />
+                          <line x1="2" y1="6" x2="10" y2="6" />
+                        </svg>
+                      </button>
+                    )}
                   </div>
                   {dayShifts.map((shift) => {
                     const badgeTitle = shift.shiftCategory || shift.note || '打工';

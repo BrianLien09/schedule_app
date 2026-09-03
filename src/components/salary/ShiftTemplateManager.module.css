@@ -1,0 +1,300 @@
+﻿.container {
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--foreground);
+}
+
+.loading {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.editingBanner {
+  margin-bottom: var(--spacing-md);
+  color: var(--text-secondary);
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 0.5rem 0.85rem;
+  border-radius: 8px;
+  background: rgba(184, 126, 107, 0.1);
+  border: 1px dashed rgba(184, 126, 107, 0.3);
+}
+
+.cancelEditBtn {
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(220, 208, 194, 0.8);
+  background: #fdfbf7;
+  color: var(--foreground);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.cancelEditBtn:hover {
+  background: rgba(220, 208, 194, 0.5);
+}
+
+/* 表單區塊 */
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: 1rem;
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.fieldLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.fieldInput,
+.fieldSelect {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  border: 2px dashed rgba(220, 208, 194, 0.8);
+  background: rgba(220, 208, 194, 0.3);
+  color: var(--foreground);
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.fieldInput:focus,
+.fieldSelect:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(184, 126, 107, 0.2);
+}
+
+.submitBtn {
+  padding: 0.6rem 1.4rem;
+  border-radius: 8px;
+  border: none;
+  background: var(--color-primary);
+  color: #f0ece1;
+  font-weight: 600;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(139, 121, 101, 0.15);
+}
+
+.submitBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.submitBtn:not(:disabled):hover {
+  background: var(--color-primary-hover);
+  transform: translateY(-1px);
+}
+
+/* 班別小卡片網格 (上次的緊湊卡片版型，一行 3 欄) */
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.1rem;
+  margin-top: 1.6rem;
+}
+
+.templateCard {
+  background: #fdfbf7;
+  border: 2px dashed rgba(220, 208, 194, 0.9);
+  border-radius: 14px;
+  padding: 1.15rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  box-shadow: 0 4px 14px rgba(139, 121, 101, 0.07);
+  transition: all 0.2s ease;
+}
+
+.templateCard:hover {
+  background: #ffffff;
+  border-color: rgba(184, 126, 107, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(184, 126, 107, 0.12);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.cardTitle {
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #3d3a36;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.roleBadge {
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(95, 113, 134, 0.12);
+  color: #5f7186;
+  border: 1px dashed rgba(95, 113, 134, 0.4);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.roleBadgeInstructor {
+  background: rgba(184, 126, 107, 0.15);
+  color: #b87e6b;
+  border-color: rgba(184, 126, 107, 0.45);
+}
+
+.roleBadgeNeutral {
+  background: rgba(220, 208, 194, 0.35);
+  color: #78716c;
+  border-color: rgba(220, 208, 194, 0.6);
+}
+
+/* 時間與時數時薪資訊行 - 與總覽一致的橫向精緻排版 */
+.cardMetaRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.timeDisplay {
+  font-size: 0.96rem;
+  font-weight: 600;
+  color: #3d3a36;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.hoursBadge,
+.rateBadge {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.hoursBadge {
+  background: rgba(220, 208, 194, 0.45);
+  color: #4b4843;
+}
+
+.rateBadge {
+  background: rgba(184, 126, 107, 0.12);
+  color: #b87e6b;
+  font-weight: 700;
+}
+
+/* 操作按鈕列 */
+.cardActions {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-end;
+  border-top: 1px dashed rgba(220, 208, 194, 0.6);
+  padding-top: 0.75rem;
+  margin-top: auto;
+}
+
+.editBtn,
+.deleteBtn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0.42rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.editBtn {
+  border: 1px solid rgba(95, 113, 134, 0.3);
+  background: rgba(95, 113, 134, 0.08);
+  color: #5f7186;
+}
+
+.editBtn:hover:not(:disabled) {
+  background: rgba(95, 113, 134, 0.18);
+}
+
+.deleteBtn {
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.06);
+  color: #dc2626;
+}
+
+.deleteBtn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.16);
+}
+
+.editBtn:disabled,
+.deleteBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.emptyState {
+  color: var(--muted);
+  text-align: center;
+  padding: 2rem 1rem;
+  background: rgba(220, 208, 194, 0.2);
+  border-radius: 10px;
+  border: 2px dashed rgba(220, 208, 194, 0.5);
+}
+
+@media (max-width: 900px) {
+  .cardsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .cardsGrid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .formGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

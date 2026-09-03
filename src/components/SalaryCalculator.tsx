@@ -121,6 +121,8 @@ export default function SalaryCalculator() {
     endTime: '17:00',
     workHours: 8,
     hourlyRate: 200,
+    role: 'assistant',
+    roleName: '助教',
   });
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
   
@@ -288,6 +290,8 @@ export default function SalaryCalculator() {
       endTime: '17:00',
       workHours: 8,
       hourlyRate: 200,
+      role: 'assistant',
+      roleName: '助教',
     });
   };
 
@@ -303,6 +307,8 @@ export default function SalaryCalculator() {
       endTime: template.endTime,
       workHours: template.workHours ?? 0,
       hourlyRate: template.hourlyRate,
+      role: template.role || 'assistant',
+      roleName: template.roleName || getWorkRoleLabel(template.role || 'assistant', roles),
     });
   };
 
@@ -1027,6 +1033,7 @@ export default function SalaryCalculator() {
             onStartEditTemplate={handleStartEditTemplate}
             onDeleteTemplate={handleDeleteTemplate}
             onResetTemplateForm={resetTemplateForm}
+            roles={roles}
           />
         )}
 

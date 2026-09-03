@@ -2,6 +2,9 @@
 
 import React from 'react';
 import type { ShiftTemplate } from '@/data/shiftTemplates';
+import type { WorkRole } from '@/data/workRoles';
+import { getWorkRoleLabel } from '@/data/workRoles';
+import styles from './ShiftTemplateManager.module.css';
 
 interface ShiftTemplateManagerProps {
   templates: ShiftTemplate[];
@@ -14,12 +17,34 @@ interface ShiftTemplateManagerProps {
   onStartEditTemplate: (template: ShiftTemplate) => void;
   onDeleteTemplate: (template: ShiftTemplate) => void;
   onResetTemplateForm: () => void;
+  roles?: WorkRole[];
+}
+
+/**
+ * 智慧解析班別範本之職位徽章標籤與樣式
+ */
+function getTemplateBadgeInfo(template: ShiftTemplate, roles: WorkRole[]) {
+  if (template.role) {
+    const roleObj = roles.find((r) => r.id === template.role);
+    const label = roleObj?.name || template.roleName || getWorkRoleLabel(template.role, roles);
+    const isInst = template.role === 'instructor' || label.includes('講師');
+    return { label, isInstructor: isInst, isNeutral: false };
+  }
+  // 若舊資料沒有指派 role，根據名稱智慧推斷
+  if (template.name.includes('講師')) {
+    return { label: '講師', isInstructor: true, isNeutral: false };
+  }
+  if (template.name.includes('助教')) {
+    return { label: '助教', isInstructor: false, isNeutral: false };
+  }
+  return { label: '一般班別', isInstructor: false, isNeutral: true };
 }
 
 /**
  * 班別範本管理組件
  * 
- * 獨立管理常態工作班別設定（如名稱、時間段、時薪與工作時數）。
+ * 獨立管理常態工作班別設定（包含名稱、職稱/職位、時間段、時薪與工作時數）。
+ * 採用卡片化佈局以確保手機端舒適瀏覽，避免橫向排版擠壓換行。
  */
 export default function ShiftTemplateManager({
   templates,
@@ -32,45 +57,26 @@ export default function ShiftTemplateManager({
   onStartEditTemplate,
   onDeleteTemplate,
   onResetTemplateForm,
+  roles = [],
 }: ShiftTemplateManagerProps) {
   return (
-    <div className="glass no-print" style={{ padding: 'var(--spacing-lg)', marginBottom: 'var(--spacing-lg)' }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 'var(--spacing-md)',
-        flexWrap: 'wrap',
-        gap: 'var(--spacing-md)',
-      }}>
-        <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>
+    <div className={`glass no-print ${styles.container}`}>
+      <div className={styles.header}>
+        <h3 className={styles.title}>
           班別範本管理
         </h3>
         {templatesLoading && (
-          <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>載入中...</span>
+          <span className={styles.loading}>載入中...</span>
         )}
       </div>
 
       {editingTemplateId && (
-        <div style={{
-          marginBottom: 'var(--spacing-md)',
-          color: 'var(--text-secondary)',
-          display: 'flex',
-          gap: '0.75rem',
-          alignItems: 'center',
-        }}>
+        <div className={styles.editingBanner}>
           <span>正在編輯：{newTemplate.name || '未命名班別'}</span>
           <button
             type="button"
             onClick={onResetTemplateForm}
-            style={{
-              padding: '0.35rem 0.8rem',
-              borderRadius: '999px',
-              border: '1px solid rgba(255,255,255,0.15)',
-              background: 'transparent',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-            }}
+            className={styles.cancelEditBtn}
           >
             取消編輯
           </button>
@@ -78,14 +84,9 @@ export default function ShiftTemplateManager({
       )}
 
       {/* 班別建立/編輯表單 */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-        gap: 'var(--spacing-md)',
-        marginBottom: 'var(--spacing-md)'
-      }}>
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
+      <div className={styles.formGrid}>
+        <div className={styles.formField}>
+          <label className={styles.fieldLabel}>
             班別名稱
           </label>
           <input
@@ -93,76 +94,82 @@ export default function ShiftTemplateManager({
             value={newTemplate.name}
             onChange={(e) => setNewTemplate(prev => ({ ...prev, name: e.target.value }))}
             placeholder="例：週六班"
-            style={{
-              width: '100%',
-              padding: '0.5rem 0.75rem',
-              borderRadius: '8px',
-              border: '2px dashed rgba(220, 208, 194, 0.8)',
-              background: 'rgba(220, 208, 194, 0.35)',
-              color: 'var(--foreground)',
-            }}
+            className={styles.fieldInput}
           />
         </div>
 
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
+        {/* 職稱／職位參數 */}
+        <div className={styles.formField}>
+          <label className={styles.fieldLabel}>
+            職稱／職位
+          </label>
+          <select
+            value={newTemplate.role || (roles[0]?.id ?? 'assistant')}
+            onChange={(e) => {
+              const selectedRole = roles.find((r) => r.id === e.target.value);
+              setNewTemplate((prev) => ({
+                ...prev,
+                role: e.target.value,
+                roleName: selectedRole?.name || '助教',
+                // 若切換職位，連動帶入該職位的預設時薪
+                hourlyRate: selectedRole?.hourlyRate ?? prev.hourlyRate,
+              }));
+            }}
+            className={styles.fieldSelect}
+          >
+            {roles.length > 0 ? (
+              roles.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name} (NT$ {r.hourlyRate}/h)
+                </option>
+              ))
+            ) : (
+              <>
+                <option value="assistant">助教 (NT$ 200/h)</option>
+                <option value="instructor">講師 (NT$ 500/h)</option>
+              </>
+            )}
+          </select>
+        </div>
+
+        <div className={styles.formField}>
+          <label className={styles.fieldLabel}>
             開始時間
           </label>
           <input
             type="time"
             value={newTemplate.startTime}
             onChange={(e) => setNewTemplate(prev => ({ ...prev, startTime: e.target.value }))}
-            style={{
-              width: '100%',
-              padding: '0.5rem 0.75rem',
-              borderRadius: '8px',
-              border: '2px dashed rgba(220, 208, 194, 0.8)',
-              background: 'rgba(220, 208, 194, 0.35)',
-              color: 'var(--foreground)',
-            }}
+            className={styles.fieldInput}
           />
         </div>
 
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
+        <div className={styles.formField}>
+          <label className={styles.fieldLabel}>
             結束時間
           </label>
           <input
             type="time"
             value={newTemplate.endTime}
             onChange={(e) => setNewTemplate(prev => ({ ...prev, endTime: e.target.value }))}
-            style={{
-              width: '100%',
-              padding: '0.5rem 0.75rem',
-              borderRadius: '8px',
-              border: '2px dashed rgba(220, 208, 194, 0.8)',
-              background: 'rgba(220, 208, 194, 0.35)',
-              color: 'var(--foreground)',
-            }}
+            className={styles.fieldInput}
           />
         </div>
 
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
+        <div className={styles.formField}>
+          <label className={styles.fieldLabel}>
             時薪 (元)
           </label>
           <input
             type="number"
             value={newTemplate.hourlyRate}
             onChange={(e) => setNewTemplate(prev => ({ ...prev, hourlyRate: Number(e.target.value) }))}
-            style={{
-              width: '100%',
-              padding: '0.5rem 0.75rem',
-              borderRadius: '8px',
-              border: '2px dashed rgba(220, 208, 194, 0.8)',
-              background: 'rgba(220, 208, 194, 0.35)',
-              color: 'var(--foreground)',
-            }}
+            className={styles.fieldInput}
           />
         </div>
 
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
+        <div className={styles.formField}>
+          <label className={styles.fieldLabel}>
             工作時數 (小時)
           </label>
           <input
@@ -171,97 +178,81 @@ export default function ShiftTemplateManager({
             min="0"
             value={newTemplate.workHours ?? 0}
             onChange={(e) => setNewTemplate(prev => ({ ...prev, workHours: Number(e.target.value) }))}
-            style={{
-              width: '100%',
-              padding: '0.5rem 0.75rem',
-              borderRadius: '8px',
-              border: '2px dashed rgba(220, 208, 194, 0.8)',
-              background: 'rgba(220, 208, 194, 0.35)',
-              color: 'var(--foreground)',
-            }}
+            className={styles.fieldInput}
           />
         </div>
-
       </div>
 
       <button
         type="button"
         onClick={onSaveTemplate}
         disabled={!canEditTemplates}
-        style={{
-          padding: '0.6rem 1.4rem',
-          borderRadius: '8px',
-          border: 'none',
-          background: 'var(--color-primary)',
-          color: '#f0ece1',
-          fontWeight: '600',
-          cursor: canEditTemplates ? 'pointer' : 'not-allowed',
-          transition: 'all 0.2s',
-          boxShadow: '0 4px 12px rgba(139, 121, 101, 0.15)',
-        }}
+        className={styles.submitBtn}
       >
         {editingTemplateId ? '更新班別' : '新增班別'}
       </button>
 
-      {/* 班別範本列表 */}
+      {/* 班別範本卡片列表 (解決手機端排版擠壓換行問題) */}
       <div style={{ marginTop: 'var(--spacing-lg)' }}>
         {templates.length === 0 ? (
-          <div style={{ color: 'var(--muted)' }}>目前尚未建立班別範本</div>
+          <div className={styles.emptyState}>目前尚未建立班別範本</div>
         ) : (
-          <div style={{ display: 'grid', gap: 'var(--spacing-sm)' }}>
-            {templates.map(template => (
-              <div
-                key={template.id}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1.5fr 1.5fr 1fr auto',
-                  gap: 'var(--spacing-sm)',
-                  alignItems: 'center',
-                  padding: '0.75rem 1rem',
-                  borderRadius: '10px',
-                  border: '2px dashed rgba(220, 208, 194, 0.7)',
-                  background: '#f0ece1',
-                }}
-              >
-                <div style={{ fontWeight: 600 }}>{template.name}</div>
-                <div>{template.startTime} - {template.endTime}</div>
-                <div>{template.workHours ?? '-'}h / ${template.hourlyRate}</div>
-                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                  <button
-                    type="button"
-                    onClick={() => onStartEditTemplate(template)}
-                    disabled={!canEditTemplates}
-                    style={{
-                      padding: '0.4rem 0.8rem',
-                      borderRadius: '8px',
-                      border: '1px dashed rgba(95, 113, 134, 0.4)',
-                      background: 'rgba(95, 113, 134, 0.12)',
-                      color: 'var(--color-secondary)',
-                      fontWeight: '600',
-                      cursor: canEditTemplates ? 'pointer' : 'not-allowed',
-                    }}
-                  >
-                    編輯
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onDeleteTemplate(template)}
-                    disabled={!canEditTemplates}
-                    style={{
-                      padding: '0.4rem 0.8rem',
-                      borderRadius: '8px',
-                      border: '1px dashed rgba(239, 68, 68, 0.3)',
-                      background: 'rgba(239, 68, 68, 0.1)',
-                      color: '#dc2626',
-                      fontWeight: '600',
-                      cursor: canEditTemplates ? 'pointer' : 'not-allowed',
-                    }}
-                  >
-                    刪除
-                  </button>
+          <div className={styles.cardsGrid}>
+            {templates.map((template) => {
+              const badgeInfo = getTemplateBadgeInfo(template, roles);
+              const badgeClass = badgeInfo.isInstructor
+                ? styles.roleBadgeInstructor
+                : badgeInfo.isNeutral
+                ? styles.roleBadgeNeutral
+                : '';
+
+              return (
+                <div key={template.id} className={styles.templateCard}>
+                  {/* 1. 卡片頂部：班別名稱與職位徽章 */}
+                  <div className={styles.cardHeader}>
+                    <h4 className={styles.cardTitle} title={template.name}>
+                      {template.name}
+                    </h4>
+                    <span className={`${styles.roleBadge} ${badgeClass}`}>
+                      {badgeInfo.label}
+                    </span>
+                  </div>
+
+                  {/* 2. 時間、工時與時薪資訊行（上次的精緻小卡片橫排） */}
+                  <div className={styles.cardMetaRow}>
+                    <span className={styles.timeDisplay}>
+                      🕒 {template.startTime} - {template.endTime}
+                    </span>
+                    <span className={styles.hoursBadge}>
+                      {template.workHours ?? '-'}h
+                    </span>
+                    <span className={styles.rateBadge}>
+                      NT$ {template.hourlyRate}/h
+                    </span>
+                  </div>
+
+                  {/* 4. 卡片底部：編輯與刪除操作 */}
+                  <div className={styles.cardActions}>
+                    <button
+                      type="button"
+                      onClick={() => onStartEditTemplate(template)}
+                      disabled={!canEditTemplates}
+                      className={styles.editBtn}
+                    >
+                      ✏️ 編輯
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDeleteTemplate(template)}
+                      disabled={!canEditTemplates}
+                      className={styles.deleteBtn}
+                    >
+                      🗑️ 刪除
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
