@@ -16,18 +16,37 @@ import { useAuth } from '@/context/AuthContext';
 import LoginPrompt from '@/components/LoginPrompt';
 import { calculateKongBalance } from '@/data/allowance';
 import { LoadingSpinner } from '@/components/Loading';
+import WorkShiftEditor from '@/components/WorkShiftEditor';
+import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
+import type { WorkShift } from '@/data/schedule';
 import styles from './page.module.css';
 
 // 生活費功能暫時隱藏開關（相關代碼保留，切換為 true 即可恢復）
 const SHOW_ALLOWANCE = false;
 
+// 星期中文名稱對照
+const WEEKDAY_NAMES = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+
+// 計算單班工時（小時）
+function getShiftHours(s: { startTime: string; endTime: string; workHours?: number }): number {
+  if (s.workHours && s.workHours > 0) return s.workHours;
+  if (!s.startTime || !s.endTime) return 0;
+  const [sh, sm] = s.startTime.split(':').map(Number);
+  const [eh, em] = s.endTime.split(':').map(Number);
+  const diff = (eh * 60 + em) - (sh * 60 + sm);
+  return diff > 0 ? parseFloat((diff / 60).toFixed(1)) : 0;
+}
+
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
 
   // 資料 Hooks
-  const { courses, shifts, events } = useScheduleData();
+  const { courses, shifts, events, updateWorkShift, deleteWorkShift } = useScheduleData();
   const { records: allowanceRecords } = useAllowanceData();
   const { records: salaryRecords } = useSalaryData();
+  const { toast } = useToast();
+  const { confirm } = useConfirm();
 
   const {
     currentTimeStr,
@@ -43,12 +62,167 @@ export default function Home() {
   // 動態進度條計算與即時秒鐘計時器
   const [nowDate, setNowDate] = useState(new Date());
 
+  // 打工安排卡片的篩選狀態與展開控制
+  const [shiftFilter, setShiftFilter] = useState<'all' | 'upcoming' | 'completed'>('all');
+  const [isShiftsExpanded, setIsShiftsExpanded] = useState(false);
+
+  // 編輯打工班表狀態
+  const [editingShift, setEditingShift] = useState<WorkShift | null>(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+
+  const handleOpenEditShift = (shift: WorkShift) => {
+    setEditingShift(shift);
+    setIsEditorOpen(true);
+  };
+
+  const handleSaveShift = async (updatedShift: WorkShift): Promise<boolean> => {
+    try {
+      await updateWorkShift(updatedShift.id, updatedShift);
+      toast.success('已成功更新打工班表');
+      setIsEditorOpen(false);
+      setEditingShift(null);
+      return true;
+    } catch {
+      toast.error('更新班表失敗，請稍後再試');
+      return false;
+    }
+  };
+
+  const handleDeleteShift = async (shiftId: string) => {
+    const target = shifts.find((s) => s.id === shiftId);
+    const dateText = target?.date || '';
+    const nameText = target?.shiftCategory || target?.note || '打工班表';
+
+    const confirmed = await confirm({
+      title: '刪除打工班表',
+      message: `確定要刪除 ${dateText} 「${nameText}」嗎？此操作會同時刪除對應的薪資計算記錄。`,
+      confirmText: '刪除',
+      danger: true,
+    });
+
+    if (confirmed) {
+      try {
+        await deleteWorkShift(shiftId);
+        toast.success('已刪除打工班表與薪資記錄');
+        setIsEditorOpen(false);
+        setEditingShift(null);
+      } catch {
+        toast.error('刪除班表失敗，請稍後再試');
+      }
+    }
+  };
+
   useEffect(() => {
     const timer = setInterval(() => setNowDate(new Date()), 10000); // 每 10 秒更新一次
     return () => clearInterval(timer);
   }, []);
 
   const latestAllowance = allowanceRecords.length > 0 ? allowanceRecords[0] : null;
+
+  // 今日本地日期字串 YYYY-MM-DD
+  const todayDateStr = useMemo(() => {
+    const y = nowDate.getFullYear();
+    const m = String(nowDate.getMonth() + 1).padStart(2, '0');
+    const d = String(nowDate.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }, [nowDate]);
+
+  // 分析本月打工班次詳細狀態與視覺資訊
+  const analyzedShifts = useMemo(() => {
+    return monthlyWorkShifts.map((shift) => {
+      const shiftDate = new Date(`${shift.date}T00:00:00`);
+      const dayOfWeek = WEEKDAY_NAMES[shiftDate.getDay()];
+      const isWeekend = shiftDate.getDay() === 0 || shiftDate.getDay() === 6;
+      const hours = getShiftHours(shift);
+
+      // 班次狀態判定
+      let status: 'today_in_progress' | 'today_upcoming' | 'today_completed' | 'upcoming' | 'completed' = 'upcoming';
+      let statusLabel = '即將到來';
+      let daysDiff = 0;
+
+      if (shift.date < todayDateStr) {
+        status = 'completed';
+        statusLabel = '已完工';
+      } else if (shift.date === todayDateStr) {
+        if (currentTimeStr >= shift.startTime && currentTimeStr <= shift.endTime) {
+          status = 'today_in_progress';
+          statusLabel = '上班中 🔥';
+        } else if (currentTimeStr > shift.endTime) {
+          status = 'today_completed';
+          statusLabel = '今日已完工 ✓';
+        } else {
+          status = 'today_upcoming';
+          statusLabel = '今日上班 ⚡';
+        }
+      } else {
+        status = 'upcoming';
+        const diffTime = shiftDate.getTime() - new Date(`${todayDateStr}T00:00:00`).getTime();
+        daysDiff = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        statusLabel = daysDiff === 1 ? '明天上班' : `${daysDiff}天後`;
+      }
+
+      // 班次名稱：優先使用當天填寫的班別名稱 (shiftCategory 或 note)，次之依角色 (講師/助教) 判定
+      const title =
+        shift.shiftCategory?.trim() ||
+        shift.note?.trim() ||
+        (shift.role === 'instructor' || shift.roleName === '講師'
+          ? '講師'
+          : shift.role === 'assistant' || shift.roleName === '助教'
+          ? '助教'
+          : shift.roleName || '打工班次');
+
+      return {
+        ...shift,
+        dayOfWeek,
+        isWeekend,
+        hours,
+        status,
+        statusLabel,
+        daysDiff,
+        title,
+      };
+    });
+  }, [monthlyWorkShifts, todayDateStr, currentTimeStr]);
+
+  // 本月打工指標與進度統計
+  const shiftMetrics = useMemo(() => {
+    const totalCount = analyzedShifts.length;
+    const completedShifts = analyzedShifts.filter((s) => s.status === 'completed' || s.status === 'today_completed');
+    const upcomingShifts = analyzedShifts.filter(
+      (s) => s.status === 'upcoming' || s.status === 'today_upcoming' || s.status === 'today_in_progress'
+    );
+    const completedCount = completedShifts.length;
+    const remainingCount = totalCount - completedCount;
+    const totalHours = analyzedShifts.reduce((sum, s) => sum + s.hours, 0);
+    const completedHours = completedShifts.reduce((sum, s) => sum + s.hours, 0);
+    const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+    const nextShift = upcomingShifts[0] || null;
+
+    return {
+      totalCount,
+      completedCount,
+      remainingCount,
+      totalHours: parseFloat(totalHours.toFixed(1)),
+      completedHours: parseFloat(completedHours.toFixed(1)),
+      progressPct,
+      nextShift,
+      upcomingCount: upcomingShifts.length,
+    };
+  }, [analyzedShifts]);
+
+  // 依篩選標籤過濾班次
+  const filteredShifts = useMemo(() => {
+    if (shiftFilter === 'upcoming') {
+      return analyzedShifts.filter((s) => s.status !== 'completed' && s.status !== 'today_completed');
+    }
+    if (shiftFilter === 'completed') {
+      return analyzedShifts.filter((s) => s.status === 'completed' || s.status === 'today_completed');
+    }
+    return analyzedShifts;
+  }, [analyzedShifts, shiftFilter]);
+
+  // 實際渲染的班次列表（預設顯示前 8 筆）
+  const displayedShifts = isShiftsExpanded ? filteredShifts : filteredShifts.slice(0, 8);
 
   // 計算本月薪資統計（與薪資計算器邏輯一致）
   const currentMonthStr = useMemo(() => {
@@ -108,27 +282,9 @@ export default function Home() {
     return <LoginPrompt />;
   }
 
-  // 招呼語
-  const hour = nowDate.getHours();
-  const greetingStr =
-    hour < 12 ? '☀️ 早安' : hour < 18 ? '☕ 下午好' : '🌙 晚上好';
-
   return (
     <div className={styles.pageContainer}>
-      {/* ===== 1. 頂部動態問候 ===== */}
-      <div className={styles.heroGreeting}>
-        <div className={styles.greetingText}>
-          <div className={styles.greetingTitle}>
-            {greetingStr}，{user.displayName || '使用者'}！
-          </div>
-          <div className={styles.greetingSubtitle}>
-            今天是 {nowDate.toLocaleDateString('zh-TW', { month: 'long', day: 'numeric', weekday: 'long' })}
-          </div>
-        </div>
-
-      </div>
-
-      {/* ===== 2. 核心 Highlights Grid (生活費隱藏時自動滿版) ===== */}
+      {/* ===== 核心 Highlights Grid (生活費隱藏時自動滿版) ===== */}
       <div className={SHOW_ALLOWANCE ? styles.heroGrid : styles.heroGridSingle}>
         {/* 左側主視覺卡片：即時焦點與時間軸倒數 */}
         <div className={styles.liveFocusCard}>
@@ -282,7 +438,204 @@ export default function Home() {
         )}
       </div>
 
-      {/* ===== 3. 中間二合一 Section (今日時間軸 + 即將到來) ===== */}
+      {/* ===== 3. 本月打工安排（往上提一個行！全新高視覺化卡片） ===== */}
+      <div className={styles.workGlanceCard}>
+        {/* Header 標題列 */}
+        <div className={styles.workGlanceHeader}>
+          <div className={styles.workGlanceTitle}>
+            <BriefcaseIcon size={22} />
+            <span>本月打工安排</span>
+            <span className={styles.monthTag}>
+              {nowDate.getMonth() + 1} 月份班表 ({shiftMetrics.totalCount} 班)
+            </span>
+            <span className={styles.editHintTag}>
+              ✏️ 點擊卡片可直接編輯
+            </span>
+          </div>
+          <Link
+            href="/schedule/work"
+            className={styles.cardActionLink}
+            style={{ fontSize: '0.85rem', color: 'var(--color-primary)', textDecoration: 'none', fontWeight: 600 }}
+          >
+            完整打工月曆 →
+          </Link>
+        </div>
+
+        {/* 頂部打工指標橫幅 (KPI Cards) */}
+        <div className={styles.metricsGrid}>
+          <div className={styles.metricCard}>
+            <span className={styles.metricLabel}>總排班天數</span>
+            <span className={styles.metricValue}>{shiftMetrics.totalCount} 天</span>
+          </div>
+          <div className={styles.metricCard}>
+            <span className={styles.metricLabel}>工時累計</span>
+            <span className={styles.metricValue}>
+              {shiftMetrics.completedHours}h{' '}
+              <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--muted)' }}>
+                / {shiftMetrics.totalHours}h
+              </span>
+            </span>
+          </div>
+          <div className={styles.metricCard}>
+            <span className={styles.metricLabel}>排班進度</span>
+            <span className={`${styles.metricValue} ${styles.metricHighlight}`}>
+              {shiftMetrics.progressPct}%
+            </span>
+          </div>
+          <div className={styles.metricCard}>
+            <span className={styles.metricLabel}>本月總收入</span>
+            <span className={styles.metricValue}>
+              NT$ {thisMonthSalaryStats.totalPay.toLocaleString()}
+            </span>
+          </div>
+        </div>
+
+        {/* 本月打工進度條 */}
+        {shiftMetrics.totalCount > 0 && (
+          <div className={styles.workProgressBlock}>
+            <div className={styles.workProgressHeader}>
+              <span>班次達成進度</span>
+              <span className={styles.workProgressValue}>
+                已完成 {shiftMetrics.completedCount} 班 · 剩餘 {shiftMetrics.remainingCount} 班 ({shiftMetrics.progressPct}%)
+              </span>
+            </div>
+            <div className={styles.workProgressBarTrack}>
+              <div
+                className={styles.workProgressBarFill}
+                style={{ width: `${shiftMetrics.progressPct}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* 篩選 Tab 列 */}
+        {shiftMetrics.totalCount > 0 && (
+          <div className={styles.shiftControlBar}>
+            <div className={styles.filterGroup}>
+              <button
+                type="button"
+                className={`${styles.filterChip} ${shiftFilter === 'all' ? styles.filterChipActive : ''}`}
+                onClick={() => setShiftFilter('all')}
+              >
+                全部 ({shiftMetrics.totalCount})
+              </button>
+              <button
+                type="button"
+                className={`${styles.filterChip} ${shiftFilter === 'upcoming' ? styles.filterChipActive : ''}`}
+                onClick={() => setShiftFilter('upcoming')}
+              >
+                即將到來 ({shiftMetrics.upcomingCount})
+              </button>
+              <button
+                type="button"
+                className={`${styles.filterChip} ${shiftFilter === 'completed' ? styles.filterChipActive : ''}`}
+                onClick={() => setShiftFilter('completed')}
+              >
+                已完成 ({shiftMetrics.completedCount})
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 班次卡片網格 Grid */}
+        {filteredShifts.length > 0 ? (
+          <div className={styles.workGlanceGrid}>
+            {displayedShifts.map((shift) => {
+              const isToday = shift.status.startsWith('today');
+              const isPast = shift.status === 'completed';
+              const isInProgress = shift.status === 'today_in_progress';
+
+              const cardClass = `${styles.shiftCard} ${
+                isInProgress ? styles.shiftCardInProgress : isToday ? styles.shiftCardToday : isPast ? styles.shiftCardPast : ''
+              }`;
+
+              const badgeClass = `${styles.shiftStatusBadge} ${
+                isInProgress
+                  ? styles.statusBadgeInProgress
+                  : isToday
+                  ? styles.statusBadgeToday
+                  : isPast
+                  ? styles.statusBadgeCompleted
+                  : styles.statusBadgeUpcoming
+              }`;
+
+              return (
+                <div
+                  key={shift.id}
+                  className={cardClass}
+                  onClick={() => handleOpenEditShift(shift)}
+                  style={{ cursor: 'pointer' }}
+                  title="點擊編輯打工班表"
+                >
+                  <div className={styles.shiftCardHeader}>
+                    <div className={styles.shiftDateGroup}>
+                      <span className={styles.shiftDateText}>{shift.date.slice(5)}</span>
+                      <span className={`${styles.shiftWeekday} ${shift.isWeekend ? styles.shiftWeekend : ''}`}>
+                        {shift.dayOfWeek}
+                      </span>
+                    </div>
+                    <span className={badgeClass}>{shift.statusLabel}</span>
+                  </div>
+
+                  <div className={styles.shiftRoleTitle} title={shift.title}>
+                    {shift.title}
+                  </div>
+
+                  <div className={styles.shiftMetaRow}>
+                    <span className={styles.shiftTime}>
+                      🕒 {shift.startTime} - {shift.endTime}
+                    </span>
+                    <span className={styles.shiftHoursPill}>{shift.hours}h</span>
+                  </div>
+
+                  {shift.location && (
+                    <div className={styles.shiftLocation} title={shift.location}>
+                      📍 {shift.location}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className={styles.emptyShiftsBlock}>
+            <span style={{ fontSize: '2rem' }}>📋</span>
+            <span>
+              {shiftFilter === 'upcoming'
+                ? '目前沒有即將到來的班次'
+                : shiftFilter === 'completed'
+                ? '本月尚未有已完工班次'
+                : '本月尚無安排打工記錄'}
+            </span>
+            <Link
+              href="/schedule/work"
+              style={{
+                fontSize: '0.85rem',
+                color: 'var(--color-primary)',
+                textDecoration: 'none',
+                fontWeight: 600,
+              }}
+            >
+              前往打工月曆安排班次 →
+            </Link>
+          </div>
+        )}
+
+        {/* 展開/收合更多班次按鈕 */}
+        {filteredShifts.length > 8 && (
+          <button
+            type="button"
+            className={styles.expandShiftsBtn}
+            onClick={() => setIsShiftsExpanded((prev) => !prev)}
+          >
+            {isShiftsExpanded
+              ? '收合部分班次 ▴'
+              : `展開查看全部 (${filteredShifts.length} 班) ▾`}
+          </button>
+        )}
+      </div>
+
+      {/* ===== 4. 今日整合行程 + 本月薪資統計 ===== */}
       <div className={styles.dualSection}>
         {/* 左欄：今日課程時間軸 */}
         <div className={styles.contentCard}>
@@ -398,35 +751,20 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ===== 4. 底部本月打工安排 ===== */}
-      {monthlyWorkShifts.length > 0 && (
-        <div className={styles.workGlanceCard}>
-          <div className={styles.workGlanceHeader}>
-            <div style={{ fontWeight: 700, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <BriefcaseIcon size={20} />
-              <span>本月打工安排 ({monthlyWorkShifts.length} 天)</span>
-            </div>
-            <Link
-              href="/schedule/work"
-              style={{ fontSize: '0.85rem', color: 'var(--color-primary)', textDecoration: 'none' }}
-            >
-              打工月曆詳情 →
-            </Link>
-          </div>
-
-          <div className={styles.workGlanceGrid}>
-            {monthlyWorkShifts.slice(0, 12).map((shift) => (
-              <div key={shift.id} className={styles.shiftPill}>
-                <span className={styles.shiftDate}>{shift.date.slice(5)}</span>
-                <span className={styles.shiftTime}>
-                  {shift.startTime} - {shift.endTime}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
+      {/* 班次編輯器（直接覆用打工月曆之編輯元件） */}
+      <WorkShiftEditor
+        isOpen={isEditorOpen}
+        onClose={() => {
+          setIsEditorOpen(false);
+          setEditingShift(null);
+        }}
+        onSave={handleSaveShift}
+        onDelete={handleDeleteShift}
+        shift={editingShift}
+        mode="edit"
+        existingCourses={courses}
+        existingShifts={shifts}
+      />
     </div>
   );
 }
