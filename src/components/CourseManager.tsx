@@ -53,11 +53,11 @@ export default function CourseManager() {
     }
   };
 
-  const handleSaveCourse = (course: Course) => {
+  const handleSaveCourse = async (course: Course) => {
     if (editorMode === 'add') {
-      addCourse(course);
+      await addCourse(course);
     } else {
-      updateCourse(course.id, course);
+      await updateCourse(course.id, course);
     }
   };
 

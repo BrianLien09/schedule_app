@@ -6,8 +6,6 @@ import {
   SchoolIcon,
   BriefcaseIcon,
   WalletIcon,
-  CalendarIcon,
-  ToolboxIcon,
 } from '@/components/Icons';
 import { TimelineItem } from '@/components/VisualComponents';
 import { useHomeDashboard } from '@/hooks/useHomeDashboard';
@@ -16,11 +14,8 @@ import { useAllowanceData } from '@/hooks/useAllowanceData';
 import { useSalaryData } from '@/hooks/useSalaryData';
 import { useAuth } from '@/context/AuthContext';
 import LoginPrompt from '@/components/LoginPrompt';
-import { formatDateForCopy, calculateKongBalance } from '@/data/allowance';
+import { calculateKongBalance } from '@/data/allowance';
 import { LoadingSpinner } from '@/components/Loading';
-import QuickActionModal from '@/components/QuickActionModal';
-import CommandPalette from '@/components/CommandPalette';
-import FloatingQuickActions from '@/components/FloatingQuickActions';
 import styles from './page.module.css';
 
 export default function Home() {
@@ -40,13 +35,7 @@ export default function Home() {
     currentEvent,
     todayTimeline,
     monthlyWorkShifts,
-    upcomingImportantEvents,
   } = useHomeDashboard(courses, shifts, events);
-
-  // 彈窗 Modal 狀態
-  const [quickModalOpen, setQuickModalOpen] = useState(false);
-  const [quickModalTab, setQuickModalTab] = useState<'allowance' | 'work'>('allowance');
-  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
   // 動態進度條計算與即時秒鐘計時器
   const [nowDate, setNowDate] = useState(new Date());
@@ -54,18 +43,6 @@ export default function Home() {
   useEffect(() => {
     const timer = setInterval(() => setNowDate(new Date()), 10000); // 每 10 秒更新一次
     return () => clearInterval(timer);
-  }, []);
-
-  // 鍵盤 Ctrl+K 全局監聽
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        setCommandPaletteOpen((prev) => !prev);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   const latestAllowance = allowanceRecords.length > 0 ? allowanceRecords[0] : null;
@@ -135,7 +112,7 @@ export default function Home() {
 
   return (
     <div className={styles.pageContainer}>
-      {/* ===== 1. 頂部動態問候與快捷按鈕列 ===== */}
+      {/* ===== 1. 頂部動態問候 ===== */}
       <div className={styles.heroGreeting}>
         <div className={styles.greetingText}>
           <div className={styles.greetingTitle}>
@@ -146,34 +123,6 @@ export default function Home() {
           </div>
         </div>
 
-        <div className={styles.quickActionBar}>
-          <button
-            className={styles.quickBtn}
-            onClick={() => {
-              setQuickModalTab('allowance');
-              setQuickModalOpen(true);
-            }}
-          >
-            <span>💵 記生活費</span>
-          </button>
-
-          <button
-            className={styles.quickBtn}
-            onClick={() => {
-              setQuickModalTab('work');
-              setQuickModalOpen(true);
-            }}
-          >
-            <span>💼 登記打工</span>
-          </button>
-
-          <button
-            className={styles.quickBtn}
-            onClick={() => setCommandPaletteOpen(true)}
-          >
-            <span>🔍 搜尋 (Ctrl+K)</span>
-          </button>
-        </div>
       </div>
 
       {/* ===== 2. 核心 Highlights 雙欄 Grid ===== */}
@@ -269,22 +218,9 @@ export default function Home() {
               <WalletIcon size={20} />
               <span>生活費帳簿摘要</span>
             </div>
-            <button
-              onClick={() => {
-                setQuickModalTab('allowance');
-                setQuickModalOpen(true);
-              }}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--color-primary)',
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-                fontWeight: 600,
-              }}
-            >
-              + 記一筆
-            </button>
+            <Link href="/tools/allowance" className={styles.cardActionLink}>
+              查看明細 →
+            </Link>
           </div>
 
           {latestAllowance ? (
@@ -333,15 +269,9 @@ export default function Home() {
           ) : (
             <div className={styles.emptyBlock}>
               <p>尚無生活費記錄</p>
-              <button
-                className={styles.quickBtn}
-                onClick={() => {
-                  setQuickModalTab('allowance');
-                  setQuickModalOpen(true);
-                }}
-              >
-                建立第一筆記錄
-              </button>
+              <Link href="/tools/allowance" className={styles.cardActionLink}>
+                前往新增記錄 →
+              </Link>
             </div>
           )}
         </div>
@@ -463,13 +393,13 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ===== 4. 底部打工 Glance ===== */}
+      {/* ===== 4. 底部本月打工安排 ===== */}
       {monthlyWorkShifts.length > 0 && (
         <div className={styles.workGlanceCard}>
           <div className={styles.workGlanceHeader}>
             <div style={{ fontWeight: 700, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <BriefcaseIcon size={20} />
-              <span>本月打工安排 Glance ({monthlyWorkShifts.length} 天)</span>
+              <span>本月打工安排 ({monthlyWorkShifts.length} 天)</span>
             </div>
             <Link
               href="/schedule/work"
@@ -492,29 +422,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* ===== 彈窗與全域 Floating Speed Dial ===== */}
-      <QuickActionModal
-        isOpen={quickModalOpen}
-        initialTab={quickModalTab}
-        onClose={() => setQuickModalOpen(false)}
-      />
-
-      <CommandPalette
-        isOpen={commandPaletteOpen}
-        onClose={() => setCommandPaletteOpen(false)}
-        onOpenQuickModal={(tab) => {
-          setQuickModalTab(tab);
-          setQuickModalOpen(true);
-        }}
-      />
-
-      <FloatingQuickActions
-        onOpenQuickModal={(tab) => {
-          setQuickModalTab(tab);
-          setQuickModalOpen(true);
-        }}
-        onOpenCommandPalette={() => setCommandPaletteOpen(true)}
-      />
     </div>
   );
 }

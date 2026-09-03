@@ -159,13 +159,13 @@ export default function SchoolSchedulePage() {
   };
 
   // 儲存課程（支援新增與編輯兩種模式）
-  const handleSaveCourse = (course: Course) => {
+  const handleSaveCourse = async (course: Course) => {
     if (editorMode === 'add') {
       // 新增時自動帶入目前選中學期
-      addCourse({ ...course, semester: selectedSemester });
+      await addCourse({ ...course, semester: selectedSemester });
       toast.success(`✅ 已新增「${course.name}」至 ${SEMESTER_OPTIONS.find(s => s.value === selectedSemester)?.label ?? selectedSemester}`);
     } else {
-      updateCourse(course.id, course);
+      await updateCourse(course.id, course);
     }
   };
 

@@ -43,35 +43,6 @@
   color: var(--muted, #94a3b8);
 }
 
-.quickActionBar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.quickBtn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 99px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--foreground, #f8fafc);
-  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.quickBtn:hover {
-  background: var(--color-primary, #38bdf8);
-  color: #fff;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
-}
-
 /* ===== 核心 Highlights 雙欄 Grid ===== */
 .heroGrid {
   display: grid;
@@ -376,7 +347,7 @@
   font-size: 2.2rem;
 }
 
-/* ===== 底部打工 Glance ===== */
+/* ===== 底部本月打工安排 ===== */
 .workGlanceCard {
   background: var(--glass-bg, rgba(30, 41, 59, 0.6));
   backdrop-filter: blur(12px);
@@ -475,28 +446,6 @@
 
 .greetingSubtitle {
   letter-spacing: 0.01em;
-}
-
-.quickActionBar {
-  position: relative;
-  z-index: 1;
-  gap: 0.5rem;
-}
-
-.quickBtn {
-  min-height: 40px;
-  padding: 0.6rem 0.9rem;
-  background-color: rgba(255, 255, 255, 0.3);
-  border: 1px solid var(--line-subtle);
-  box-shadow: none;
-  transition: transform 180ms var(--ease-standard), background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
-}
-
-.quickBtn:hover {
-  background-color: rgba(184, 126, 107, 0.12);
-  border-color: rgba(184, 126, 107, 0.38);
-  color: var(--foreground);
-  box-shadow: var(--shadow-sm);
 }
 
 .liveFocusCard,
@@ -603,16 +552,6 @@
   .workGlanceCard {
     padding: 1.1rem;
     border-radius: var(--radius-md);
-  }
-
-  .quickActionBar {
-    /* 手機端保留右下角快捷入口，避免同一動作在首屏重複出現 */
-    display: none;
-  }
-
-  .quickBtn {
-    flex: 1 1 auto;
-    justify-content: center;
   }
 
   .eventSubInfo {

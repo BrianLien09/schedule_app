@@ -53,6 +53,7 @@ export default function WorkShiftEditor({
   const { templates } = useShiftTemplates();
   const { roles } = useWorkRoles();
   const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<Partial<WorkShift>>({
     date: new Date().toISOString().split('T')[0],
     startTime: '09:00',
@@ -108,7 +109,7 @@ export default function WorkShiftEditor({
   }, [shift, mode, roles, templates]);
 
   /**
-   * 當使用者選擇下拉選單範本時，自動將該範本的欄位 (時間/身份/工時/時薪) 帶入表單
+   * 當使用者選擇下拉選單範本時，自動將該範本的欄位（時間、職稱／職位、工時、時薪）帶入表單
    */
   const handleSelectTemplate = (selectedName: string) => {
     if (selectedName === '__custom__') {
@@ -154,6 +155,7 @@ export default function WorkShiftEditor({
 
   const handleSubmit = async (e: React.FormEvent, closeModal: () => void = onClose) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     if (!formData.date || !formData.startTime || !formData.endTime) {
       toast.warning('請填寫所有必填欄位');
@@ -208,8 +210,13 @@ export default function WorkShiftEditor({
       if (!confirmed) return;
     }
 
-    const saved = await onSave(newShift);
-    if (saved !== false) closeModal();
+    setIsSubmitting(true);
+    try {
+      const saved = await onSave(newShift);
+      if (saved !== false) closeModal();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleRoleChange = (newRole: RoleType) => {
@@ -255,7 +262,7 @@ export default function WorkShiftEditor({
       title={mode === 'add' ? '新增打工班表' : '編輯打工班表'}
     >
       <ModalContent render={(requestClose) => <form onSubmit={(e) => handleSubmit(e, requestClose)} className={styles.form}>
-        {/* 日期與職位 / 身份 */}
+        {/* 日期與職稱／職位 */}
         <div className={styles.formRow}>
           <div className={styles.formGroup}>
             <label htmlFor="date">
@@ -272,7 +279,7 @@ export default function WorkShiftEditor({
 
           <div className={styles.formGroup}>
             <label htmlFor="role">
-              職位 / 身份 <span className={styles.required}>*</span>
+              職稱／職位 <span className={styles.required}>*</span>
             </label>
             <select
               id="role"
@@ -412,15 +419,16 @@ export default function WorkShiftEditor({
               type="button"
               className={`btn ${styles.deleteButton}`}
               onClick={() => handleDelete(requestClose)}
+              disabled={isSubmitting}
             >
               🗑️ 刪除
             </button>
           )}
-          <button type="button" className={`btn ${styles.cancelButton}`} onClick={requestClose}>
+          <button type="button" className={`btn ${styles.cancelButton}`} onClick={requestClose} disabled={isSubmitting}>
             取消
           </button>
-          <button type="submit" className={`btn ${styles.saveButton}`}>
-            {mode === 'add' ? '新增' : '儲存'}
+          <button type="submit" className={`btn ${styles.saveButton}`} disabled={isSubmitting}>
+            {isSubmitting ? '儲存中...' : mode === 'add' ? '新增' : '儲存'}
           </button>
         </div>
       </form>} />

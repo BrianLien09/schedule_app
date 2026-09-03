@@ -74,6 +74,7 @@ export default function AllowanceManager() {
 
   // ========== 新增模態框狀態 ==========
   const [showAddModal, setShowAddModal] = useState(false);
+  const [submittingAction, setSubmittingAction] = useState<'add' | 'edit' | null>(null);
 
   // ========== 月份篩選狀態 ==========
   // 預設顯示本月記錄
@@ -287,6 +288,7 @@ export default function AllowanceManager() {
 
   // ========== 新增記錄 ==========
   const handleAdd = async () => {
+    if (submittingAction) return;
     const error = validateForm(currentRecord);
     if (error) {
       toast.warning(error);
@@ -299,24 +301,30 @@ export default function AllowanceManager() {
       timestamp: Date.now(),
     };
 
-    await addRecord(newRecord);
+    setSubmittingAction('add');
+    try {
+      await addRecord(newRecord);
 
-    // 重置表單（保留最新的小呆餘額作為預設值）
-    const nextSourceType = sourceTypes[0] || '生活費匯款';
-    const isNextAllowance = isAllowanceType(nextSourceType);
-    
-    setCurrentRecord({
-      date: new Date().toISOString().split('T')[0],
-      amount: 0,
-      totalBalance: 0,
-      xiaoBalance: isNextAllowance ? newRecord.xiaoBalance : 0,
-      sourceType: nextSourceType,
-      note: '',
-    });
+      // 重置表單（保留最新的小呆餘額作為預設值）
+      const nextSourceType = sourceTypes[0] || '生活費匯款';
+      const isNextAllowance = isAllowanceType(nextSourceType);
 
-    // 關閉新增 Modal
-    setShowAddModal(false);
-    toast.success('記錄已新增');
+      setCurrentRecord({
+        date: new Date().toISOString().split('T')[0],
+        amount: 0,
+        totalBalance: 0,
+        xiaoBalance: isNextAllowance ? newRecord.xiaoBalance : 0,
+        sourceType: nextSourceType,
+        note: '',
+      });
+
+      setShowAddModal(false);
+      toast.success('記錄已新增');
+    } catch {
+      toast.error('新增記錄失敗，請稍後再試');
+    } finally {
+      setSubmittingAction(null);
+    }
   };
 
   // ========== 開啟新增模態框 ==========
@@ -345,6 +353,7 @@ export default function AllowanceManager() {
 
   // ========== 儲存編輯 ==========
   const handleSaveEdit = async () => {
+    if (submittingAction) return;
     if (!editingRecord) return;
 
     const error = validateForm(editingRecord);
@@ -353,10 +362,17 @@ export default function AllowanceManager() {
       return;
     }
 
-    await updateRecord(editingRecord.id, editingRecord);
-    setShowEditModal(false);
-    setEditingRecord(null);
-    toast.success('記錄已更新');
+    setSubmittingAction('edit');
+    try {
+      await updateRecord(editingRecord.id, editingRecord);
+      setShowEditModal(false);
+      setEditingRecord(null);
+      toast.success('記錄已更新');
+    } catch {
+      toast.error('更新記錄失敗，請稍後再試');
+    } finally {
+      setSubmittingAction(null);
+    }
   };
 
   // ========== 刪除記錄 ==========
@@ -672,11 +688,12 @@ export default function AllowanceManager() {
               <button
                 className={`${styles.btn} ${styles.btnSecondary}`}
                 onClick={() => setShowEditModal(false)}
+                disabled={submittingAction === 'edit'}
               >
                 取消
               </button>
-              <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSaveEdit}>
-                儲存變更
+              <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSaveEdit} disabled={submittingAction === 'edit'}>
+                {submittingAction === 'edit' ? '儲存中...' : '儲存變更'}
               </button>
             </div>
           </div>
@@ -786,11 +803,12 @@ export default function AllowanceManager() {
               <button
                 className={`${styles.btn} ${styles.btnSecondary}`}
                 onClick={() => setShowAddModal(false)}
+                disabled={submittingAction === 'add'}
               >
                 取消
               </button>
-              <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleAdd}>
-                確認新增
+              <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleAdd} disabled={submittingAction === 'add'}>
+                {submittingAction === 'add' ? '新增中...' : '確認新增'}
               </button>
             </div>
           </div>

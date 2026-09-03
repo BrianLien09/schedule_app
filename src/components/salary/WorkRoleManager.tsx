@@ -22,7 +22,7 @@ interface RoleDraft {
 
 const EMPTY_DRAFT: RoleDraft = { name: '', hourlyRate: '200' };
 
-/** 身份與時薪的後端資料管理介面。 */
+/** 職稱／職位與時薪的後端資料管理介面。 */
 export default function WorkRoleManager({
   roles,
   loading,
@@ -48,7 +48,7 @@ export default function WorkRoleManager({
     const hourlyRate = Number(draft.hourlyRate);
 
     if (!name) {
-      toast.warning('身份名稱不可為空');
+      toast.warning('職稱／職位名稱不可為空');
       return;
     }
     if (!Number.isFinite(hourlyRate) || hourlyRate <= 0) {
@@ -56,7 +56,7 @@ export default function WorkRoleManager({
       return;
     }
     if (!canEdit) {
-      toast.warning('目前沒有編輯身份的權限');
+      toast.warning('目前沒有編輯職稱／職位的權限');
       return;
     }
 
@@ -64,7 +64,7 @@ export default function WorkRoleManager({
       (role) => role.id !== editingRoleId && role.name.trim().toLowerCase() === name.toLowerCase()
     );
     if (duplicated) {
-      toast.warning('身份名稱不可重複');
+      toast.warning('職稱／職位名稱不可重複');
       return;
     }
 
@@ -72,15 +72,15 @@ export default function WorkRoleManager({
     try {
       if (editingRoleId) {
         await onUpdateRole(editingRoleId, { name, hourlyRate });
-        toast.success('已更新身份與時薪');
+        toast.success('已更新職稱／職位與時薪');
       } else {
         await onAddRole({ name, hourlyRate });
-        toast.success('已新增身份');
+        toast.success('已新增職稱／職位');
       }
       resetDraft();
     } catch (error: unknown) {
-      console.error('儲存身份失敗', error);
-      toast.error('儲存身份失敗，請稍後再試');
+      console.error('儲存職稱／職位失敗', error);
+      toast.error('儲存職稱／職位失敗，請稍後再試');
     } finally {
       setIsSaving(false);
     }
@@ -88,7 +88,7 @@ export default function WorkRoleManager({
 
   const handleStartEdit = (role: WorkRole) => {
     if (!canEdit) {
-      toast.warning('目前沒有編輯身份的權限');
+      toast.warning('目前沒有編輯職稱／職位的權限');
       return;
     }
     setEditingRoleId(role.id);
@@ -97,12 +97,12 @@ export default function WorkRoleManager({
 
   const handleDelete = async (role: WorkRole) => {
     if (!canEdit) {
-      toast.warning('目前沒有刪除身份的權限');
+      toast.warning('目前沒有刪除職稱／職位的權限');
       return;
     }
 
     const confirmed = await confirm({
-      title: '刪除身份',
+      title: '刪除職稱／職位',
       message: `確定要刪除「${role.name}」嗎？既有薪資記錄會保留，不會一併刪除。`,
       confirmText: '刪除',
       danger: true,
@@ -112,10 +112,10 @@ export default function WorkRoleManager({
     try {
       await onDeleteRole(role.id);
       if (editingRoleId === role.id) resetDraft();
-      toast.success(`已刪除身份「${role.name}」`);
+      toast.success(`已刪除職稱／職位「${role.name}」`);
     } catch (error: unknown) {
-      console.error('刪除身份失敗', error);
-      toast.error('刪除身份失敗，請稍後再試');
+      console.error('刪除職稱／職位失敗', error);
+      toast.error('刪除職稱／職位失敗，請稍後再試');
     }
   };
 
@@ -123,8 +123,8 @@ export default function WorkRoleManager({
     <section className={`glass no-print ${styles.container}`} aria-labelledby="work-role-manager-title">
       <div className={styles.header}>
         <div>
-          <h3 id="work-role-manager-title" className={styles.title}>身份與時薪管理</h3>
-          <p className={styles.description}>這裡的身份會同步套用到薪資記錄與打工月曆。</p>
+          <h3 id="work-role-manager-title" className={styles.title}>職稱／職位與時薪管理</h3>
+          <p className={styles.description}>這裡的職稱／職位會同步套用到薪資記錄與打工月曆。</p>
         </div>
         {loading && <span className={styles.loading}>載入中...</span>}
       </div>
@@ -132,11 +132,11 @@ export default function WorkRoleManager({
       <form className={styles.form} onSubmit={handleSubmit}>
         {editingRoleId && (
           <div className={styles.editingHint}>
-            正在編輯：{roles.find((role) => role.id === editingRoleId)?.name || '身份'}
+            正在編輯：{roles.find((role) => role.id === editingRoleId)?.name || '職稱／職位'}
           </div>
         )}
         <div className={styles.field}>
-          <label className={styles.label} htmlFor="work-role-name">身份名稱</label>
+          <label className={styles.label} htmlFor="work-role-name">職稱／職位名稱</label>
           <input
             id="work-role-name"
             className={styles.input}
@@ -167,14 +167,14 @@ export default function WorkRoleManager({
             </button>
           )}
           <button type="submit" className={styles.saveButton} disabled={!canEdit || isSaving}>
-            {isSaving ? '儲存中...' : editingRoleId ? '更新身份' : '新增身份'}
+            {isSaving ? '儲存中...' : editingRoleId ? '更新職稱／職位' : '新增職稱／職位'}
           </button>
         </div>
       </form>
 
       <div className={styles.roleList}>
         {!loading && roles.length === 0 && (
-          <div className={styles.empty}>目前尚未建立身份，請先新增一個身份。</div>
+          <div className={styles.empty}>目前尚未建立職稱／職位，請先新增一個。</div>
         )}
         {roles.map((role) => (
           <div className={styles.roleRow} key={role.id}>

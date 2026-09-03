@@ -12,21 +12,21 @@ export type WorkRoleInput = Pick<WorkRole, 'name' | 'hourlyRate'>;
 export const WORK_ROLES_COLLECTION = 'workRoles';
 export const WORK_ROLES_CONFIG_ID = 'role-config';
 
-/** 首次啟用身份管理時寫入的預設身份。 */
+/** 首次啟用職稱／職位管理時寫入的預設資料。 */
 export const DEFAULT_WORK_ROLES: WorkRole[] = [
   { id: 'assistant', name: '助教', hourlyRate: 200, createdAt: 0 },
   { id: 'instructor', name: '講師', hourlyRate: 500, createdAt: 0 },
   { id: 'admin', name: '行政', hourlyRate: 200, createdAt: 0 },
 ];
 
-/** 舊資料沒有身份名稱時，仍可用固定 ID 顯示可讀文字。 */
+/** 舊資料沒有職稱／職位名稱時，仍可用固定 ID 顯示可讀文字。 */
 export const LEGACY_ROLE_LABELS: Record<string, string> = {
   assistant: '助教',
   instructor: '講師',
   admin: '行政',
 };
 
-/** 舊資料沒有時薪時的相容預設值；新身份的時薪由 Firestore 資料提供。 */
+/** 舊資料沒有時薪時的相容預設值；新職稱／職位的時薪由 Firestore 資料提供。 */
 export const ROLE_HOURLY_RATES: Record<string, number> = DEFAULT_WORK_ROLES.reduce(
   (rates, role) => {
     rates[role.id] = role.hourlyRate;
@@ -44,7 +44,7 @@ export function getWorkRoleLabel(
   roles: WorkRole[],
   fallbackName?: string
 ): string {
-  if (!roleId) return fallbackName?.trim() || '未設定身份';
+  if (!roleId) return fallbackName?.trim() || '未設定職稱／職位';
 
   const role = roles.find((item) => item.id === roleId);
   if (role) return role.name;

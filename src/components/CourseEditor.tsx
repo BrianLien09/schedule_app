@@ -10,7 +10,7 @@ import { findCourseConflicts, formatConflictMessage } from '@/utils/scheduleConf
 interface CourseEditorProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (course: Course) => void;
+  onSave: (course: Course) => void | Promise<void>;
   course?: Course | null;
   mode: 'add' | 'edit';
   existingCourses?: Course[];
@@ -32,6 +32,7 @@ export default function CourseEditor({
 }: CourseEditorProps) {
   const { toast } = useToast();
   const { confirm } = useConfirm();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<Partial<Course>>({
     name: '',
     day: 1,
@@ -58,6 +59,7 @@ export default function CourseEditor({
 
   const handleSubmit = async (e: React.FormEvent, closeModal: () => void = onClose) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     if (!formData.name || !formData.startTime || !formData.endTime) {
       toast.warning('請填寫所有必填欄位');
@@ -92,8 +94,15 @@ export default function CourseEditor({
       }
     }
 
-    onSave(newCourse);
-    closeModal();
+    setIsSubmitting(true);
+    try {
+      await onSave(newCourse);
+      closeModal();
+    } catch {
+      toast.error('儲存課程失敗，請稍後再試');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (field: keyof Course, value: string | number) => {
@@ -193,11 +202,11 @@ export default function CourseEditor({
         </div>
 
         <div className={styles.buttonGroup}>
-          <button type="button" className={`btn ${styles.cancelButton}`} onClick={requestClose}>
+          <button type="button" className={`btn ${styles.cancelButton}`} onClick={requestClose} disabled={isSubmitting}>
             取消
           </button>
-          <button type="submit" className={`btn ${styles.saveButton}`}>
-            {mode === 'add' ? '新增' : '儲存'}
+          <button type="submit" className={`btn ${styles.saveButton}`} disabled={isSubmitting}>
+            {isSubmitting ? '儲存中...' : mode === 'add' ? '新增' : '儲存'}
           </button>
         </div>
       </form>} />

@@ -139,6 +139,10 @@ export default function SalaryCalculator() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [importValidation, setImportValidation] = useState<ImportValidation | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [isAddingRecord, setIsAddingRecord] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [isSavingBatchEdit, setIsSavingBatchEdit] = useState(false);
+  const [isConfirmingImport, setIsConfirmingImport] = useState(false);
   const [showAllImportRecords, setShowAllImportRecords] = useState(false); 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -241,7 +245,8 @@ export default function SalaryCalculator() {
     return Math.round((record.workHours || 0) * record.hourlyRate);
   };
 
-  const handleAddRecord = () => {
+  const handleAddRecord = async () => {
+    if (isAddingRecord) return;
     const hours = parseFloat(workHours) || 0;
     const newRecord: SalaryRecord = {
       ...currentRecord,
@@ -249,8 +254,15 @@ export default function SalaryCalculator() {
       workHours: hours,
       id: Date.now().toString(),
     };
-    addRecord(newRecord);
-    toast.success('已新增打工記錄');
+    setIsAddingRecord(true);
+    try {
+      await addRecord(newRecord);
+      toast.success('已新增打工記錄');
+    } catch {
+      toast.error('新增打工記錄失敗，請稍後再試');
+    } finally {
+      setIsAddingRecord(false);
+    }
   };
 
   const handleApplyTemplate = (template: ShiftTemplate) => {
@@ -415,16 +427,23 @@ export default function SalaryCalculator() {
     setShowEditModal(true);
   };
 
-  const handleSaveEdit = () => {
-    if (!editingRecord) return;
+  const handleSaveEdit = async () => {
+    if (!editingRecord || isSavingEdit) return;
     const hours = parseFloat(editingWorkHours) || 0;
-    updateRecord(editingRecord.id, {
-      ...editingRecord,
-      workHours: hours,
-    });
-    setShowEditModal(false);
-    setEditingRecord(null);
-    toast.success('已儲存變更');
+    setIsSavingEdit(true);
+    try {
+      await updateRecord(editingRecord.id, {
+        ...editingRecord,
+        workHours: hours,
+      });
+      setShowEditModal(false);
+      setEditingRecord(null);
+      toast.success('已儲存變更');
+    } catch {
+      toast.error('儲存變更失敗，請稍後再試');
+    } finally {
+      setIsSavingEdit(false);
+    }
   };
 
   const handleCancelEdit = () => {
@@ -466,7 +485,8 @@ export default function SalaryCalculator() {
     setShowBatchEditModal(true);
   };
 
-  const handleBatchEditHourlyRate = () => {
+  const handleBatchEditHourlyRate = async () => {
+    if (isSavingBatchEdit) return;
     const updateData: Partial<SalaryRecord> = {};
     if (batchNewHourlyRate > 0) {
       updateData.hourlyRate = batchNewHourlyRate;
@@ -505,10 +525,17 @@ export default function SalaryCalculator() {
       data: updateData
     }));
     
-    batchUpdateRecords(updates);
-    setShowBatchEditModal(false);
-    setSelectedRecordIds(new Set());
-    toast.success(`已成功更新 ${selectedRecordIds.size} 筆記錄！`);
+    setIsSavingBatchEdit(true);
+    try {
+      await batchUpdateRecords(updates);
+      setShowBatchEditModal(false);
+      setSelectedRecordIds(new Set());
+      toast.success(`已成功更新 ${selectedRecordIds.size} 筆記錄！`);
+    } catch {
+      toast.error('批次更新失敗，請稍後再試');
+    } finally {
+      setIsSavingBatchEdit(false);
+    }
   };
 
   const handleCancelBatchEdit = () => {
@@ -648,11 +675,13 @@ export default function SalaryCalculator() {
   };
 
   const handleConfirmImport = async () => {
+    if (isConfirmingImport) return;
     if (!importValidation || !importValidation.success) {
       toast.warning('無有效資料可匯入');
       return;
     }
 
+    setIsConfirmingImport(true);
     try {
       const existingDates = new Set(records.map(r => r.date));
       const recordsToImport = importValidation.records.filter(record => !existingDates.has(record.date));
@@ -675,6 +704,8 @@ export default function SalaryCalculator() {
     } catch (error) {
       console.error('匯入失敗:', error);
       toast.error('匯入失敗，請稍後再試');
+    } finally {
+      setIsConfirmingImport(false);
     }
   };
 
@@ -892,7 +923,7 @@ export default function SalaryCalculator() {
                 transition: 'background-color 0.2s ease, color 0.2s ease',
               }}
             >
-              身份與時薪
+              職稱／職位與時薪
             </button>
           </div>
         )}
@@ -913,6 +944,7 @@ export default function SalaryCalculator() {
               importMonth={importMonth}
               setImportMonth={setImportMonth}
               onAddRecord={handleAddRecord}
+              isAddingRecord={isAddingRecord}
               onImportFromWorkShifts={handleImportFromWorkShifts}
               onApplyTemplate={handleApplyTemplate}
             />
@@ -951,6 +983,7 @@ export default function SalaryCalculator() {
               onEditStartTimeChange={(t) => editingRecord && setEditingRecord({ ...editingRecord, startTime: t })}
               onEditEndTimeChange={(t) => editingRecord && setEditingRecord({ ...editingRecord, endTime: t })}
               onSaveEdit={handleSaveEdit}
+              isSavingEdit={isSavingEdit}
               onCancelEdit={handleCancelEdit}
               setEditingRecord={setEditingRecord}
               showBatchEditModal={showBatchEditModal}
@@ -960,6 +993,7 @@ export default function SalaryCalculator() {
               setBatchEditData={setBatchEditData}
               shiftCategoryOptions={shiftCategoryOptions}
               onBatchEditHourlyRate={handleBatchEditHourlyRate}
+              isSavingBatchEdit={isSavingBatchEdit}
               onCancelBatchEdit={handleCancelBatchEdit}
             />
           </>
@@ -1117,6 +1151,7 @@ export default function SalaryCalculator() {
                 <button
                   type="button"
                   onClick={handleCancelImport}
+                  disabled={isConfirmingImport}
                   style={{
                     padding: '0.5rem 1.25rem',
                     borderRadius: '8px',
@@ -1131,6 +1166,7 @@ export default function SalaryCalculator() {
                   <button
                     type="button"
                     onClick={handleConfirmImport}
+                    disabled={isConfirmingImport}
                     style={{
                       padding: '0.5rem 1.25rem',
                       borderRadius: '8px',
@@ -1141,7 +1177,7 @@ export default function SalaryCalculator() {
                       cursor: 'pointer',
                     }}
                   >
-                    確認匯入 ({importValidation.records.length} 筆)
+                    {isConfirmingImport ? '匯入中...' : `確認匯入 (${importValidation.records.length} 筆)`}
                   </button>
                 )}
               </div>

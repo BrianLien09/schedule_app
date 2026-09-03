@@ -23,7 +23,8 @@ interface SalaryRecordFormProps {
   templates: ShiftTemplate[];
   importMonth: string;
   setImportMonth: (val: string) => void;
-  onAddRecord: () => void;
+  onAddRecord: () => void | Promise<void>;
+  isAddingRecord: boolean;
   onImportFromWorkShifts: () => void;
   onApplyTemplate: (template: ShiftTemplate) => void;
 }
@@ -42,6 +43,7 @@ export default function SalaryRecordForm({
   importMonth,
   setImportMonth,
   onAddRecord,
+  isAddingRecord,
   onImportFromWorkShifts,
   onApplyTemplate,
 }: SalaryRecordFormProps) {
@@ -204,10 +206,10 @@ export default function SalaryRecordForm({
           </div>
         </div>
 
-        {/* 身份 */}
+        {/* 職稱／職位 */}
         <div>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
-            身份
+            職稱／職位
           </label>
           <select
             value={currentRecord.role}
@@ -365,6 +367,7 @@ export default function SalaryRecordForm({
 
       <button
         onClick={onAddRecord}
+        disabled={isAddingRecord}
         style={{
           padding: '0.75rem 1.5rem',
           borderRadius: '8px',
@@ -385,7 +388,7 @@ export default function SalaryRecordForm({
           e.currentTarget.style.background = 'var(--color-primary)';
         }}
       >
-        新增記錄
+        {isAddingRecord ? '新增中...' : '新增記錄'}
       </button>
     </div>
   );

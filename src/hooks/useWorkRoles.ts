@@ -147,7 +147,7 @@ export function useWorkRoles() {
 
   const deleteRole = async (id: string): Promise<void> => {
     if (!user || !hasWriteAccess(user.email) || id === WORK_ROLES_CONFIG_ID) {
-      console.warn('目前沒有刪除身份的權限');
+      console.warn('目前沒有刪除職稱／職位的權限');
       return;
     }
 

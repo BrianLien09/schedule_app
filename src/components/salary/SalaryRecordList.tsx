@@ -48,6 +48,7 @@ interface SalaryRecordListProps {
   onEditStartTimeChange: (val: string) => void;
   onEditEndTimeChange: (val: string) => void;
   onSaveEdit: () => void;
+  isSavingEdit: boolean;
   onCancelEdit: () => void;
   setEditingRecord: React.Dispatch<React.SetStateAction<SalaryRecord | null>>;
   
@@ -71,6 +72,7 @@ interface SalaryRecordListProps {
   }>>;
   shiftCategoryOptions: string[];
   onBatchEditHourlyRate: () => void;
+  isSavingBatchEdit: boolean;
   onCancelBatchEdit: () => void;
 }
 
@@ -110,6 +112,7 @@ export default function SalaryRecordList({
   onEditStartTimeChange,
   onEditEndTimeChange,
   onSaveEdit,
+  isSavingEdit,
   onCancelEdit,
   setEditingRecord,
   showBatchEditModal,
@@ -119,6 +122,7 @@ export default function SalaryRecordList({
   setBatchEditData,
   shiftCategoryOptions,
   onBatchEditHourlyRate,
+  isSavingBatchEdit,
   onCancelBatchEdit,
 }: SalaryRecordListProps) {
 
@@ -415,7 +419,7 @@ export default function SalaryRecordList({
                       />
                     </th>
                     <th style={{ textAlign: 'left' }}>日期</th>
-                    <th style={{ textAlign: 'left' }}>身份</th>
+                    <th style={{ textAlign: 'left' }}>職稱／職位</th>
                     <th style={{ textAlign: 'left' }}>班別</th>
                     <th style={{ textAlign: 'left' }}>時間</th>
                     <th style={{ textAlign: 'center' }}>工時</th>
@@ -579,7 +583,7 @@ export default function SalaryRecordList({
                       key={record.id}
                       className={`${styles.mobileCard} ${isSelected ? styles.mobileCardSelected : ''}`}
                     >
-                      {/* 卡片頂部：Checkbox、日期與身份/時薪 */}
+                      {/* 卡片頂部：勾選框、日期與職稱／職位、時薪 */}
                       <div className={styles.mobileCardTop}>
                         <div className={styles.dateBlock}>
                           <input
@@ -691,7 +695,7 @@ export default function SalaryRecordList({
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>身份</label>
+                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>職稱／職位</label>
                 <select
                   value={editingRecord.role}
                   onChange={(e) => {
@@ -773,6 +777,7 @@ export default function SalaryRecordList({
               <button
                 type="button"
                 onClick={onCancelEdit}
+                disabled={isSavingEdit}
                 style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: '1px solid #ccc', background: 'transparent', cursor: 'pointer' }}
               >
                 取消
@@ -780,9 +785,10 @@ export default function SalaryRecordList({
               <button
                 type="button"
                 onClick={onSaveEdit}
+                disabled={isSavingEdit}
                 style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', background: 'var(--color-primary)', color: '#fff', fontWeight: 600, cursor: 'pointer' }}
               >
-                儲存
+                {isSavingEdit ? '儲存中...' : '儲存'}
               </button>
             </div>
           </div>
@@ -820,7 +826,7 @@ export default function SalaryRecordList({
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>修改身份 (選填)</label>
+                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>修改職稱／職位（選填）</label>
                 <select
                   value={batchEditData.role}
                   onChange={(e) => setBatchEditData(prev => ({ ...prev, role: e.target.value }))}
@@ -852,6 +858,7 @@ export default function SalaryRecordList({
               <button
                 type="button"
                 onClick={onCancelBatchEdit}
+                disabled={isSavingBatchEdit}
                 style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: '1px solid #ccc', background: 'transparent', cursor: 'pointer' }}
               >
                 取消
@@ -859,9 +866,10 @@ export default function SalaryRecordList({
               <button
                 type="button"
                 onClick={onBatchEditHourlyRate}
+                disabled={isSavingBatchEdit}
                 style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', background: 'var(--color-primary)', color: '#fff', fontWeight: 600, cursor: 'pointer' }}
               >
-                套用修改
+                {isSavingBatchEdit ? '套用中...' : '套用修改'}
               </button>
             </div>
           </div>
