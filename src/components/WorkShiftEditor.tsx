@@ -317,6 +317,8 @@ export default function WorkShiftEditor({
             <input
               id="startTime"
               type="time"
+              lang="en-GB"
+              step="60"
               value={formData.startTime || ''}
               onChange={(e) => handleTimeChange('startTime', e.target.value)}
               required
@@ -330,6 +332,8 @@ export default function WorkShiftEditor({
             <input
               id="endTime"
               type="time"
+              lang="en-GB"
+              step="60"
               value={formData.endTime || ''}
               onChange={(e) => handleTimeChange('endTime', e.target.value)}
               required
@@ -398,7 +402,6 @@ export default function WorkShiftEditor({
                   }))
                 }
                 placeholder="請輸入自訂班別名稱..."
-                autoFocus
               />
               <button
                 type="button"
