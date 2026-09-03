@@ -1,9 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useState, useTransition } from 'react';
-import { SchoolIcon, BriefcaseIcon, GamepadIcon, MusicIcon, CalculatorIcon, WalletIcon, ExternalLinkIcon } from './Icons';
+import { SchoolIcon, BriefcaseIcon, GamepadIcon, CalculatorIcon } from './Icons';
 import styles from './GlassRadioNav.module.css';
 
 /**
@@ -23,24 +22,19 @@ export default function GlassRadioNav() {
    * 1: 學校課表
    * 2: 打工月曆
    * 3: 薪資計算
-   * 4: 生活費記錄
-   * 5: 遊戲攻略
-   * 6: DayMate 音樂（外部連結，不會觸發）
+   * 4: 遊戲攻略
    */
   const getGliderPosition = useCallback((path: string): number => {
     if (path === '/') return 0;
     if (path.startsWith('/schedule/school')) return 1;
     if (path.startsWith('/schedule/work')) return 2;
     if (path.startsWith('/tools/salary')) return 3;
-    if (path.startsWith('/tools/allowance')) return 4;
-    if (path === '/games') return 5;
-    // DayMate 音樂是外部連結，不改變路由
+    if (path === '/games') return 4;
     return 0;
   }, []);
 
   /**
    * isPending 為 false 代表路由切換已完成，此時 pendingPosition 應讓位給真實 pathname
-   * 避免 setTimeout 固定 600ms 與路由實際完成時間不同步，造成 Glider 左右跳動
    */
   const gliderPosition = (isPending && pendingPosition !== null)
     ? pendingPosition
@@ -128,24 +122,6 @@ export default function GlassRadioNav() {
         </span>
       </label>
 
-      {/* 生活費記錄 */}
-      <input
-        type="radio"
-        name="nav"
-        id="nav-allowance"
-        checked={pathname.startsWith('/tools/allowance')}
-        readOnly
-      />
-      <label 
-        htmlFor="nav-allowance"
-        onClick={(e) => handleNavClick(e, '/tools/allowance', 4)}
-      >
-        <span>
-          <WalletIcon size={16} />
-          <span>生活費</span>
-        </span>
-      </label>
-
       {/* 遊戲攻略 */}
       <input
         type="radio"
@@ -156,7 +132,7 @@ export default function GlassRadioNav() {
       />
       <label 
         htmlFor="nav-games"
-        onClick={(e) => handleNavClick(e, '/games', 5)}
+        onClick={(e) => handleNavClick(e, '/games', 4)}
       >
         <span>
           <GamepadIcon size={16} />
@@ -164,31 +140,11 @@ export default function GlassRadioNav() {
         </span>
       </label>
 
-      {/* 冥夜音樂 (外部連結) */}
-      <input
-        type="radio"
-        name="nav"
-        id="nav-music"
-        checked={false}
-        readOnly
-      />
-      <label htmlFor="nav-music">
-        <a
-          href="https://brianlien09.github.io/Music_app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <MusicIcon size={16} />
-          <span>冥夜音樂</span>
-          <ExternalLinkIcon size={10} />
-        </a>
-      </label>
-
       {/* Glider 滑動高亮 */}
       <div
         className={styles.glassGlider}
         style={{
-          transform: `translateX(${gliderPosition * 100}%)`
+          transform: `translateX(${gliderPosition * 100}%)`,
         }}
       />
     </div>

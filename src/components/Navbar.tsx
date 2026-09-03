@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { SchoolIcon, BriefcaseIcon, GamepadIcon, MusicIcon, ToolboxIcon, CalculatorIcon, WalletIcon } from './Icons';
+import { SchoolIcon, BriefcaseIcon, GamepadIcon, CalculatorIcon } from './Icons';
 import GlassRadioNav from './GlassRadioNav';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -42,15 +42,21 @@ export default function Navbar() {
 
   // 路由變更時關閉行動選單
   useEffect(() => {
-    setMenuOpen(false);
-    setOpenDropdown(null);
+    const timer = setTimeout(() => {
+      setMenuOpen(false);
+      setOpenDropdown(null);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [pathname]);
 
   // 當切回桌面時重置行動選單狀態
   useEffect(() => {
     if (!isMobile) {
-      setMenuOpen(false);
-      setOpenDropdown(null);
+      const timer = setTimeout(() => {
+        setMenuOpen(false);
+        setOpenDropdown(null);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [isMobile]);
 
@@ -139,7 +145,11 @@ export default function Navbar() {
           {/* 行動版：頂部列 (Logo + 漢堡選單) */}
           {isMobile && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+              <Link
+                href="/"
+                onClick={closeMenu}
+                style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', textDecoration: 'none' }}
+              >
                 <img
                   src={`${BASE_PATH}/avatar.jpg`}
                   alt="Avatar"
@@ -162,7 +172,7 @@ export default function Navbar() {
                 }}>
                   DayMate
                 </h1>
-              </div>
+              </Link>
               
               <button
                 type="button"
@@ -181,7 +191,10 @@ export default function Navbar() {
 
           {/* 桌面版：左側 Logo */}
           {!isMobile && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginLeft: '-0.75rem' }}>
+            <Link
+              href="/"
+              style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginLeft: '-0.75rem', textDecoration: 'none' }}
+            >
               <img
                 src={`${BASE_PATH}/icon.png?v=2`}
                 alt="DayMate Logo"
@@ -204,7 +217,7 @@ export default function Navbar() {
               }}>
                 DayMate
               </h1>
-            </div>
+            </Link>
           )}
 
           {/* 桌面版：Glass Radio Navigation（置中偏右） */}
@@ -279,13 +292,14 @@ export default function Navbar() {
             </div>
           )}
 
-          {/* 行動版：導航連結列表 */}
+          {/* 行動版：導航連結列表（扁平直接呈現所有頁面按鈕） */}
           {isMobile && (
             <ul
               id="mobile-navigation"
               className={`navbar-links ${styles.mobileMenu} ${menuOpen ? styles.mobileMenuOpen : ''}`}
               aria-hidden={!menuOpen}
             >
+              {/* 總覽 */}
               <li className={styles.mobileMenuItem}>
                 <Link
                   href="/"
@@ -298,78 +312,49 @@ export default function Navbar() {
                 </Link>
               </li>
 
-              {/* 日程表 Dropdown */}
-              <li className={`${styles.mobileMenuItem} dropdown ${isMobile && openDropdown === 'schedule' ? styles.dropdownOpen : ''}`}>
-                <div className={`${styles.mobileMenuLinkRow} ${pathname.startsWith('/schedule') ? styles.mobileMenuLinkRowActive : ''}`}>
-                  <Link
-                    href="/schedule/school"
-                    className={styles.mobileMenuLinkTarget}
-                    onClick={closeMenu}
-                  >
-                    <span className={styles.linkContentGroup}>
-                      <SchoolIcon size={18} />
-                      <span>日程表</span>
-                    </span>
-                  </Link>
-                  <button
-                    type="button"
-                    className={styles.mobileMenuDisclosure}
-                    onClick={(e) => toggleDropdown('schedule', e)}
-                    aria-label={openDropdown === 'schedule' ? '收合日程表子選單' : '展開日程表子選單'}
-                    aria-expanded={openDropdown === 'schedule'}
-                    aria-controls="mobile-schedule-menu"
-                  >
-                    <span className={styles.dropdownArrow} aria-hidden="true">{openDropdown === 'schedule' ? '▴' : '▾'}</span>
-                  </button>
-                </div>
-                <div id="mobile-schedule-menu" className={`dropdown-content ${isMobile && openDropdown === 'schedule' ? styles.dropdownContentOpen : ''}`} aria-hidden={openDropdown !== 'schedule'}>
-                  <Link href="/schedule/school" className="dropdown-item" onClick={closeMenu}>
-                    <SchoolIcon size={18} />
+              {/* 學校課表 */}
+              <li className={styles.mobileMenuItem}>
+                <Link
+                  href="/schedule/school"
+                  className={`${styles.mobileMenuLink} ${pathname.startsWith('/schedule/school') ? styles.mobileMenuLinkActive : ''}`}
+                  onClick={closeMenu}
+                >
+                  <div className={styles.linkContentGroup}>
+                    <SchoolIcon size={20} />
                     <span>學校課表</span>
-                  </Link>
-                  <Link href="/schedule/work" className="dropdown-item" onClick={closeMenu}>
-                    <BriefcaseIcon size={18} />
+                  </div>
+                </Link>
+              </li>
+
+              {/* 打工月曆 */}
+              <li className={styles.mobileMenuItem}>
+                <Link
+                  href="/schedule/work"
+                  className={`${styles.mobileMenuLink} ${pathname.startsWith('/schedule/work') ? styles.mobileMenuLinkActive : ''}`}
+                  onClick={closeMenu}
+                >
+                  <div className={styles.linkContentGroup}>
+                    <BriefcaseIcon size={20} />
                     <span>打工月曆</span>
-                  </Link>
-                </div>
+                  </div>
+                </Link>
               </li>
 
-              {/* 工具箱 Dropdown */}
-              <li className={`${styles.mobileMenuItem} dropdown ${isMobile && openDropdown === 'tools' ? styles.dropdownOpen : ''}`}>
-                <div className={`${styles.mobileMenuLinkRow} ${pathname.startsWith('/tools') ? styles.mobileMenuLinkRowActive : ''}`}>
-                  <Link
-                    href="/tools/salary"
-                    className={styles.mobileMenuLinkTarget}
-                    onClick={closeMenu}
-                  >
-                    <span className={styles.linkContentGroup}>
-                      <ToolboxIcon size={18} />
-                      <span>工具箱</span>
-                    </span>
-                  </Link>
-                  <button
-                    type="button"
-                    className={styles.mobileMenuDisclosure}
-                    onClick={(e) => toggleDropdown('tools', e)}
-                    aria-label={openDropdown === 'tools' ? '收合工具箱子選單' : '展開工具箱子選單'}
-                    aria-expanded={openDropdown === 'tools'}
-                    aria-controls="mobile-tools-menu"
-                  >
-                    <span className={styles.dropdownArrow} aria-hidden="true">{openDropdown === 'tools' ? '▴' : '▾'}</span>
-                  </button>
-                </div>
-                <div id="mobile-tools-menu" className={`dropdown-content ${isMobile && openDropdown === 'tools' ? styles.dropdownContentOpen : ''}`} aria-hidden={openDropdown !== 'tools'}>
-                  <Link href="/tools/salary" className="dropdown-item" onClick={closeMenu}>
-                    <CalculatorIcon size={18} />
+              {/* 薪資計算 */}
+              <li className={styles.mobileMenuItem}>
+                <Link
+                  href="/tools/salary"
+                  className={`${styles.mobileMenuLink} ${pathname.startsWith('/tools/salary') ? styles.mobileMenuLinkActive : ''}`}
+                  onClick={closeMenu}
+                >
+                  <div className={styles.linkContentGroup}>
+                    <CalculatorIcon size={20} />
                     <span>薪資計算</span>
-                  </Link>
-                  <Link href="/tools/allowance" className="dropdown-item" onClick={closeMenu}>
-                    <WalletIcon size={18} />
-                    <span>生活費記錄</span>
-                  </Link>
-                </div>
+                  </div>
+                </Link>
               </li>
 
+              {/* 遊戲攻略 */}
               <li className={styles.mobileMenuItem}>
                 <Link
                   href="/games"
@@ -377,25 +362,13 @@ export default function Navbar() {
                   onClick={closeMenu}
                 >
                   <div className={styles.linkContentGroup}>
-                    <GamepadIcon size={18} />
+                    <GamepadIcon size={20} />
                     <span>遊戲攻略</span>
                   </div>
                 </Link>
               </li>
-              <li className={styles.mobileMenuItem}>
-                <a
-                  href="https://brianlien09.github.io/Music_app"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.mobileMenuLink}
-                  onClick={closeMenu}
-                >
-                  <div className={styles.linkContentGroup}>
-                    <MusicIcon size={18} />
-                    <span>DayMate 音樂</span>
-                  </div>
-                </a>
-              </li>
+
+              {/* 使用者狀態與登入/登出 */}
               {!loading && (
                 <li className={styles.mobileMenuItem}>
                   {user ? (

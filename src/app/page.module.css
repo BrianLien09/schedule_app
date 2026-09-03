@@ -50,6 +50,12 @@
   gap: 20px;
 }
 
+.heroGridSingle {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
 @media (max-width: 900px) {
   .heroGrid {
     grid-template-columns: 1fr;

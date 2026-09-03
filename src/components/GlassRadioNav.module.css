@@ -93,14 +93,15 @@
   top: 0;
   bottom: 0;
   height: 100%;
-  width: calc(100% / 7);
+  width: calc(100% / 5);
   border-radius: 0.85rem;
   z-index: 1;
   background: var(--color-primary);
   box-shadow: 0 4px 12px rgba(139, 121, 101, 0.2);
   transition:
     transform 0.4s cubic-bezier(0.37, 1.95, 0.66, 0.56),
-    background 0.3s ease-in-out;
+    background 0.3s ease-in-out,
+    opacity 0.24s ease;
   pointer-events: none;
 }
 
@@ -156,5 +157,5 @@
   bottom: 4px;
   height: auto;
   border-radius: 0.75rem;
-  transition: transform 420ms var(--ease-standard), background-color 240ms ease, box-shadow 240ms ease;
+  transition: transform 420ms var(--ease-standard), background-color 240ms ease, box-shadow 240ms ease, opacity 240ms ease;
 }

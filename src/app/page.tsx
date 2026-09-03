@@ -18,6 +18,9 @@ import { calculateKongBalance } from '@/data/allowance';
 import { LoadingSpinner } from '@/components/Loading';
 import styles from './page.module.css';
 
+// 生活費功能暫時隱藏開關（相關代碼保留，切換為 true 即可恢復）
+const SHOW_ALLOWANCE = false;
+
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
 
@@ -125,8 +128,8 @@ export default function Home() {
 
       </div>
 
-      {/* ===== 2. 核心 Highlights 雙欄 Grid ===== */}
-      <div className={styles.heroGrid}>
+      {/* ===== 2. 核心 Highlights Grid (生活費隱藏時自動滿版) ===== */}
+      <div className={SHOW_ALLOWANCE ? styles.heroGrid : styles.heroGridSingle}>
         {/* 左側主視覺卡片：即時焦點與時間軸倒數 */}
         <div className={styles.liveFocusCard}>
           <div className={styles.cardHeaderLabel}>
@@ -211,70 +214,72 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 右側：生活費小帳簿卡片 */}
-        <div className={styles.allowanceCard}>
-          <div className={styles.allowanceCardHeader}>
-            <div className={styles.allowanceTitle}>
-              <WalletIcon size={20} />
-              <span>生活費帳簿摘要</span>
+        {/* 右側：生活費小帳簿卡片（暫時隱藏，代碼保留） */}
+        {SHOW_ALLOWANCE && (
+          <div className={styles.allowanceCard}>
+            <div className={styles.allowanceCardHeader}>
+              <div className={styles.allowanceTitle}>
+                <WalletIcon size={20} />
+                <span>生活費帳簿摘要</span>
+              </div>
+              <Link href="/tools/allowance" className={styles.cardActionLink}>
+                查看明細 →
+              </Link>
             </div>
-            <Link href="/tools/allowance" className={styles.cardActionLink}>
-              查看明細 →
-            </Link>
+
+            {latestAllowance ? (
+              <>
+                <div className={styles.allowanceBalanceBlock}>
+                  <span className={styles.balanceLabel}>帳簿總餘額</span>
+                  <span className={styles.balanceValue}>
+                    NT$ {latestAllowance.totalBalance.toLocaleString()}
+                  </span>
+                </div>
+
+                {/* 小呆/孔呆餘額分割條 */}
+                <div className={styles.splitBarContainer}>
+                  <div className={styles.splitInfoRow}>
+                    <span className={styles.xiaoLabel}>
+                      小呆: NT$ {latestAllowance.xiaoBalance.toLocaleString()}
+                    </span>
+                    <span className={styles.kongLabel}>
+                      孔呆: NT${' '}
+                      {calculateKongBalance(
+                        latestAllowance.totalBalance,
+                        latestAllowance.xiaoBalance
+                      ).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className={styles.splitTrack}>
+                    <div
+                      className={styles.splitXiaoFill}
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          Math.max(
+                            0,
+                            (latestAllowance.xiaoBalance / (latestAllowance.totalBalance || 1)) * 100
+                          )
+                        )}%`,
+                      }}
+                    ></div>
+                  </div>
+                </div>
+
+                <Link href="/tools/allowance" className={styles.cardActionLink}>
+                  查看詳細流水帳明細 →
+                </Link>
+              </>
+            ) : (
+              <div className={styles.emptyBlock}>
+                <p>尚無生活費記錄</p>
+                <Link href="/tools/allowance" className={styles.cardActionLink}>
+                  前往新增記錄 →
+                </Link>
+              </div>
+            )}
           </div>
-
-          {latestAllowance ? (
-            <>
-              <div className={styles.allowanceBalanceBlock}>
-                <span className={styles.balanceLabel}>帳簿總餘額</span>
-                <span className={styles.balanceValue}>
-                  NT$ {latestAllowance.totalBalance.toLocaleString()}
-                </span>
-              </div>
-
-              {/* 小呆/孔呆餘額分割條 */}
-              <div className={styles.splitBarContainer}>
-                <div className={styles.splitInfoRow}>
-                  <span className={styles.xiaoLabel}>
-                    小呆: NT$ {latestAllowance.xiaoBalance.toLocaleString()}
-                  </span>
-                  <span className={styles.kongLabel}>
-                    孔呆: NT${' '}
-                    {calculateKongBalance(
-                      latestAllowance.totalBalance,
-                      latestAllowance.xiaoBalance
-                    ).toLocaleString()}
-                  </span>
-                </div>
-                <div className={styles.splitTrack}>
-                  <div
-                    className={styles.splitXiaoFill}
-                    style={{
-                      width: `${Math.min(
-                        100,
-                        Math.max(
-                          0,
-                          (latestAllowance.xiaoBalance / (latestAllowance.totalBalance || 1)) * 100
-                        )
-                      )}%`,
-                    }}
-                  ></div>
-                </div>
-              </div>
-
-              <Link href="/tools/allowance" className={styles.cardActionLink}>
-                查看詳細流水帳明細 →
-              </Link>
-            </>
-          ) : (
-            <div className={styles.emptyBlock}>
-              <p>尚無生活費記錄</p>
-              <Link href="/tools/allowance" className={styles.cardActionLink}>
-                前往新增記錄 →
-              </Link>
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
       {/* ===== 3. 中間二合一 Section (今日時間軸 + 即將到來) ===== */}
