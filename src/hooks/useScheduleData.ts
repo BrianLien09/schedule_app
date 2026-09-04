@@ -4,12 +4,11 @@ import {
   workShifts as defaultWorkShifts,
   importantEvents,
   DEFAULT_COURSE_SEMESTER,
-  LEGACY_PERSONAL_COURSE_SEMESTER,
-  SHARED_COURSE_SEMESTER,
   Course,
   WorkShift,
   Event,
 } from '../data/schedule';
+import { normalizeCourses, type CourseCollectionSource } from '@/utils/courseSemesters';
 import {
   getDocuments,
   setDocument,
@@ -37,28 +36,8 @@ import {
   updateWorkShiftInFamilyWeb,
 } from '@/services/familySyncService';
 
-type CourseCollectionSource = 'personal' | 'shared';
-
 function getCourseCollectionSource(email: string | null | undefined): CourseCollectionSource {
   return isBrianAccount(email) ? 'personal' : 'shared';
-}
-
-function normalizeCourses(
-  courses: Course[],
-  semester: string,
-  collectionSource: CourseCollectionSource
-): Course[] {
-  const legacySemester = collectionSource === 'shared'
-    ? SHARED_COURSE_SEMESTER
-    : LEGACY_PERSONAL_COURSE_SEMESTER;
-
-  return courses
-    .filter((course) => (course.semester ?? legacySemester) === semester)
-    .map((course) => ({
-      ...course,
-      // 舊路徑文件沒有 semester 欄位時，依資料庫路徑補上既有學期。
-      semester: course.semester ?? legacySemester,
-    }));
 }
 
 async function migrateLegacyWorkShifts(
