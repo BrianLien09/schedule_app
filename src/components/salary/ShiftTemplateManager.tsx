@@ -4,20 +4,121 @@ import React from 'react';
 import type { ShiftTemplate } from '@/data/shiftTemplates';
 import type { WorkRole } from '@/data/workRoles';
 import { getWorkRoleLabel } from '@/data/workRoles';
+import Modal, { ModalContent } from '@/components/Modal';
 import styles from './ShiftTemplateManager.module.css';
+
+type ShiftTemplateDraft = Omit<ShiftTemplate, 'id' | 'createdAt'>;
 
 interface ShiftTemplateManagerProps {
   templates: ShiftTemplate[];
   templatesLoading: boolean;
   canEditTemplates: boolean;
-  newTemplate: Omit<ShiftTemplate, 'id' | 'createdAt'>;
-  setNewTemplate: React.Dispatch<React.SetStateAction<Omit<ShiftTemplate, 'id' | 'createdAt'>>>;
+  newTemplate: ShiftTemplateDraft;
+  setNewTemplate: React.Dispatch<React.SetStateAction<ShiftTemplateDraft>>;
   editingTemplateId: string | null;
-  onSaveTemplate: () => void;
+  editingTemplate: ShiftTemplateDraft | null;
+  setEditingTemplate: React.Dispatch<React.SetStateAction<ShiftTemplateDraft | null>>;
+  onAddTemplate: () => Promise<boolean>;
+  onUpdateTemplate: () => Promise<boolean>;
   onStartEditTemplate: (template: ShiftTemplate) => void;
   onDeleteTemplate: (template: ShiftTemplate) => void;
-  onResetTemplateForm: () => void;
+  onCloseTemplateEdit: () => void;
   roles?: WorkRole[];
+}
+
+interface TemplateFieldsProps {
+  newTemplate: ShiftTemplateDraft;
+  setNewTemplate: React.Dispatch<React.SetStateAction<ShiftTemplateDraft>>;
+  roles: WorkRole[];
+}
+
+function TemplateFields({ newTemplate, setNewTemplate, roles }: TemplateFieldsProps) {
+  return (
+    <>
+      <div className={styles.formField}>
+        <label className={styles.fieldLabel}>班別名稱</label>
+        <input
+          type="text"
+          value={newTemplate.name}
+          onChange={(event) => setNewTemplate((previous) => ({ ...previous, name: event.target.value }))}
+          placeholder="例：週六班"
+          className={styles.fieldInput}
+        />
+      </div>
+
+      <div className={styles.formField}>
+        <label className={styles.fieldLabel}>職稱／職位</label>
+        <select
+          value={newTemplate.role || (roles[0]?.id ?? 'assistant')}
+          onChange={(event) => {
+            const selectedRole = roles.find((role) => role.id === event.target.value);
+            setNewTemplate((previous) => ({
+              ...previous,
+              role: event.target.value,
+              roleName: selectedRole?.name || '助教',
+              hourlyRate: selectedRole?.hourlyRate ?? previous.hourlyRate,
+            }));
+          }}
+          className={styles.fieldSelect}
+        >
+          {roles.length > 0 ? (
+            roles.map((role) => (
+              <option key={role.id} value={role.id}>
+                {role.name} (NT$ {role.hourlyRate}/h)
+              </option>
+            ))
+          ) : (
+            <>
+              <option value="assistant">助教 (NT$ 200/h)</option>
+              <option value="instructor">講師 (NT$ 500/h)</option>
+            </>
+          )}
+        </select>
+      </div>
+
+      <div className={styles.formField}>
+        <label className={styles.fieldLabel}>時薪 (元)</label>
+        <input
+          type="number"
+          value={newTemplate.hourlyRate}
+          onChange={(event) => setNewTemplate((previous) => ({ ...previous, hourlyRate: Number(event.target.value) }))}
+          className={styles.fieldInput}
+        />
+      </div>
+
+      <div className={styles.formField}>
+        <label className={styles.fieldLabel}>開始時間</label>
+        <input
+          type="time"
+          value={newTemplate.startTime}
+          onChange={(event) => setNewTemplate((previous) => ({ ...previous, startTime: event.target.value }))}
+          className={styles.fieldInput}
+        />
+      </div>
+
+      <div className={styles.formField}>
+        <label className={styles.fieldLabel}>結束時間</label>
+        <input
+          type="time"
+          value={newTemplate.endTime}
+          onChange={(event) => setNewTemplate((previous) => ({ ...previous, endTime: event.target.value }))}
+          className={styles.fieldInput}
+        />
+      </div>
+
+      <div className={styles.formField}>
+        <label className={styles.fieldLabel}>工作時數 (小時)</label>
+        <input
+          type="number"
+          step="0.01"
+          min="0"
+          value={newTemplate.workHours ?? 0}
+          onChange={(event) => setNewTemplate((previous) => ({ ...previous, workHours: Number(event.target.value) }))}
+          className={styles.fieldInput}
+        />
+      </div>
+    </>
+  );
 }
 
 /**
@@ -53,12 +154,24 @@ export default function ShiftTemplateManager({
   newTemplate,
   setNewTemplate,
   editingTemplateId,
-  onSaveTemplate,
+  editingTemplate,
+  setEditingTemplate,
+  onAddTemplate,
+  onUpdateTemplate,
   onStartEditTemplate,
   onDeleteTemplate,
-  onResetTemplateForm,
+  onCloseTemplateEdit,
   roles = [],
 }: ShiftTemplateManagerProps) {
+  const handleEditSubmit = async (
+    event: React.FormEvent<HTMLFormElement>,
+    requestClose: () => void
+  ) => {
+    event.preventDefault();
+    const didSave = await onUpdateTemplate();
+    if (didSave) requestClose();
+  };
+
   return (
     <div className={`glass no-print ${styles.container}`}>
       <div className={styles.header}>
@@ -70,144 +183,62 @@ export default function ShiftTemplateManager({
         )}
       </div>
 
-      {/* 班別建立/編輯表單外框容器 */}
+      {/* 上方區塊只新增範本；既有範本由卡片的編輯彈窗處理。 */}
       <div className={styles.formContainer}>
-        {editingTemplateId && (
-          <div className={styles.editingBanner}>
-            <span>正在編輯：{newTemplate.name || '未命名班別'}</span>
-            <button
-              type="button"
-              onClick={onResetTemplateForm}
-              className={styles.cancelEditBtn}
-            >
-              ✕ 放棄編輯
-            </button>
-          </div>
-        )}
-
-        {/* 雙行 3 欄 Grid 配置 */}
         <div className={styles.formGrid}>
-          {/* 第 1 行：基本職務設定 */}
-          <div className={styles.formField}>
-            <label className={styles.fieldLabel}>
-              班別名稱
-            </label>
-            <input
-              type="text"
-              value={newTemplate.name}
-              onChange={(e) => setNewTemplate(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="例：週六班"
-              className={styles.fieldInput}
-            />
-          </div>
-
-          {/* 職稱／職位參數 */}
-          <div className={styles.formField}>
-            <label className={styles.fieldLabel}>
-              職稱／職位
-            </label>
-            <select
-              value={newTemplate.role || (roles[0]?.id ?? 'assistant')}
-              onChange={(e) => {
-                const selectedRole = roles.find((r) => r.id === e.target.value);
-                setNewTemplate((prev) => ({
-                  ...prev,
-                  role: e.target.value,
-                  roleName: selectedRole?.name || '助教',
-                  // 若切換職位，連動帶入該職位的預設時薪
-                  hourlyRate: selectedRole?.hourlyRate ?? prev.hourlyRate,
-                }));
-              }}
-              className={styles.fieldSelect}
-            >
-              {roles.length > 0 ? (
-                roles.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name} (NT$ {r.hourlyRate}/h)
-                  </option>
-                ))
-              ) : (
-                <>
-                  <option value="assistant">助教 (NT$ 200/h)</option>
-                  <option value="instructor">講師 (NT$ 500/h)</option>
-                </>
-              )}
-            </select>
-          </div>
-
-          <div className={styles.formField}>
-            <label className={styles.fieldLabel}>
-              時薪 (元)
-            </label>
-            <input
-              type="number"
-              value={newTemplate.hourlyRate}
-              onChange={(e) => setNewTemplate(prev => ({ ...prev, hourlyRate: Number(e.target.value) }))}
-              className={styles.fieldInput}
-            />
-          </div>
-
-          {/* 第 2 行：時間與工作時數 */}
-          <div className={styles.formField}>
-            <label className={styles.fieldLabel}>
-              開始時間
-            </label>
-            <input
-              type="time"
-              value={newTemplate.startTime}
-              onChange={(e) => setNewTemplate(prev => ({ ...prev, startTime: e.target.value }))}
-              className={styles.fieldInput}
-            />
-          </div>
-
-          <div className={styles.formField}>
-            <label className={styles.fieldLabel}>
-              結束時間
-            </label>
-            <input
-              type="time"
-              value={newTemplate.endTime}
-              onChange={(e) => setNewTemplate(prev => ({ ...prev, endTime: e.target.value }))}
-              className={styles.fieldInput}
-            />
-          </div>
-
-          <div className={styles.formField}>
-            <label className={styles.fieldLabel}>
-              工作時數 (小時)
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              value={newTemplate.workHours ?? 0}
-              onChange={(e) => setNewTemplate(prev => ({ ...prev, workHours: Number(e.target.value) }))}
-              className={styles.fieldInput}
-            />
-          </div>
+          <TemplateFields
+            newTemplate={newTemplate}
+            setNewTemplate={setNewTemplate}
+            roles={roles}
+          />
         </div>
 
-        {/* 表單操作按鈕區：明確靠右對齊，排版工整協調 */}
         <div className={styles.formActions}>
-          {editingTemplateId && (
-            <button
-              type="button"
-              onClick={onResetTemplateForm}
-              className={styles.cancelBtn}
-            >
-              取消
-            </button>
-          )}
           <button
             type="button"
-            onClick={onSaveTemplate}
+            onClick={() => void onAddTemplate()}
             disabled={!canEditTemplates}
             className={styles.submitBtn}
           >
-            {editingTemplateId ? '✓ 更新班別' : '＋ 新增班別'}
+            ＋ 新增班別
           </button>
         </div>
       </div>
+
+      <Modal
+        isOpen={editingTemplateId !== null && editingTemplate !== null}
+        onClose={onCloseTemplateEdit}
+        title="編輯班別範本"
+        maxWidth="680px"
+      >
+        <ModalContent render={(requestClose) => (
+          <form
+            className={styles.editForm}
+            onSubmit={(event) => void handleEditSubmit(event, requestClose)}
+          >
+            <div className={styles.formGrid}>
+              <TemplateFields
+                newTemplate={editingTemplate!}
+                setNewTemplate={(value) => {
+                  setEditingTemplate((previous) => {
+                    if (!previous) return previous;
+                    return typeof value === 'function' ? value(previous) : value;
+                  });
+                }}
+                roles={roles}
+              />
+            </div>
+            <div className={styles.formActions}>
+              <button type="button" onClick={requestClose} className={styles.cancelBtn}>
+                取消
+              </button>
+              <button type="submit" disabled={!canEditTemplates} className={styles.submitBtn}>
+                ✓ 更新班別
+              </button>
+            </div>
+          </form>
+        )} />
+      </Modal>
 
       {/* 班別範本卡片列表 (與表單左右起始位置 100% 對齊) */}
       <div className={styles.listSection}>

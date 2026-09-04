@@ -3,6 +3,7 @@
 import React, { RefObject, useMemo } from 'react';
 import type { SalaryRecord } from '@/hooks/useSalaryData';
 import { getWorkRoleLabel, type RoleType, type WorkRole } from '@/data/workRoles';
+import Modal, { ModalContent } from '@/components/Modal';
 import styles from './SalaryRecordList.module.css';
 
 const WEEKDAY_SHORT_LABELS = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'] as const;
@@ -47,7 +48,7 @@ interface SalaryRecordListProps {
   onEditWorkHoursChange: (val: string) => void;
   onEditStartTimeChange: (val: string) => void;
   onEditEndTimeChange: (val: string) => void;
-  onSaveEdit: () => void;
+  onSaveEdit: () => Promise<boolean>;
   isSavingEdit: boolean;
   onCancelEdit: () => void;
   setEditingRecord: React.Dispatch<React.SetStateAction<SalaryRecord | null>>;
@@ -664,135 +665,124 @@ export default function SalaryRecordList({
         )}
       </div>
 
-      {/* 單筆編輯 Modal */}
+      {/* 單筆編輯 Modal：沿用打工月曆的雙欄表單與共用模糊遮罩。 */}
       {showEditModal && editingRecord && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-        }}>
-          <div className="glass" style={{ width: '90%', maxWidth: '500px', padding: '1.5rem', background: '#f0ece1' }}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '1rem' }}>
-              編輯工作記錄
-            </h3>
-            
-            <div style={{ display: 'grid', gap: '1rem', marginBottom: '1.5rem' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>日期</label>
-                <input
-                  type="date"
-                  value={editingRecord.date}
-                  onChange={(e) => setEditingRecord({ ...editingRecord, date: e.target.value })}
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
-                />
+        <Modal isOpen={showEditModal} onClose={onCancelEdit} title="編輯工作記錄" maxWidth="560px">
+          <ModalContent render={(requestClose) => (
+            <form
+              className={styles.recordEditForm}
+              onSubmit={(event) => {
+                event.preventDefault();
+                void onSaveEdit().then((didSave) => {
+                  if (didSave) requestClose();
+                });
+              }}
+            >
+              <div className={styles.recordEditRow}>
+                <div className={styles.recordEditGroup}>
+                  <label htmlFor="edit-record-date">日期</label>
+                  <input
+                    id="edit-record-date"
+                    type="date"
+                    value={editingRecord.date}
+                    onChange={(event) => setEditingRecord({ ...editingRecord, date: event.target.value })}
+                  />
+                </div>
+
+                <div className={styles.recordEditGroup}>
+                  <label htmlFor="edit-record-role">職稱／職位</label>
+                  <select
+                    id="edit-record-role"
+                    value={editingRecord.role}
+                    onChange={(event) => {
+                      const roleId: RoleType = event.target.value;
+                      const selectedRole = roles.find((role) => role.id === roleId);
+                      setEditingRecord({
+                        ...editingRecord,
+                        role: roleId,
+                        roleName: selectedRole?.name,
+                        hourlyRate: selectedRole?.hourlyRate ?? editingRecord.hourlyRate,
+                      });
+                    }}
+                  >
+                    {roles.length === 0 ? (
+                      <option value={editingRecord.role}>
+                        {getWorkRoleLabel(editingRecord.role, roles, editingRecord.roleName)}
+                      </option>
+                    ) : (
+                      <>
+                        {!roles.some((role) => role.id === editingRecord.role) && (
+                          <option value={editingRecord.role}>
+                            {getWorkRoleLabel(editingRecord.role, roles, editingRecord.roleName)}（已移除）
+                          </option>
+                        )}
+                        {roles.map((role) => (
+                          <option key={role.id} value={role.id}>
+                            {role.name} (NT$ {role.hourlyRate}/小時)
+                          </option>
+                        ))}
+                      </>
+                    )}
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>職稱／職位</label>
-                <select
-                  value={editingRecord.role}
-                  onChange={(e) => {
-                    const roleId: RoleType = e.target.value;
-                    const selectedRole = roles.find((role) => role.id === roleId);
-                    setEditingRecord({
-                      ...editingRecord,
-                      role: roleId,
-                      roleName: selectedRole?.name,
-                      hourlyRate: selectedRole?.hourlyRate ?? editingRecord.hourlyRate,
-                    });
-                  }}
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
-                >
-                  {roles.length === 0 ? (
-                    <option value={editingRecord.role}>
-                      {getWorkRoleLabel(editingRecord.role, roles, editingRecord.roleName)}
-                    </option>
-                  ) : (
-                    <>
-                      {!roles.some((role) => role.id === editingRecord.role) && (
-                        <option value={editingRecord.role}>
-                          {getWorkRoleLabel(editingRecord.role, roles, editingRecord.roleName)}（已移除）
-                        </option>
-                      )}
-                      {roles.map((role) => (
-                        <option key={role.id} value={role.id}>
-                          {role.name} (NT$ {role.hourlyRate}/小時)
-                        </option>
-                      ))}
-                    </>
-                  )}
-                </select>
+              <div className={styles.recordEditRow}>
+                <div className={styles.recordEditGroup}>
+                  <label htmlFor="edit-record-start-time">開始時間</label>
+                  <input
+                    id="edit-record-start-time"
+                    type="time"
+                    value={editingRecord.startTime}
+                    onChange={(event) => onEditStartTimeChange(event.target.value)}
+                  />
+                </div>
+
+                <div className={styles.recordEditGroup}>
+                  <label htmlFor="edit-record-end-time">結束時間</label>
+                  <input
+                    id="edit-record-end-time"
+                    type="time"
+                    value={editingRecord.endTime}
+                    onChange={(event) => onEditEndTimeChange(event.target.value)}
+                  />
+                </div>
               </div>
 
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>開始時間</label>
-                <input
-                  type="time"
-                  value={editingRecord.startTime}
-                  onChange={(e) => onEditStartTimeChange(e.target.value)}
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
-                />
+              <div className={styles.recordEditRow}>
+                <div className={styles.recordEditGroup}>
+                  <label htmlFor="edit-record-hours">工作時數</label>
+                  <input
+                    id="edit-record-hours"
+                    type="number"
+                    step="0.01"
+                    value={editingWorkHours}
+                    onChange={(event) => onEditWorkHoursChange(event.target.value)}
+                  />
+                </div>
+
+                <div className={styles.recordEditGroup}>
+                  <label htmlFor="edit-record-rate">時薪 (元)</label>
+                  <input
+                    id="edit-record-rate"
+                    type="number"
+                    value={editingRecord.hourlyRate}
+                    onChange={(event) => setEditingRecord({ ...editingRecord, hourlyRate: Number(event.target.value) })}
+                  />
+                </div>
               </div>
 
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>結束時間</label>
-                <input
-                  type="time"
-                  value={editingRecord.endTime}
-                  onChange={(e) => onEditEndTimeChange(e.target.value)}
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
-                />
+              <div className={styles.recordEditActions}>
+                <button type="button" onClick={requestClose} disabled={isSavingEdit} className={styles.cancelEditButton}>
+                  取消
+                </button>
+                <button type="submit" disabled={isSavingEdit} className={styles.saveEditButton}>
+                  {isSavingEdit ? '儲存中...' : '儲存'}
+                </button>
               </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>工作時數</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={editingWorkHours}
-                  onChange={(e) => onEditWorkHoursChange(e.target.value)}
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>時薪 (元)</label>
-                <input
-                  type="number"
-                  value={editingRecord.hourlyRate}
-                  onChange={(e) => setEditingRecord({ ...editingRecord, hourlyRate: Number(e.target.value) })}
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-              <button
-                type="button"
-                onClick={onCancelEdit}
-                disabled={isSavingEdit}
-                style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: '1px solid #ccc', background: 'transparent', cursor: 'pointer' }}
-              >
-                取消
-              </button>
-              <button
-                type="button"
-                onClick={onSaveEdit}
-                disabled={isSavingEdit}
-                style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', background: 'var(--color-primary)', color: '#fff', fontWeight: 600, cursor: 'pointer' }}
-              >
-                {isSavingEdit ? '儲存中...' : '儲存'}
-              </button>
-            </div>
-          </div>
-        </div>
+            </form>
+          )} />
+        </Modal>
       )}
 
       {/* 批次編輯 Modal */}

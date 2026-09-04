@@ -228,3 +228,126 @@
   font-weight: bold;
   margin-top: 0.5rem;
 }
+
+/* 工作紀錄編輯表單與打工月曆的班表 Editor 維持相同雙欄密度。 */
+.recordEditForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.recordEditRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.recordEditGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.recordEditGroup label {
+  color: var(--foreground);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.recordEditGroup input,
+.recordEditGroup select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.62rem 0.75rem;
+  border: 2px dashed var(--glass-border);
+  border-radius: 8px;
+  background: rgba(220, 208, 194, 0.25);
+  color: var(--foreground);
+  font-size: 1rem;
+}
+
+.recordEditGroup input:focus,
+.recordEditGroup select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(184, 126, 107, 0.2);
+}
+
+.recordEditActions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+}
+
+.recordEditActions button {
+  flex: 1;
+  padding: 0.7rem 1.25rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancelEditButton {
+  border: 2px dashed var(--glass-border);
+  background: #f0ece1;
+  color: var(--foreground);
+}
+
+.saveEditButton {
+  border: none;
+  background: var(--color-primary);
+  color: #f0ece1;
+  box-shadow: 0 4px 12px rgba(139, 121, 101, 0.15);
+}
+
+.cancelEditButton:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background: var(--glass-bg-hover);
+}
+
+.saveEditButton:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  box-shadow: 0 6px 16px rgba(139, 121, 101, 0.2);
+  transform: translateY(-2px);
+}
+
+.recordEditActions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (max-width: 640px) {
+  .recordEditForm {
+    gap: 0.65rem;
+  }
+
+  .recordEditRow {
+    gap: 0.5rem;
+  }
+
+  .recordEditGroup {
+    gap: 0.25rem;
+  }
+
+  .recordEditGroup label {
+    font-size: 0.8rem;
+  }
+
+  .recordEditGroup input,
+  .recordEditGroup select {
+    padding: 0.45rem 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  .recordEditActions {
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+  }
+
+  .recordEditActions button {
+    padding: 0.6rem 0.5rem;
+    font-size: 0.9rem;
+  }
+}

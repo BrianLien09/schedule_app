@@ -125,6 +125,7 @@ export default function SalaryCalculator() {
     roleName: '助教',
   });
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState<Omit<ShiftTemplate, 'id' | 'createdAt'> | null>(null);
   
   // 批量編輯多欄位狀態
   const [batchEditData, setBatchEditData] = useState({
@@ -282,8 +283,7 @@ export default function SalaryCalculator() {
     toast.info(`已帶入「${template.name}」範本`);
   };
 
-  const resetTemplateForm = () => {
-    setEditingTemplateId(null);
+  const resetNewTemplateForm = () => {
     setNewTemplate({
       name: '',
       startTime: '09:00',
@@ -295,13 +295,18 @@ export default function SalaryCalculator() {
     });
   };
 
+  const closeTemplateEdit = () => {
+    setEditingTemplateId(null);
+    setEditingTemplate(null);
+  };
+
   const handleStartEditTemplate = (template: ShiftTemplate) => {
     if (!canEditTemplates) {
       toast.warning('目前沒有編輯班別的權限');
       return;
     }
     setEditingTemplateId(template.id);
-    setNewTemplate({
+    setEditingTemplate({
       name: template.name,
       startTime: template.startTime,
       endTime: template.endTime,
@@ -312,21 +317,14 @@ export default function SalaryCalculator() {
     });
   };
 
-  const handleSaveTemplate = async () => {
+  const handleAddTemplate = async (): Promise<boolean> => {
     if (!newTemplate.name.trim()) {
       toast.warning('班別名稱不可為空');
-      return;
+      return false;
     }
     if (!canEditTemplates) {
       toast.warning('目前沒有編輯班別的權限');
-      return;
-    }
-
-    if (editingTemplateId) {
-      await updateTemplate(editingTemplateId, { ...newTemplate });
-      toast.success('已更新班別範本');
-      resetTemplateForm();
-      return;
+      return false;
     }
 
     const template: ShiftTemplate = {
@@ -336,7 +334,24 @@ export default function SalaryCalculator() {
     };
     await addTemplate(template);
     toast.success('已新增班別範本');
-    resetTemplateForm();
+    resetNewTemplateForm();
+    return true;
+  };
+
+  const handleUpdateTemplate = async (): Promise<boolean> => {
+    if (!editingTemplateId || !editingTemplate) return false;
+    if (!editingTemplate.name.trim()) {
+      toast.warning('班別名稱不可為空');
+      return false;
+    }
+    if (!canEditTemplates) {
+      toast.warning('目前沒有編輯班別的權限');
+      return false;
+    }
+
+    await updateTemplate(editingTemplateId, { ...editingTemplate });
+    toast.success('已更新班別範本');
+    return true;
   };
 
   const handleDeleteTemplate = async (template: ShiftTemplate) => {
@@ -433,8 +448,8 @@ export default function SalaryCalculator() {
     setShowEditModal(true);
   };
 
-  const handleSaveEdit = async () => {
-    if (!editingRecord || isSavingEdit) return;
+  const handleSaveEdit = async (): Promise<boolean> => {
+    if (!editingRecord || isSavingEdit) return false;
     const hours = parseFloat(editingWorkHours) || 0;
     setIsSavingEdit(true);
     try {
@@ -442,11 +457,11 @@ export default function SalaryCalculator() {
         ...editingRecord,
         workHours: hours,
       });
-      setShowEditModal(false);
-      setEditingRecord(null);
       toast.success('已儲存變更');
+      return true;
     } catch {
       toast.error('儲存變更失敗，請稍後再試');
+      return false;
     } finally {
       setIsSavingEdit(false);
     }
@@ -1029,10 +1044,13 @@ export default function SalaryCalculator() {
             newTemplate={newTemplate}
             setNewTemplate={setNewTemplate}
             editingTemplateId={editingTemplateId}
-            onSaveTemplate={handleSaveTemplate}
+            editingTemplate={editingTemplate}
+            setEditingTemplate={setEditingTemplate}
+            onAddTemplate={handleAddTemplate}
+            onUpdateTemplate={handleUpdateTemplate}
             onStartEditTemplate={handleStartEditTemplate}
             onDeleteTemplate={handleDeleteTemplate}
-            onResetTemplateForm={resetTemplateForm}
+            onCloseTemplateEdit={closeTemplateEdit}
             roles={roles}
           />
         )}

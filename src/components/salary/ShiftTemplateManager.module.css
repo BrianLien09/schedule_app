@@ -36,37 +36,6 @@
   box-sizing: border-box;
 }
 
-.editingBanner {
-  margin-bottom: 1rem;
-  color: var(--color-primary);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  padding: 0.55rem 0.9rem;
-  border-radius: 8px;
-  background: rgba(184, 126, 107, 0.12);
-  border: 1px dashed rgba(184, 126, 107, 0.35);
-  font-weight: 600;
-  font-size: 0.88rem;
-}
-
-.cancelEditBtn {
-  padding: 0.25rem 0.65rem;
-  border-radius: 6px;
-  border: 1px solid rgba(184, 126, 107, 0.4);
-  background: #fdfbf7;
-  color: var(--color-primary);
-  cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: 600;
-  transition: all 0.2s ease;
-}
-
-.cancelEditBtn:hover {
-  background: rgba(184, 126, 107, 0.2);
-}
-
 /* 雙行 3 欄 Grid 表單配置：6 個欄位完美排列，不擠壓 */
 .formGrid {
   display: grid;
@@ -118,6 +87,11 @@
   margin-top: 1.25rem;
   padding-top: 1rem;
   border-top: 1px dashed rgba(220, 208, 194, 0.65);
+}
+
+.editForm {
+  display: flex;
+  flex-direction: column;
 }
 
 .cancelBtn {
@@ -346,8 +320,8 @@
     padding: 1rem;
   }
   .formGrid {
-    grid-template-columns: 1fr;
-    gap: 0.85rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
   }
   .formActions {
     flex-direction: column-reverse;
