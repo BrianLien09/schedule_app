@@ -127,7 +127,7 @@ export const CATEGORY_COLORS: Record<GuideCategory, { bg: string; text: string }
 // 建立新攻略時的預設值
 export const createDefaultGuide = (gameId: string, version?: string): Omit<GameGuide, 'id'> => {
   const now = new Date().toISOString();
-  const guide: any = {
+  return {
     gameId,
     title: '',
     url: '',
@@ -137,15 +137,9 @@ export const createDefaultGuide = (gameId: string, version?: string): Omit<GameG
     completed: false,
     order: Date.now(), // 使用時間戳作為初始排序值
     createdAt: now,
-    updatedAt: now
+    updatedAt: now,
+    ...(version ? { version } : {}),
   };
-  
-  // 只有在有值時才加入選填欄位（避免 undefined）
-  if (version) {
-    guide.version = version;
-  }
-  
-  return guide as Omit<GameGuide, 'id'>;
 };
 
 // 驗證攻略資料是否完整

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { startTransition, useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import {
   setDocument,
@@ -20,14 +20,18 @@ export function useSalaryData() {
 
   useEffect(() => {
     if (!user) {
-      setRecords([]);
-      setLoading(false);
-      setCanEdit(false);
+      startTransition(() => {
+        setRecords([]);
+        setLoading(false);
+        setCanEdit(false);
+      });
       return;
     }
 
-    setLoading(true);
-    setCanEdit(hasWriteAccess(user.email));
+    startTransition(() => {
+      setLoading(true);
+      setCanEdit(hasWriteAccess(user.email));
+    });
 
     const unsubscribe = subscribeToCollection<SalaryRecord>(
       user.uid,

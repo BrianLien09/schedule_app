@@ -14,7 +14,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useGameGuides } from '@/hooks/useGameGuides';
 import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import { GuideCard, CategoryBadge } from '@/components/GuideComponents';
 import { GuideEditForm } from '@/components/GuideEditForm';
@@ -34,7 +33,6 @@ export default function GamesPage() {
     updateGuide,
     removeGuide,
   } = useGameGuides();
-  const { toast } = useToast();
   const { confirm: confirmDialog } = useConfirm();
 
   // UI 狀態
@@ -46,9 +44,6 @@ export default function GamesPage() {
 
   // 表單區域的 ref，用於自動滾動
   const formRef = useRef<HTMLDivElement>(null);
-
-  // 取得當前遊戲資訊
-  const currentGame = games.find((g) => g.id === selectedGame);
 
   // 取得當前遊戲的版本列表（直接在這裡計算，避免額外的函式依賴）
   const availableVersions = useMemo(() => {
@@ -66,18 +61,10 @@ export default function GamesPage() {
     });
   }, [guides, selectedGame]);
 
-  // 當版本列表變化時，自動選擇最新版本（如果當前未選擇或選擇的版本不存在）
-  useEffect(() => {
-    if (availableVersions.length > 0) {
-      // 如果當前沒有選擇版本，或選擇的版本不在可用列表中，則選擇最新版本
-      if (selectedVersion === null || !availableVersions.includes(selectedVersion)) {
-        setSelectedVersion(availableVersions[0]); // 選擇最新版本（陣列第一個）
-      }
-    } else {
-      // 如果沒有任何版本，清空選擇
-      setSelectedVersion(null);
-    }
-  }, [availableVersions]); // 只依賴 availableVersions，避免無限循環
+  // 版本清單改變時直接推導可用選擇，避免額外 state 與重複渲染。
+  const activeVersion = selectedVersion && availableVersions.includes(selectedVersion)
+    ? selectedVersion
+    : availableVersions[0] ?? null;
 
   // 當表單顯示時，自動滾動到表單位置
   useEffect(() => {
@@ -95,17 +82,17 @@ export default function GamesPage() {
 
   // 篩選顯示的攻略（直接計算，不使用額外函式）
   const filteredGuides = useMemo(() => {
-    if (selectedVersion) {
+    if (activeVersion) {
       // 當選擇特定版本時：
       // 1. 顯示該版本的攻略
       // 2. 同時顯示沒有版本標記的攻略（通用資源類）
       return guides.filter(
-        (g) => g.gameId === selectedGame && (!g.version || g.version === selectedVersion)
+        (g) => g.gameId === selectedGame && (!g.version || g.version === activeVersion)
       );
     }
     // 「全部版本」時顯示所有攻略
     return guides.filter((g) => g.gameId === selectedGame);
-  }, [guides, selectedGame, selectedVersion]);
+  }, [activeVersion, guides, selectedGame]);
 
   // 按照分類分組攻略（保持順序）
   const groupedGuides = useMemo(() => {
@@ -123,7 +110,7 @@ export default function GamesPage() {
 
     // 按照 GUIDE_CATEGORIES 順序返回有資料的分類
     return GUIDE_CATEGORIES.map((category) => [category, groups[category]] as const)
-      .filter(([_, guides]) => guides.length > 0);
+      .filter((entry) => entry[1].length > 0);
   }, [filteredGuides]);
 
   // 處理新增攻略（使用 useCallback 避免重新建立）
@@ -222,7 +209,7 @@ export default function GamesPage() {
           {availableVersions.map((ver) => (
             <button
               key={ver}
-              className={`${styles.versionChip} ${selectedVersion === ver ? styles.active : ''}`}
+              className={`${styles.versionChip} ${activeVersion === ver ? styles.active : ''}`}
               onClick={() => setSelectedVersion(ver)}
             >
               v{ver}
@@ -230,7 +217,7 @@ export default function GamesPage() {
           ))}
           {/* 「全部版本」按鈕放在最後 */}
           <button
-            className={`${styles.versionChip} ${selectedVersion === null ? styles.active : ''}`}
+            className={`${styles.versionChip} ${activeVersion === null ? styles.active : ''}`}
             onClick={() => setSelectedVersion(null)}
           >
             全部版本
@@ -255,7 +242,7 @@ export default function GamesPage() {
           <GuideEditForm
             guide={editingGuide || undefined}
             gameId={selectedGame}
-            version={selectedVersion || undefined}
+            version={activeVersion || undefined}
             onSave={editingGuide ? handleUpdateGuide : handleAddGuide}
             onCancel={() => {
               setShowAddForm(false);

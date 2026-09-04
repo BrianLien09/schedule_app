@@ -7,7 +7,7 @@
  * 使用 Portal 確保不被其他元素遮蓋。
  */
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { useToast } from '@/context/ToastContext';
 import styles from './Toast.module.css';
@@ -22,12 +22,11 @@ const TOAST_ICONS: Record<string, string> = {
 
 export default function ToastContainer() {
   const { toasts, removeToast } = useToast();
-  const [mounted, setMounted] = useState(false);
-
-  // Portal 需要等 DOM 就緒
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false
+  );
 
   if (!mounted) return null;
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { startTransition, useState, useEffect } from 'react';
 
 /**
  * Responsive Mobile Detection Hook
@@ -12,7 +12,7 @@ export function useIsMobile(breakpoint: number = 768): boolean {
     const mediaQuery = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
 
     // 初始檢查
-    setIsMobile(mediaQuery.matches);
+    startTransition(() => setIsMobile(mediaQuery.matches));
 
     // 監聽 media query 變化 (內建 debounce)
     const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {

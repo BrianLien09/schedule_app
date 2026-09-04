@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { startTransition, useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import {
   workShifts as defaultWorkShifts,
@@ -61,6 +61,54 @@ function normalizeCourses(
     }));
 }
 
+async function migrateLegacyWorkShifts(
+  userId: string,
+  existingSalaryRecords: SalaryRecord[],
+  legacyShifts: WorkShift[]
+): Promise<void> {
+  const recordsToCreate = legacyShifts
+    .filter(
+      (shift) =>
+        !existingSalaryRecords.some((record) => isSalaryRecordLinkedToShift(record, shift))
+    )
+    .map((shift) =>
+      createSalaryRecordFromWorkShift(shift, {
+        id: `salary-${shift.id}`,
+        legacyWorkShiftId: shift.id,
+      })
+    );
+
+  if (recordsToCreate.length > 0) {
+    await batchSetDocuments(userId, 'salaryRecords', recordsToCreate);
+  }
+}
+
+async function initializeDefaultData(userId: string): Promise<void> {
+  try {
+    const existingLegacyShifts = await getDocuments<WorkShift>(userId, 'workShifts');
+    const existingSalaryRecords = await getDocuments<SalaryRecord>(userId, 'salaryRecords');
+    const existingEvents = await getDocuments<Event>(userId, 'events');
+
+    if (existingSalaryRecords.length === 0 && existingLegacyShifts.length === 0) {
+      const seededSalaryRecords = defaultWorkShifts.map((shift) =>
+        createSalaryRecordFromWorkShift(shift, {
+          id: `salary-${shift.id}`,
+          legacyWorkShiftId: shift.id,
+        })
+      );
+      await batchSetDocuments(userId, 'salaryRecords', seededSalaryRecords);
+    } else if (existingLegacyShifts.length > 0) {
+      await migrateLegacyWorkShifts(userId, existingSalaryRecords, existingLegacyShifts);
+    }
+
+    if (existingEvents.length === 0) {
+      await batchSetDocuments(userId, 'events', importantEvents);
+    }
+  } catch (error) {
+    console.error('初始化個人資料失敗', error);
+  }
+}
+
 export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
   const { user } = useAuth();
 
@@ -73,75 +121,22 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
   const courseCollectionSource = getCourseCollectionSource(user?.email);
   const canEditCourses = canEdit && isBrianAccount(user?.email);
 
-  /**
-   * 舊版 workShifts 仍可能留在資料庫，這裡先補成薪資格式，避免切換來源後資料消失。
-   */
-  const migrateLegacyWorkShifts = async (
-    userId: string,
-    existingSalaryRecords: SalaryRecord[],
-    legacyShifts: WorkShift[]
-  ) => {
-    const recordsToCreate = legacyShifts
-      .filter(
-        (shift) =>
-          !existingSalaryRecords.some((record) => isSalaryRecordLinkedToShift(record, shift))
-      )
-      .map((shift) =>
-        createSalaryRecordFromWorkShift(shift, {
-          id: `salary-${shift.id}`,
-          legacyWorkShiftId: shift.id,
-        })
-      );
-
-    if (recordsToCreate.length > 0) {
-      await batchSetDocuments(userId, 'salaryRecords', recordsToCreate);
-    }
-  };
-
-  const initializeDefaultData = async (userId: string) => {
-    try {
-      const existingLegacyShifts = await getDocuments<WorkShift>(
-        userId,
-        'workShifts'
-      );
-      const existingSalaryRecords = await getDocuments<SalaryRecord>(
-        userId,
-        'salaryRecords'
-      );
-      const existingEvents = await getDocuments<Event>(userId, 'events');
-
-      if (existingSalaryRecords.length === 0 && existingLegacyShifts.length === 0) {
-        const seededSalaryRecords = defaultWorkShifts.map((shift) =>
-          createSalaryRecordFromWorkShift(shift, {
-            id: `salary-${shift.id}`,
-            legacyWorkShiftId: shift.id,
-          })
-        );
-        await batchSetDocuments(userId, 'salaryRecords', seededSalaryRecords);
-      } else if (existingLegacyShifts.length > 0) {
-        await migrateLegacyWorkShifts(userId, existingSalaryRecords, existingLegacyShifts);
-      }
-
-      if (existingEvents.length === 0) {
-        await batchSetDocuments(userId, 'events', importantEvents);
-      }
-    } catch (error) {
-      console.error('初始化個人資料失敗', error);
-    }
-  };
-
   useEffect(() => {
     if (!user) {
-      setCourses([]);
-      setShifts([]);
-      setEvents([]);
-      setLoading(false);
-      setCanEdit(false);
+      startTransition(() => {
+        setCourses([]);
+        setShifts([]);
+        setEvents([]);
+        setLoading(false);
+        setCanEdit(false);
+      });
       return;
     }
 
-    setLoading(true);
-    setCanEdit(hasWriteAccess(user.email));
+    startTransition(() => {
+      setLoading(true);
+      setCanEdit(hasWriteAccess(user.email));
+    });
 
     initializeDefaultData(user.uid).then(() => {
       setLoading(false);
@@ -249,7 +244,9 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
       id: mergedShift.salaryRecordId ?? id,
       legacyWorkShiftId: mergedShift.legacyWorkShiftId,
     });
-    const { id: _recordId, ...recordData } = record;
+    const recordData = Object.fromEntries(
+      Object.entries(record).filter(([key]) => key !== 'id')
+    );
 
     await updateDocument(user.uid, 'salaryRecords', id, recordData);
     await updateWorkShiftInFamilyWeb(id, mergedShift, user.email);

@@ -15,7 +15,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { games } from '@/data/games';
-import { batchImportGameGuides } from '@/services/firestoreService';
+import { batchImportGameGuides } from '@/services/gameGuideRepository';
 import type { GameGuide } from '@/data/gameGuides';
 import styles from './migration.module.css';
 
@@ -54,7 +54,7 @@ export default function MigrationPage() {
 
         // 遷移通用連結
         for (const link of game.links) {
-          const guide: any = {
+          const guide: Omit<GameGuide, 'id'> = {
             gameId: game.id,
             title: link.title,
             url: link.url,
@@ -98,7 +98,7 @@ export default function MigrationPage() {
                   order: Date.now() + guidesToMigrate.length,
                   createdAt: new Date().toISOString(),
                   updatedAt: new Date().toISOString(),
-                } as any);
+                });
                 addLog(`    ⭐ 角色：${character.name}`);
               }
             }
@@ -106,7 +106,7 @@ export default function MigrationPage() {
             // 遷移版本連結
             if (version.links) {
               for (const link of version.links) {
-                const guide: any = {
+                const guide: Omit<GameGuide, 'id'> = {
                   gameId: game.id,
                   version: version.version,
                   title: link.title,

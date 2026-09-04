@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect, memo } from 'react';
-import type { GameGuide } from '@/data/gameGuides';
+import type { GameGuide, GuideCategory } from '@/data/gameGuides';
 import { GUIDE_CATEGORIES, COMMON_TAGS, createDefaultGuide, validateGuide } from '@/data/gameGuides';
 import { StarRating } from './GuideComponents';
 import { games } from '@/data/games';
@@ -57,18 +57,13 @@ const GuideEditFormComponent = ({ guide, gameId, version, onSave, onCancel }: Gu
     }
 
     // 清理空字串（轉換為不包含該欄位）
-    const cleanedData: any = { ...formData };
-    
-    // 移除空字串的選填欄位
-    if (!cleanedData.subtitle?.trim()) {
-      delete cleanedData.subtitle;
-    }
-    if (!cleanedData.resonanceCode?.trim()) {
-      delete cleanedData.resonanceCode;
-    }
-    if (!cleanedData.version?.trim()) {
-      delete cleanedData.version;
-    }
+    const { subtitle, resonanceCode, version: guideVersion, ...requiredData } = formData;
+    const cleanedData: Omit<GameGuide, 'id'> = {
+      ...requiredData,
+      ...(subtitle?.trim() ? { subtitle } : {}),
+      ...(resonanceCode?.trim() ? { resonanceCode } : {}),
+      ...(guideVersion?.trim() ? { version: guideVersion } : {}),
+    };
 
     setSaving(true);
     try {
@@ -171,7 +166,7 @@ const GuideEditFormComponent = ({ guide, gameId, version, onSave, onCancel }: Gu
         <label>攻略分類 *</label>
         <select
           value={formData.category}
-          onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
+          onChange={(e) => setFormData({ ...formData, category: e.target.value as GuideCategory })}
           required
         >
           {GUIDE_CATEGORIES.map((cat) => (
@@ -200,7 +195,7 @@ const GuideEditFormComponent = ({ guide, gameId, version, onSave, onCancel }: Gu
           </datalist>
         )}
         <small className={styles.hint}>
-          選填，可輸入版本號或從建議中選擇（無需輸入 "v" 前綴）
+          選填，可輸入版本號或從建議中選擇（無需輸入 &quot;v&quot; 前綴）
         </small>
       </div>
 

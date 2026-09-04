@@ -66,7 +66,7 @@ export default function CourseNoteList({
           return <li key={i} className={styles.mdListItem}>{line.substring(2)}</li>;
         }
         // 粗體和斜體
-        let formatted = line
+        const formatted = line
           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
           .replace(/\*(.*?)\*/g, '<em>$1</em>')
           .replace(/`(.*?)`/g, '<code>$1</code>');

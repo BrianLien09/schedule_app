@@ -1,6 +1,8 @@
 import * as XLSX from 'xlsx';
 import type { SalaryRecord } from '@/hooks/useSalaryData';
 
+type SpreadsheetRow = Record<string, unknown>;
+
 /**
  * Excel 日期轉換為 YYYY-MM-DD 格式
  * 
@@ -8,7 +10,7 @@ import type { SalaryRecord } from '@/hooks/useSalaryData';
  * - 序列號（如 45859 代表 2025/7/21）
  * - 文字格式（如 "7/21/25", "2025-07-21"）
  */
-function parseExcelDate(value: any): string {
+function parseExcelDate(value: unknown): string {
   if (!value) {
     throw new Error('日期欄位不得為空');
   }
@@ -33,7 +35,8 @@ function parseExcelDate(value: any): string {
     // 嘗試解析 M/D/YY 或 M/D/YYYY 格式
     const match = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
     if (match) {
-      let [, month, day, year] = match;
+      const [, month, day, rawYear] = match;
+      let year = rawYear;
       
       // 處理兩位數年份（25 → 2025）
       if (year.length === 2) {
@@ -67,7 +70,7 @@ function parseExcelDate(value: any): string {
 /**
  * 解析時薪（移除貨幣符號與逗號）
  */
-function parseHourlyRate(value: any): number {
+function parseHourlyRate(value: unknown): number {
   if (typeof value === 'number') {
     return value;
   }
@@ -90,8 +93,12 @@ function parseHourlyRate(value: any): number {
 /**
  * 解析工作時長
  */
-function parseWorkHours(value: any): number {
-  const hours = typeof value === 'number' ? value : parseFloat(value);
+function parseWorkHours(value: unknown): number {
+  const hours = typeof value === 'number'
+    ? value
+    : typeof value === 'string'
+      ? parseFloat(value)
+      : Number.NaN;
   
   if (isNaN(hours) || hours <= 0) {
     throw new Error(`無效的工作時長：${value}`);
@@ -180,19 +187,19 @@ export async function parseExcelFile(file: File): Promise<ImportValidation> {
     const worksheet = workbook.Sheets[sheetName];
 
     // 方法一：嘗試從第一行開始讀取（標準格式）
-    let rawJsonData = XLSX.utils.sheet_to_json(worksheet, { 
+    let rawJsonData = XLSX.utils.sheet_to_json<SpreadsheetRow>(worksheet, {
       raw: false,
       defval: '',
     });
 
     // 方法二：如果第一行不是標題，從第二行開始讀取
-    if (rawJsonData.length === 0 || !('打工日期' in (rawJsonData[0] as Record<string, any>))) {
+    if (rawJsonData.length === 0 || !('打工日期' in rawJsonData[0])) {
       // 嘗試跳過第一行（可能是月份標題）
       const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
       range.s.r = 1; // 從第二行開始
       const newRef = XLSX.utils.encode_range(range);
       
-      rawJsonData = XLSX.utils.sheet_to_json(worksheet, {
+      rawJsonData = XLSX.utils.sheet_to_json<SpreadsheetRow>(worksheet, {
         raw: false,
         defval: '',
         range: newRef,
@@ -206,8 +213,8 @@ export async function parseExcelFile(file: File): Promise<ImportValidation> {
 
     // 清理欄位名稱（去除前後空格、全形符號）
     const jsonData = rawJsonData.map(row => {
-      const cleanedRow: Record<string, any> = {};
-      for (const [key, value] of Object.entries(row as Record<string, any>)) {
+      const cleanedRow: SpreadsheetRow = {};
+      for (const [key, value] of Object.entries(row)) {
         let cleanedKey = String(key).trim();
         // 處理可能的全形括號和符號
         cleanedKey = cleanedKey.replace(/（/g, '(').replace(/）/g, ')');
@@ -218,7 +225,7 @@ export async function parseExcelFile(file: File): Promise<ImportValidation> {
     });
 
     // 檢查必要欄位
-    const firstRow = jsonData[0] as Record<string, any>;
+    const firstRow = jsonData[0];
     const requiredColumns = ['打工日期', '工作內容', '工作時長 (時)', '時薪($)'];
     const actualColumns = Object.keys(firstRow);
     const missingColumns = requiredColumns.filter(col => !(col in firstRow));
@@ -232,7 +239,7 @@ export async function parseExcelFile(file: File): Promise<ImportValidation> {
 
     // 解析每一筆資料
     let skippedCount = 0;
-    jsonData.forEach((row: any, index: number) => {
+    jsonData.forEach((row, index: number) => {
       const rowNumber = index + 2; // Excel 行號（第1行是標題）
 
       try {

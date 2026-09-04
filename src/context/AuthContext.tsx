@@ -58,7 +58,7 @@ interface AuthProviderProps {
  */
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(isFirebaseConfigured && Boolean(auth));
 
   /**
    * 監聽 Firebase Auth 狀態變化
@@ -67,9 +67,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * 這確保了即使使用者重新整理頁面，登入狀態也能保持。
    */
   useEffect(() => {
-    // 如果 Firebase 未設定，直接結束載入
+    // Firebase 未設定時初始值已是非載入狀態，不需要額外觸發 render。
     if (!isFirebaseConfigured || !auth) {
-      setLoading(false);
       return;
     }
 

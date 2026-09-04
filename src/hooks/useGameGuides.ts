@@ -8,14 +8,14 @@
  * - 進度計算
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { startTransition, useState, useEffect, useCallback } from 'react';
 import type { GameGuide } from '@/data/gameGuides';
 import {
   subscribeToGameGuides,
   addGameGuide,
   updateGameGuide,
   deleteGameGuide,
-} from '@/services/firestoreService';
+} from '@/services/gameGuideRepository';
 import { useAuth } from '@/context/AuthContext';
 import { hasGameGuideWriteAccess } from '@/config/permissions';
 
@@ -29,12 +29,14 @@ export function useGameGuides() {
   // 訂閱 Firestore 資料變更
   useEffect(() => {
     if (!user) {
-      setLoading(false);
-      setGuides([]);
+      startTransition(() => {
+        setLoading(false);
+        setGuides([]);
+      });
       return;
     }
 
-    setLoading(true);
+    startTransition(() => setLoading(true));
     const unsubscribe = subscribeToGameGuides((data) => {
       setGuides(data);
       setLoading(false);

@@ -77,14 +77,6 @@ export default function AllowanceManager() {
   const [submittingAction, setSubmittingAction] = useState<'add' | 'edit' | null>(null);
 
   // ========== 月份篩選狀態 ==========
-  // 預設顯示本月記錄
-  const getCurrentMonth = () => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth() + 1;
-    return `${year}-${String(month).padStart(2, '0')}`;
-  };
-  
   const [filterMonth, setFilterMonth] = useState<string>(''); // 預設顯示全部月份
   const [customMonth, setCustomMonth] = useState<string>(''); // 自訂月份選擇器
 
@@ -226,7 +218,13 @@ export default function AllowanceManager() {
         }));
       }
     }
-  }, [loading, records.length]); // 只監聽 loading 和 records 數量變化
+  }, [
+    currentRecord.amount,
+    currentRecord.sourceType,
+    currentRecord.xiaoBalance,
+    loading,
+    records,
+  ]);
 
   // ========== 計算孔呆餘額（編輯表單） ==========
   const editingKongBalance = useMemo(() => {
@@ -396,7 +394,7 @@ export default function AllowanceManager() {
     try {
       await navigator.clipboard.writeText(text);
       toast.info('已複製到剪貼簿');
-    } catch (err) {
+    } catch {
       toast.error('複製失敗，請手動選取文字');
     }
   };

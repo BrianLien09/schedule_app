@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { startTransition, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import {
   setDocument,
@@ -19,14 +19,18 @@ export function useShiftTemplates() {
 
   useEffect(() => {
     if (!user) {
-      setTemplates([]);
-      setLoading(false);
-      setCanEdit(false);
+      startTransition(() => {
+        setTemplates([]);
+        setLoading(false);
+        setCanEdit(false);
+      });
       return;
     }
 
-    setLoading(true);
-    setCanEdit(hasWriteAccess(user.email));
+    startTransition(() => {
+      setLoading(true);
+      setCanEdit(hasWriteAccess(user.email));
+    });
 
     const unsubscribe = subscribeToCollection<ShiftTemplate>(
       user.uid,

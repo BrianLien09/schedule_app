@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { startTransition, useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import {
   setDocument,
@@ -40,16 +40,20 @@ export function useAllowanceData() {
   useEffect(() => {
     if (!user) {
       // 未登入：不顯示任何資料
-      setRecords([]);
-      setSourceTypes(DEFAULT_SOURCE_TYPES);
-      setLoading(false);
-      setCanEdit(false);
+      startTransition(() => {
+        setRecords([]);
+        setSourceTypes(DEFAULT_SOURCE_TYPES);
+        setLoading(false);
+        setCanEdit(false);
+      });
       return;
     }
 
     // 已登入：使用共用資料路徑
-    setLoading(true);
-    setCanEdit(hasWriteAccess(user.email));
+    startTransition(() => {
+      setLoading(true);
+      setCanEdit(hasWriteAccess(user.email));
+    });
 
     // 訂閱即時資料變更（生活費記錄）
     const unsubscribeRecords = subscribeToCollection<AllowanceRecord>(

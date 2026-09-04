@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { startTransition, useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import type { CourseNote, NoteType } from '@/data/courseNotes';
 import {
@@ -17,7 +17,7 @@ import {
   deleteCourseNote,
   toggleCourseNoteCompletion,
   getIncompleteTasks,
-} from '@/services/firestoreService';
+} from '@/services/courseNoteRepository';
 
 interface UseCourseNotesOptions {
   courseId?: string;  // 如果提供，只訂閱特定課程的筆記
@@ -32,13 +32,17 @@ export function useCourseNotes(options: UseCourseNotesOptions = {}) {
   // 訂閱筆記資料（即時同步）
   useEffect(() => {
     if (!user) {
-      setNotes([]);
-      setLoading(false);
+      startTransition(() => {
+        setNotes([]);
+        setLoading(false);
+      });
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    startTransition(() => {
+      setLoading(true);
+      setError(null);
+    });
 
     try {
       const unsubscribe = options.courseId
@@ -53,8 +57,10 @@ export function useCourseNotes(options: UseCourseNotesOptions = {}) {
 
       return () => unsubscribe();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '載入筆記失敗');
-      setLoading(false);
+      startTransition(() => {
+        setError(err instanceof Error ? err.message : '載入筆記失敗');
+        setLoading(false);
+      });
     }
   }, [user, options.courseId]);
 
