@@ -11,6 +11,67 @@
   font-size: 0.9rem;
 }
 
+.timetableScroll {
+  overflow-x: auto;
+}
+
+.timetableGrid {
+  display: grid;
+  grid-template-columns: minmax(100px, auto) repeat(5, minmax(110px, 1fr));
+  grid-template-rows: 42px repeat(10, 48px);
+  min-width: 650px;
+  gap: 1px;
+  background-color: var(--glass-border);
+}
+
+.timetableCorner,
+.timetableHeader {
+  grid-row: 1;
+  padding: 0.25rem;
+  background: rgba(255, 255, 255, 0.5);
+  text-align: center;
+}
+
+.timetableCorner {
+  grid-column: 1;
+}
+
+.timetableHeader {
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.periodLabel {
+  grid-column: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.1rem;
+  border-right: 1px solid rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.3);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.periodName {
+  margin-bottom: 0;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.periodTime {
+  font-size: 0.65rem;
+  line-height: 1;
+  opacity: 0.8;
+  white-space: pre-line;
+}
+
+.emptyCell {
+  background: rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
 /* 展開/收合按鈕 */
 .toggleButton {
   padding: 8px 16px;

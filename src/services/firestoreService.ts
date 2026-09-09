@@ -98,8 +98,9 @@ export function subscribeToSharedCollection<T>(
     q,
     (querySnapshot) => {
       const data = querySnapshot.docs.map((documentSnapshot) => ({
-        id: documentSnapshot.id,
         ...documentSnapshot.data(),
+        // 文件路徑才是唯一識別值，不能讓舊資料欄位覆蓋它。
+        id: documentSnapshot.id,
       })) as T[];
       callback(data);
     },
@@ -119,8 +120,9 @@ export async function getSharedDocuments<T>(
   const querySnapshot = await getDocs(q);
 
   return querySnapshot.docs.map((documentSnapshot) => ({
-    id: documentSnapshot.id,
     ...documentSnapshot.data(),
+    // 文件路徑才是唯一識別值，不能讓舊資料欄位覆蓋它。
+    id: documentSnapshot.id,
   })) as T[];
 }
 
@@ -252,8 +254,9 @@ export async function getDocuments<T>(
   const querySnapshot = await getDocs(q);
   
   return querySnapshot.docs.map(doc => ({
-    id: doc.id,
     ...doc.data(),
+    // 文件路徑才是唯一識別值，不能讓舊資料欄位覆蓋它。
+    id: doc.id,
   })) as T[];
 }
 
@@ -340,8 +343,9 @@ export function subscribeToCollection<T>(
     q,
     (querySnapshot) => {
       const data = querySnapshot.docs.map(doc => ({
-        id: doc.id,
         ...doc.data(),
+        // 文件路徑才是唯一識別值，不能讓舊資料欄位覆蓋它。
+        id: doc.id,
       })) as T[];
       callback(data);
     },

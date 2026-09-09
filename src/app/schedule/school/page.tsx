@@ -1,5 +1,5 @@
 'use client';
-import { Fragment, useState } from 'react';
+import { useState } from 'react';
 import { useScheduleData } from '../../../hooks/useScheduleData';
 import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -13,6 +13,7 @@ import CourseNoteEditor from '../../../components/CourseNoteEditor';
 import CourseNoteList from '../../../components/CourseNoteList';
 import { LoadingSpinner } from '../../../components/Loading';
 import { exportToICS, CalendarEventItem } from '@/utils/icsExport';
+import { getCourseTimetablePlacement, SCHOOL_PERIODS } from '@/utils/courseTimetable';
 import styles from './page.module.css';
 
 export default function SchoolSchedulePage() {
@@ -85,37 +86,7 @@ export default function SchoolSchedulePage() {
   // School Schedule Configuration
   const weekDays = ['一', '二', '三', '四', '五']; // Mon-Fri only
   
-  const periods = [
-    { id: 1, label: '第 1 節', time: '0810-0900', start: '08:10', end: '09:00' },
-    { id: 2, label: '第 2 節', time: '0910-1000', start: '09:10', end: '10:00' },
-    { id: 3, label: '第 3 節', time: '1010-1100', start: '10:10', end: '11:00' },
-    { id: 4, label: '第 4 節', time: '1110-1200', start: '11:10', end: '12:00' },
-    { id: 5, label: '第 5 節', time: '1210-1300', start: '12:10', end: '13:00' },
-    { id: 6, label: '第 6 節', time: '1310-1400', start: '13:10', end: '14:00' },
-    { id: 7, label: '第 7 節', time: '1410-1500', start: '14:10', end: '15:00' },
-    { id: 8, label: '第 8 節', time: '1510-1600', start: '15:10', end: '16:00' },
-    { id: 9, label: '第 9 節', time: '1610-1700', start: '16:10', end: '17:00' },
-    { id: 10, label: '第 10 節', time: '1710-1800', start: '17:10', end: '18:00' },
-  ];
-
-  // 依學期篩選後的課程查詢
-  const getCourseAtPeriod = (day: number, periodStart: string) => {
-    return filteredCourses.find(c => {
-      return c.day === day && c.startTime === periodStart;
-    });
-  };
-
-  // Calculate duration in periods
-  const getPeriodSpan = (startTime: string, endTime: string) => {
-    const startIndex = periods.findIndex(p => p.start === startTime);
-    const endIndex = periods.findIndex(p => p.end === endTime);
-    
-    if (startIndex !== -1 && endIndex !== -1) {
-        return endIndex - startIndex + 1;
-    }
-    
-    return 1;
-  };
+  const periods = SCHOOL_PERIODS;
 
   // 處理新增課程
   const handleAddCourse = () => {
@@ -319,94 +290,78 @@ export default function SchoolSchedulePage() {
               </div>
             )}
             
-            <div style={{ overflowX: 'auto' }}>
-              <div style={{ minWidth: '600px', display: 'grid', gridTemplateColumns: 'minmax(100px, auto) repeat(5, 1fr)', gap: '1px', backgroundColor: 'var(--glass-border)' }}>
-                {/* Header */}
-                <div style={{ padding: '0.25rem', background: 'rgba(255,255,255,0.5)', textAlign: 'center' }}></div>
-                {weekDays.map(d => (
-                  <div key={d} style={{ padding: '0.25rem', background: 'rgba(255,255,255,0.5)', textAlign: 'center', fontWeight: 'bold', fontSize: '0.9rem' }}>
-                    週{d}
+            <div className={styles.timetableScroll}>
+              <div className={styles.timetableGrid}>
+                <div className={styles.timetableCorner} />
+                {weekDays.map((day, index) => (
+                  <div key={day} className={styles.timetableHeader} style={{ gridColumn: index + 2 }}>
+                    週{day}
                   </div>
                 ))}
+                {periods.map((period, index) => (
+                  <div key={period.id} className={styles.periodLabel} style={{ gridRow: index + 2 }}>
+                    <div className={styles.periodName}>{period.label}</div>
+                    <div className={styles.periodTime}>{period.time.replace('-', '\n')}</div>
+                  </div>
+                ))}
+                {periods.flatMap((period, periodIndex) =>
+                  Array.from({ length: 5 }, (_, dayIndex) => (
+                    <div
+                      key={`${dayIndex + 1}-${period.id}`}
+                      className={styles.emptyCell}
+                      style={{ gridColumn: dayIndex + 2, gridRow: periodIndex + 2 }}
+                    />
+                  ))
+                )}
+                {filteredCourses.map((course) => {
+                  const placement = getCourseTimetablePlacement(course, periods);
+                  if (!placement) return null;
 
-                {/* Grid */}
-                {periods.map((period) => (
-                  <Fragment key={period.id}>
-                    {/* Period Label Column */}
-                    <div style={{ 
-                      padding: '0.1rem', textAlign: 'center', fontSize: '0.8rem', 
-                      background: 'rgba(255,255,255,0.3)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                      height: '48px', borderRight: '1px solid rgba(0,0,0,0.05)'
-                    }}>
-                      <div style={{ marginBottom: '0px', whiteSpace: 'nowrap', fontWeight: 'bold' }}>{period.label}</div>
-                      <div style={{ fontSize: '0.65rem', opacity: 0.8, lineHeight: '1' }}>{period.time.replace('-', '\n')}</div>
-                    </div>
-                    
-                    {/* Days Columns */}
-                    {Array.from({ length: 5 }).map((_, dayIndex) => {
-                      const day = dayIndex + 1;
-                      const course = getCourseAtPeriod(day, period.start);
-                      const isOccupiedBySpan = filteredCourses.some(c => {
-                          if (c.day !== day) return false;
-                           const pStartIdx = periods.findIndex(p => p.start === c.startTime);
-                           let pEndIdx = periods.findIndex(p => p.end === c.endTime);
-                           if (pEndIdx === -1 && c.endTime === '18:00') pEndIdx = 9;
-
-                           const currentIdx = periods.findIndex(p => p.id === period.id);
-                           return currentIdx > pStartIdx && currentIdx <= pEndIdx;
-                      });
-
-                      if (isOccupiedBySpan) {
-                          return null;
-                      }
-                      
-                      if (course) {
-                         const duration = getPeriodSpan(course.startTime, course.endTime);
-                         const isCourseActive = hoveredCourse === course.id || activeCourseId === course.id;
-                         
-                         return (
-                          <div 
-                            key={`${day}-${period.id}`} 
-                            className={styles.courseCell}
-                            onMouseEnter={() => setHoveredCourse(course.id)}
-                            onMouseLeave={() => setHoveredCourse(null)}
-                            onFocus={() => setHoveredCourse(course.id)}
-                            onBlur={(e) => {
-                              const nextTarget = e.relatedTarget;
-                              if (!(nextTarget instanceof Node) || !e.currentTarget.contains(nextTarget)) {
-                                setHoveredCourse(null);
-                              }
-                            }}
-                            onClick={() => setActiveCourseId((currentId) => currentId === course.id ? null : course.id)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                setActiveCourseId((currentId) => currentId === course.id ? null : course.id);
-                              }
-                            }}
-                            tabIndex={0}
-                            aria-expanded={isCourseActive}
-                            aria-label={`${course.name} 課程操作`}
-                            style={{ 
-                              gridRow: `span ${duration}`,
-                              backgroundColor: course.color,
-                              color: '#1f2937',
-                              padding: '0.25rem',
-                              margin: '2px',
-                              borderRadius: '6px',
-                              fontSize: '0.9rem',
-                              display: 'flex', 
-                              flexDirection: 'column', 
-                              justifyContent: 'center', 
-                              alignItems: 'center',
-                              boxShadow: isCourseActive ? '0 4px 12px rgba(0,0,0,0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
-                              zIndex: isCourseActive ? 10 : 1,
-                              position: 'relative',
-                              transform: isCourseActive ? 'scale(1.05)' : 'scale(1)',
-                              transition: 'all 0.2s ease',
-                              cursor: canEditCourses ? 'pointer' : 'default'
-                            }}
-                          >
+                  const isCourseActive = hoveredCourse === course.id || activeCourseId === course.id;
+                  return (
+                    <div
+                      key={course.id}
+                      className={styles.courseCell}
+                      onMouseEnter={() => setHoveredCourse(course.id)}
+                      onMouseLeave={() => setHoveredCourse(null)}
+                      onFocus={() => setHoveredCourse(course.id)}
+                      onBlur={(e) => {
+                        const nextTarget = e.relatedTarget;
+                        if (!(nextTarget instanceof Node) || !e.currentTarget.contains(nextTarget)) {
+                          setHoveredCourse(null);
+                        }
+                      }}
+                      onClick={() => setActiveCourseId((currentId) => currentId === course.id ? null : course.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setActiveCourseId((currentId) => currentId === course.id ? null : course.id);
+                        }
+                      }}
+                      tabIndex={0}
+                      aria-expanded={isCourseActive}
+                      aria-label={`${course.name} 課程操作`}
+                      style={{
+                        gridColumn: placement.columnStart,
+                        gridRow: `${placement.rowStart} / ${placement.rowEnd}`,
+                        backgroundColor: course.color,
+                        color: '#1f2937',
+                        padding: '0.25rem',
+                        margin: '2px',
+                        borderRadius: '6px',
+                        fontSize: '0.9rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        boxShadow: isCourseActive ? '0 4px 12px rgba(0,0,0,0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
+                        zIndex: isCourseActive ? 10 : 1,
+                        position: 'relative',
+                        transform: isCourseActive ? 'scale(1.05)' : 'scale(1)',
+                        transition: 'all 0.2s ease',
+                        cursor: canEditCourses ? 'pointer' : 'default',
+                      }}
+                    >
                             <div style={{ 
                               fontWeight: 'bold',
                               marginBottom: '2px', 
@@ -475,14 +430,9 @@ export default function SchoolSchedulePage() {
                                 )}
                               </div>
                             )}
-                          </div>
-                        );
-                      }
-                      
-                      return <div key={`${day}-${period.id}`} style={{ background: 'rgba(255,255,255,0.1)', borderBottom: '1px solid rgba(255,255,255,0.2)' }} />;
-                    })}
-                  </Fragment>
-                ))}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

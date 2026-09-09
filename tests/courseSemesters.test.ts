@@ -35,3 +35,35 @@ test('已標記學期的課程不受舊資料預設值影響', () => {
     ['current']
   );
 });
+
+test('同一天同地點且重疊的重複課程只顯示最後更新的一筆', () => {
+  const duplicateCourses: Course[] = [
+    {
+      ...legacyCourse,
+      id: 'digital-art-old',
+      name: '數位藝術概論',
+      day: 5,
+      startTime: '09:10',
+      endTime: '12:00',
+      location: '博愛 A310',
+      semester: '2026-1',
+      updatedAt: '2026-09-09T01:00:00.000Z',
+    },
+    {
+      ...legacyCourse,
+      id: 'digital-art-current',
+      name: '數位藝術概論',
+      day: 5,
+      startTime: '10:10',
+      endTime: '12:00',
+      location: '博愛 A310',
+      semester: '2026-1',
+      updatedAt: '2026-09-09T02:00:00.000Z',
+    },
+  ];
+
+  assert.deepEqual(
+    normalizeCourses(duplicateCourses, '2026-1', 'personal').map((course) => course.id),
+    ['digital-art-current']
+  );
+});

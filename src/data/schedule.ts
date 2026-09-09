@@ -8,6 +8,7 @@ export interface Course {
   teacher?: string;
   color?: string;
   semester?: string; // 學期標識，如 "2025-1"（大一上）, "2025-2"（大一下）
+  updatedAt?: string;
 }
 
 /** 目前學校課表預設顯示的學期。 */
