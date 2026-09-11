@@ -10,7 +10,7 @@ import { useState } from 'react';
 import type { CourseNote, NoteType } from '@/data/courseNotes';
 import { NOTE_TYPE_LABELS } from '@/data/courseNotes';
 import { useToast } from '@/context/ToastContext';
-import Modal, { ModalContent } from './Modal';
+import Modal, { ModalContent } from '../../shared/Modal';
 import styles from './CourseNoteEditor.module.css';
 
 interface CourseNoteEditorProps {

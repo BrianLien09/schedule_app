@@ -10,7 +10,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { LoadingSpinner } from '@/components/Loading';
+import { LoadingSpinner } from '@/components/shared/Loading';
 import styles from './login.module.css';
 
 export default function LoginPage() {

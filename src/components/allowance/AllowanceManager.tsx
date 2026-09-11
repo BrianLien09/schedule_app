@@ -9,39 +9,12 @@ import {
   generateAllowanceId,
   calculateKongBalance,
   generateCopyText,
-  formatDateForCopy,
 } from '@/data/allowance';
-import { StatCard } from '@/components/VisualComponents';
-import { LoadingSpinner } from '@/components/Loading';
+import { StatCard } from '@/components/shared/VisualComponents';
+import { LoadingSpinner } from '@/components/shared/Loading';
+import AllowanceRecordList from './AllowanceRecordList';
+import AllowanceRecordDialogs from './AllowanceRecordDialogs';
 import styles from './AllowanceManager.module.css';
-
-// ========== 子元件：來源類型標籤 ==========
-// bgColor 為亮色模式下的半透明填充，讓 badge 在淺色背景上有層次感
-const sourceTypeConfig: Record<string, { icon: string; color: string; bgColor: string }> = {
-  '生活費匯款': { icon: '🎓', color: 'var(--color-primary)',   bgColor: 'rgba(184, 126, 107, 0.15)' },
-  '打工收入':   { icon: '💼', color: 'var(--color-secondary)', bgColor: 'rgba(95, 113, 134, 0.15)' },
-  '獎學金':     { icon: '🏆', color: 'var(--color-highlight)', bgColor: 'rgba(217, 119, 6, 0.15)' },
-  '退費':       { icon: '💸', color: 'var(--muted)',           bgColor: 'rgba(220, 208, 194, 0.3)' },
-  '其他':       { icon: '📦', color: 'var(--muted-dark)',      bgColor: 'rgba(220, 208, 194, 0.3)' },
-};
-
-interface SourceTypeBadgeProps {
-  type: string;
-}
-
-const SourceTypeBadge = ({ type }: SourceTypeBadgeProps) => {
-  const config = sourceTypeConfig[type] || sourceTypeConfig['其他'];
-  
-  return (
-    <div 
-      className={styles.sourceBadge}
-      style={{ borderColor: config.color, color: config.color, backgroundColor: config.bgColor }}
-    >
-      <span>{config.icon}</span>
-      <span>{type}</span>
-    </div>
-  );
-};
 
 export default function AllowanceManager() {
   // ========== 資料層 ==========
@@ -479,339 +452,40 @@ export default function AllowanceManager() {
 
       {/* 記錄列表 */}
       <div className={styles.recordsList}>
-        {filteredRecords.length === 0 ? (
-          <div className="glass card page-section-enter page-section-enter-delay-3">
-            <div className={styles.emptyState}>
-              <div className={styles.emptyStateIcon}>📭</div>
-              <div className={styles.emptyStateTitle}>尚無記錄</div>
-              <div className={styles.emptyStateSubtitle}>
-                {filterMonth ? '此月份沒有任何記錄' : '開始新增你的第一筆生活費記錄吧'}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <>
-            {displayedRecords.map((record, index) => {
-              const recordKongBalance = calculateKongBalance(record.totalBalance, record.xiaoBalance);
-              const recordIsAllowance = isAllowanceType(record.sourceType);
-              return (
-                <div 
-                  key={record.id} 
-                  className={`glass ${styles.recordCard}`}
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                >
-                  {/* 來源類型標籤 */}
-                  <SourceTypeBadge type={record.sourceType} />
-                  
-                  <div className={styles.recordHeader}>
-                    <div className={styles.recordDate}>{formatDateForCopy(record.date)}</div>
-                    <button
-                      className={styles.copyButton}
-                      onClick={() => handleCopy(record)}
-                      title="複製此記錄"
-                    >
-                      📋 複製
-                  </button>
-                </div>
-
-                {/* 匯入金額（突出顯示） */}
-                <div className={styles.amountSection}>
-                  <div className={styles.amountLabel}>匯入金額</div>
-                  <div className={styles.amountValue}>
-                    +{record.amount.toLocaleString()} 元
-                  </div>
-                </div>
-
-                {/* 餘額資訊 */}
-                <div className={styles.balanceGrid}>
-                  <div className={styles.balanceItem}>
-                    <div className={styles.balanceLabel}>帳簿餘額</div>
-                    <div className={styles.balanceValue}>
-                      {record.totalBalance.toLocaleString()} 元
-                    </div>
-                  </div>
-                  
-                  <div className={styles.balanceItem}>
-                    <div className={styles.balanceLabel}>小呆餘額</div>
-                    <div className={styles.balanceValue}>
-                      {record.xiaoBalance.toLocaleString()} 元
-                    </div>
-                  </div>
-                  
-                  {recordIsAllowance && (
-                    <div className={styles.balanceItem}>
-                      <div className={styles.balanceLabel}>孔呆餘額</div>
-                      <div className={styles.balanceValue}>
-                        {recordKongBalance.toLocaleString()} 元
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {record.note && (
-                  <div className={styles.recordNote}>
-                    <strong>備註：</strong> {record.note}
-                  </div>
-                )}
-
-                {canEdit && (
-                  <div className={styles.recordActions}>
-                    <button className={styles.btnEdit} onClick={() => handleEdit(record)}>
-                      編輯
-                    </button>
-                    <button className={styles.btnDelete} onClick={() => handleDelete(record.id)}>
-                      刪除
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-          
-          {/* 查看更多按鈕 */}
-          {hasMore && !isExpanded && (
-            <button 
-              className={`${styles.btn} ${styles.btnSecondary} ${styles.expandButton}`}
-              onClick={() => setIsExpanded(true)}
-            >
-              查看全部 (共 {filteredRecords.length} 筆)
-            </button>
-          )}
-          
-          {isExpanded && (
-            <button 
-              className={`${styles.btn} ${styles.btnSecondary} ${styles.expandButton}`}
-              onClick={() => setIsExpanded(false)}
-            >
-              收起記錄
-            </button>
-          )}
-          </>
-        )}
+        <AllowanceRecordList
+          displayedRecords={displayedRecords}
+          filterMonth={filterMonth}
+          canEdit={canEdit}
+          isExpanded={isExpanded}
+          hasMore={hasMore}
+          filteredRecordCount={filteredRecords.length}
+          isAllowanceType={isAllowanceType}
+          onCopy={handleCopy}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onToggleExpanded={() => setIsExpanded((expanded) => !expanded)}
+        />
       </div>
 
-      {/* 編輯模態框 */}
-      {showEditModal && editingRecord && (
-        <div className={styles.modalOverlay} onClick={() => setShowEditModal(false)}>
-          <div className={`glass ${styles.modal}`} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>編輯記錄</h2>
-              <button className={styles.closeButton} onClick={() => setShowEditModal(false)}>
-                ✕
-              </button>
-            </div>
-
-            <div className={styles.formGrid}>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>匯入日期 *</label>
-                <input
-                  type="date"
-                  className={styles.input}
-                  value={editingRecord.date}
-                  onChange={(e) => setEditingRecord({ ...editingRecord, date: e.target.value })}
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.label}>匯入金額 (元) *</label>
-                <input
-                  type="number"
-                  className={styles.input}
-                  value={editingRecord.amount}
-                  onChange={(e) => setEditingRecord({ ...editingRecord, amount: Number(e.target.value) })}
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.label}>帳簿餘額 (元) *</label>
-                <input
-                  type="number"
-                  className={styles.input}
-                  value={editingRecord.totalBalance}
-                  onChange={(e) =>
-                    setEditingRecord({ ...editingRecord, totalBalance: Number(e.target.value) })
-                  }
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.label}>小呆餘額 (元) *</label>
-                <input
-                  type="number"
-                  className={styles.input}
-                  value={editingRecord.xiaoBalance}
-                  onChange={(e) =>
-                    setEditingRecord({ ...editingRecord, xiaoBalance: Number(e.target.value) })
-                  }
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.label}>孔呆餘額 (元)</label>
-                <input
-                  type="text"
-                  className={`${styles.input} ${styles.readOnlyField}`}
-                  value={editingKongBalance.toLocaleString()}
-                  readOnly
-                  disabled
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.label}>來源類型 *</label>
-                <select
-                  className={styles.select}
-                  value={editingRecord.sourceType}
-                  onChange={(e) => setEditingRecord({ ...editingRecord, sourceType: e.target.value })}
-                >
-                  {sourceTypes.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.label}>備註</label>
-              <textarea
-                className={styles.textarea}
-                value={editingRecord.note || ''}
-                onChange={(e) => setEditingRecord({ ...editingRecord, note: e.target.value })}
-              />
-            </div>
-
-            <div className={styles.formActions}>
-              <button
-                className={`${styles.btn} ${styles.btnSecondary}`}
-                onClick={() => setShowEditModal(false)}
-                disabled={submittingAction === 'edit'}
-              >
-                取消
-              </button>
-              <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSaveEdit} disabled={submittingAction === 'edit'}>
-                {submittingAction === 'edit' ? '儲存中...' : '儲存變更'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 新增模態框 */}
-      {showAddModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowAddModal(false)}>
-          <div className={`glass ${styles.modal}`} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>新增記錄</h2>
-              <button className={styles.closeButton} onClick={() => setShowAddModal(false)}>
-                ✕
-              </button>
-            </div>
-
-            <div className={styles.formGrid}>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>匯入日期 *</label>
-                <input
-                  type="date"
-                  className={styles.input}
-                  value={currentRecord.date}
-                  onChange={(e) => setCurrentRecord({ ...currentRecord, date: e.target.value })}
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.label}>匯入金額 (元) *</label>
-                <input
-                  type="number"
-                  className={styles.input}
-                  value={currentRecord.amount || ''}
-                  onChange={(e) => handleAmountChange(Number(e.target.value))}
-                  placeholder="0"
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.label}>帳簿餘額 (元) *</label>
-                <input
-                  type="number"
-                  className={styles.input}
-                  value={currentRecord.totalBalance || ''}
-                  onChange={(e) => setCurrentRecord({ ...currentRecord, totalBalance: Number(e.target.value) })}
-                  placeholder="0"
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.label}>
-                  小呆餘額 (元) * 
-                  {!shouldShowKongBalance && <span className={styles.autoCalcHint}>（自動計算）</span>}
-                </label>
-                <input
-                  type="number"
-                  className={`${styles.input} ${!shouldShowKongBalance ? styles.readOnlyField : ''}`}
-                  value={currentRecord.xiaoBalance || ''}
-                  onChange={(e) => setCurrentRecord({ ...currentRecord, xiaoBalance: Number(e.target.value) })}
-                  disabled={!shouldShowKongBalance}
-                  readOnly={!shouldShowKongBalance}
-                  placeholder="0"
-                />
-              </div>
-
-              {shouldShowKongBalance && (
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>孔呆餘額 (元)</label>
-                  <input
-                    type="text"
-                    className={`${styles.input} ${styles.readOnlyField}`}
-                    value={kongBalance.toLocaleString()}
-                    readOnly
-                    disabled
-                  />
-                </div>
-              )}
-
-              <div className={styles.formGroup}>
-                <label className={styles.label}>來源類型 *</label>
-                <select
-                  className={styles.select}
-                  value={currentRecord.sourceType}
-                  onChange={(e) => handleSourceTypeChange(e.target.value)}
-                >
-                  {sourceTypes.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className={styles.formGroup} style={{ gridColumn: '1 / -1', marginTop: 'var(--spacing-md)' }}>
-              <label className={styles.label}>備註</label>
-              <textarea
-                className={styles.textarea}
-                value={currentRecord.note || ''}
-                onChange={(e) => setCurrentRecord({ ...currentRecord, note: e.target.value })}
-                placeholder="選填"
-              />
-            </div>
-
-            <div className={styles.modalActions}>
-              <button
-                className={`${styles.btn} ${styles.btnSecondary}`}
-                onClick={() => setShowAddModal(false)}
-                disabled={submittingAction === 'add'}
-              >
-                取消
-              </button>
-              <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleAdd} disabled={submittingAction === 'add'}>
-                {submittingAction === 'add' ? '新增中...' : '確認新增'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AllowanceRecordDialogs
+        showEditModal={showEditModal}
+        showAddModal={showAddModal}
+        editingRecord={editingRecord}
+        currentRecord={currentRecord}
+        sourceTypes={sourceTypes}
+        submittingAction={submittingAction}
+        editingKongBalance={editingKongBalance}
+        shouldShowKongBalance={shouldShowKongBalance}
+        kongBalance={kongBalance}
+        onCloseEdit={() => setShowEditModal(false)}
+        onCloseAdd={() => setShowAddModal(false)}
+        onSaveEdit={handleSaveEdit}
+        onAdd={handleAdd}
+        onAmountChange={handleAmountChange}
+        onSourceTypeChange={handleSourceTypeChange}
+        setEditingRecord={setEditingRecord}
+        setCurrentRecord={setCurrentRecord}
+      />
     </div>
   );
 }

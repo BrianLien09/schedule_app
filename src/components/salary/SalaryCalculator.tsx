@@ -15,12 +15,14 @@ import { generateShiftTemplateId, type ShiftTemplate } from '@/data/shiftTemplat
 import { getWorkRoleHourlyRate, getWorkRoleLabel, type RoleType } from '@/data/workRoles';
 import { parseExcelFile, convertToExportFormat, type ImportValidation } from '@/utils/excelParser';
 
-import SalaryHeaderStats from './salary/SalaryHeaderStats';
-import SalaryRecordForm from './salary/SalaryRecordForm';
-import SalaryRecordList from './salary/SalaryRecordList';
-import SalaryAnalytics, { type MonthStats } from './salary/SalaryAnalytics';
-import ShiftTemplateManager from './salary/ShiftTemplateManager';
-import WorkRoleManager from './salary/WorkRoleManager';
+import SalaryHeaderStats from './SalaryHeaderStats';
+import SalaryRecordForm from './SalaryRecordForm';
+import SalaryRecordList from './SalaryRecordList';
+import SalaryAnalytics, { type MonthStats } from './SalaryAnalytics';
+import ShiftTemplateManager from './ShiftTemplateManager';
+import WorkRoleManager from './WorkRoleManager';
+import SalaryCalculatorImportModal from './SalaryCalculatorImportModal';
+import SalaryCalculatorTabs, { type SalaryCalculatorTab } from './SalaryCalculatorTabs';
 import styles from './SalaryCalculator.module.css';
 
 export default function SalaryCalculator() {
@@ -59,7 +61,7 @@ export default function SalaryCalculator() {
   const pathname = usePathname();
   
   // 標籤頁狀態：'records' | 'analytics' | 'templates' | 'roles'
-  const [activeTab, setActiveTab] = useState<'records' | 'analytics' | 'templates' | 'roles'>('records');
+  const [activeTab, setActiveTab] = useState<SalaryCalculatorTab>('records');
 
   const [currentRecord, setCurrentRecord] = useState<Omit<SalaryRecord, 'id'>>({
     date: new Date().toISOString().split('T')[0],
@@ -868,86 +870,7 @@ export default function SalaryCalculator() {
           )}
         </div>
 
-        {/* 標籤頁 (Tabs) 導覽列 */}
-        {!isPrintMode && (
-          <div className="no-print page-section-enter page-section-enter-delay-1" style={{
-            display: 'flex',
-            gap: '0.5rem',
-            flexWrap: 'wrap',
-            marginBottom: 'var(--spacing-lg)',
-            borderBottom: '2px solid rgba(220, 208, 194, 0.5)',
-            paddingBottom: '0.25rem',
-          }}>
-            <button
-              type="button"
-              onClick={() => setActiveTab('records')}
-              style={{
-                padding: '0.6rem 1.25rem',
-                borderRadius: '8px 8px 0 0',
-                border: 'none',
-                background: activeTab === 'records' ? 'var(--color-primary)' : 'transparent',
-                color: activeTab === 'records' ? '#f0ece1' : 'var(--text-secondary)',
-                fontWeight: '600',
-                fontSize: '0.95rem',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s ease, color 0.2s ease',
-              }}
-            >
-              薪資明細與記帳
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('analytics')}
-              style={{
-                padding: '0.6rem 1.25rem',
-                borderRadius: '8px 8px 0 0',
-                border: 'none',
-                background: activeTab === 'analytics' ? 'var(--color-primary)' : 'transparent',
-                color: activeTab === 'analytics' ? '#f0ece1' : 'var(--text-secondary)',
-                fontWeight: '600',
-                fontSize: '0.95rem',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s ease, color 0.2s ease',
-              }}
-            >
-              統計與趨勢分析
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('templates')}
-              style={{
-                padding: '0.6rem 1.25rem',
-                borderRadius: '8px 8px 0 0',
-                border: 'none',
-                background: activeTab === 'templates' ? 'var(--color-primary)' : 'transparent',
-                color: activeTab === 'templates' ? '#f0ece1' : 'var(--text-secondary)',
-                fontWeight: '600',
-                fontSize: '0.95rem',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s ease, color 0.2s ease',
-              }}
-            >
-              班別範本管理
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('roles')}
-              style={{
-                padding: '0.6rem 1.25rem',
-                borderRadius: '8px 8px 0 0',
-                border: 'none',
-                background: activeTab === 'roles' ? 'var(--color-primary)' : 'transparent',
-                color: activeTab === 'roles' ? '#f0ece1' : 'var(--text-secondary)',
-                fontWeight: '600',
-                fontSize: '0.95rem',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s ease, color 0.2s ease',
-              }}
-            >
-              職稱／職位與時薪
-            </button>
-          </div>
-        )}
+        {!isPrintMode && <SalaryCalculatorTabs activeTab={activeTab} onChange={setActiveTab} />}
 
         {/* 標籤頁內容切換 */}
         <div key={activeTab} className={styles.tabPanel}>
@@ -1067,148 +990,18 @@ export default function SalaryCalculator() {
         )}
         </div>
 
-        {/* Excel 匯入預覽 Modal */}
         {showImportModal && importValidation && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.7)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}>
-            <div className="glass" style={{
-              width: '90%',
-              maxWidth: '800px',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              padding: 'var(--spacing-lg)',
-              background: '#f0ece1',
-            }}>
-              <h3 style={{ fontSize: '1.3rem', fontWeight: 'bold', marginBottom: 'var(--spacing-md)' }}>
-                Excel 匯入預覽
-              </h3>
-
-              {importValidation.errors.length > 0 && (
-                <div style={{
-                  padding: '1rem',
-                  marginBottom: 'var(--spacing-md)',
-                  borderRadius: '8px',
-                  background: 'rgba(239, 68, 68, 0.1)',
-                  border: '1px solid rgba(239, 68, 68, 0.3)',
-                  color: '#dc2626',
-                }}>
-                  <strong>驗證錯誤：</strong>
-                  <ul style={{ margin: '0.5rem 0 0 1.5rem', padding: 0 }}>
-                    {importValidation.errors.map((error, index) => (
-                      <li key={index}>{error}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {importValidation.success && (
-                <div>
-                  <div style={{
-                    padding: '1rem',
-                    marginBottom: 'var(--spacing-md)',
-                    borderRadius: '8px',
-                    background: 'rgba(34, 197, 94, 0.1)',
-                    border: '1px solid rgba(34, 197, 94, 0.3)',
-                    color: '#16a34a',
-                  }}>
-                    成功解析 <strong>{importValidation.records.length}</strong> 筆記錄！
-                  </div>
-
-                  <div style={{ maxHeight: '300px', overflowY: 'auto', marginBottom: 'var(--spacing-md)' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-                      <thead>
-                        <tr style={{ borderBottom: '2px solid rgba(0,0,0,0.1)', background: 'rgba(0,0,0,0.05)' }}>
-                          <th style={{ padding: '0.5rem', textAlign: 'left' }}>日期</th>
-                          <th style={{ padding: '0.5rem', textAlign: 'left' }}>班別</th>
-                          <th style={{ padding: '0.5rem', textAlign: 'center' }}>工時</th>
-                          <th style={{ padding: '0.5rem', textAlign: 'right' }}>時薪</th>
-                          <th style={{ padding: '0.5rem', textAlign: 'right' }}>薪資</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(showAllImportRecords 
-                          ? importValidation.records 
-                          : importValidation.records.slice(0, 5)
-                        ).map((record, index) => (
-                          <tr key={index} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                            <td style={{ padding: '0.5rem' }}>{record.date}</td>
-                            <td style={{ padding: '0.5rem' }}>{record.shiftCategory || '-'}</td>
-                            <td style={{ padding: '0.5rem', textAlign: 'center' }}>{record.workHours}h</td>
-                            <td style={{ padding: '0.5rem', textAlign: 'right' }}>${record.hourlyRate}</td>
-                            <td style={{ padding: '0.5rem', textAlign: 'right' }}>${calculatePay(record).toLocaleString()}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    {!showAllImportRecords && importValidation.records.length > 5 && (
-                      <button
-                        type="button"
-                        onClick={() => setShowAllImportRecords(true)}
-                        style={{
-                          width: '100%',
-                          padding: '0.5rem',
-                          marginTop: '0.5rem',
-                          background: 'transparent',
-                          border: '1px dashed rgba(0,0,0,0.2)',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          color: 'var(--text-secondary)',
-                        }}
-                      >
-                        顯示全部 ({importValidation.records.length} 筆)
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              <div style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'flex-end' }}>
-                <button
-                  type="button"
-                  onClick={handleCancelImport}
-                  disabled={isConfirmingImport}
-                  style={{
-                    padding: '0.5rem 1.25rem',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(0,0,0,0.2)',
-                    background: 'transparent',
-                    cursor: 'pointer',
-                  }}
-                >
-                  取消
-                </button>
-                {importValidation.success && (
-                  <button
-                    type="button"
-                    onClick={handleConfirmImport}
-                    disabled={isConfirmingImport}
-                    style={{
-                      padding: '0.5rem 1.25rem',
-                      borderRadius: '8px',
-                      border: 'none',
-                      background: 'var(--color-primary)',
-                      color: '#fff',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {isConfirmingImport ? '匯入中...' : `確認匯入 (${importValidation.records.length} 筆)`}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
+          <SalaryCalculatorImportModal
+            validation={importValidation}
+            showAllRecords={showAllImportRecords}
+            isConfirming={isConfirmingImport}
+            calculatePay={calculatePay}
+            onShowAll={() => setShowAllImportRecords(true)}
+            onCancel={handleCancelImport}
+            onConfirm={handleConfirmImport}
+          />
         )}
+
       </div>
     </>
   );

@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import Providers from "@/components/Providers";
-import Navbar from "@/components/Navbar";
-import BackToTop from "@/components/BackToTop";
-import PWAHandler from "@/components/PWAHandler";
-import PageTransition from "@/components/PageTransition";
+import Providers from "@/components/layout/Providers";
+import Navbar from "@/components/layout/Navbar";
+import BackToTop from "@/components/layout/BackToTop";
+import PWAHandler from "@/components/layout/PWAHandler";
+import PageTransition from "@/components/layout/PageTransition";
 import "./globals.css";
 
 const BASE_PATH = process.env.NODE_ENV === "production" ? "/schedule_app" : "";

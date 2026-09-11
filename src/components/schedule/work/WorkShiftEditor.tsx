@@ -2,10 +2,10 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
-import { generateWorkShiftId, type Course, type WorkShift } from '../data/schedule';
+import { generateWorkShiftId, type Course, type WorkShift } from '../../../data/schedule';
 import { getWorkRoleHourlyRate, getWorkRoleLabel, type RoleType } from '@/data/workRoles';
 import { getShiftTemplateWorkHours } from '@/data/shiftTemplates';
-import Modal, { ModalContent } from './Modal';
+import Modal, { ModalContent } from '../../shared/Modal';
 import styles from './WorkShiftEditor.module.css';
 
 import { useShiftTemplates } from '@/hooks/useShiftTemplates';

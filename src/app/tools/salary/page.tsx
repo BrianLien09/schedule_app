@@ -1,8 +1,8 @@
 'use client';
-import SalaryCalculator from '@/components/SalaryCalculator';
+import SalaryCalculator from '@/components/salary/SalaryCalculator';
 import { useAuth } from '@/context/AuthContext';
-import LoginPrompt from '@/components/LoginPrompt';
-import { LoadingSpinner } from '@/components/Loading';
+import LoginPrompt from '@/components/shared/LoginPrompt';
+import { LoadingSpinner } from '@/components/shared/Loading';
 
 export default function SalaryPage() {
   const { user, loading: authLoading } = useAuth();

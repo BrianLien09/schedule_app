@@ -1,12 +1,10 @@
 'use client';
 
-import React, { RefObject, useMemo } from 'react';
+import React, { RefObject } from 'react';
 import type { SalaryRecord } from '@/hooks/useSalaryData';
-import { getWorkRoleLabel, type RoleType, type WorkRole } from '@/data/workRoles';
-import Modal, { ModalContent } from '@/components/Modal';
-import styles from './SalaryRecordList.module.css';
-
-const WEEKDAY_SHORT_LABELS = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'] as const;
+import { type RoleType, type WorkRole } from '@/data/workRoles';
+import SalaryRecordDialogs from './SalaryRecordDialogs';
+import SalaryRecordTable from './SalaryRecordTable';
 
 interface SalaryRecordListProps {
   records: SalaryRecord[];
@@ -76,7 +74,6 @@ interface SalaryRecordListProps {
   isSavingBatchEdit: boolean;
   onCancelBatchEdit: () => void;
 }
-
 /**
  * 薪資記錄清單、表格、篩選器與批次/彈窗管理組件
  */
@@ -126,22 +123,6 @@ export default function SalaryRecordList({
   isSavingBatchEdit,
   onCancelBatchEdit,
 }: SalaryRecordListProps) {
-
-  const getWeekdayLabel = (dateStr: string): string => {
-    if (!dateStr) return '--';
-    const date = new Date(dateStr);
-    if (Number.isNaN(date.getTime())) return '--';
-    return WEEKDAY_SHORT_LABELS[date.getDay()] ?? '--';
-  };
-
-  // 計算總計工時與總計薪資
-  const totalWorkHours = useMemo(() => {
-    return filteredRecords.reduce((sum, r) => sum + calculateHours(r), 0);
-  }, [filteredRecords, calculateHours]);
-
-  const totalSalary = useMemo(() => {
-    return filteredRecords.reduce((sum, r) => sum + calculatePay(r), 0);
-  }, [filteredRecords, calculatePay]);
 
   return (
     <>
@@ -404,467 +385,44 @@ export default function SalaryRecordList({
             目前沒有打工記錄
           </div>
         ) : (
-          <>
-            {/* 桌面端表格視圖 */}
-            <div className={`${styles.tableWrapper} ${styles.desktopView}`}>
-              <table className={styles.desktopTable}>
-                <thead>
-                  <tr>
-                    <th style={{ textAlign: 'center', width: '50px' }}>
-                      <input
-                        type="checkbox"
-                        checked={selectedRecordIds.size === filteredRecords.length && filteredRecords.length > 0}
-                        onChange={toggleSelectAll}
-                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                        title="全選/取消全選"
-                      />
-                    </th>
-                    <th style={{ textAlign: 'left' }}>日期</th>
-                    <th style={{ textAlign: 'left' }}>職稱／職位</th>
-                    <th style={{ textAlign: 'left' }}>班別</th>
-                    <th style={{ textAlign: 'left' }}>時間</th>
-                    <th style={{ textAlign: 'center' }}>工時</th>
-                    <th style={{ textAlign: 'right' }}>時薪</th>
-                    <th style={{ textAlign: 'right' }}>薪資</th>
-                    <th style={{ textAlign: 'center' }}>操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[...filteredRecords]
-                    .sort((a, b) => {
-                      const dateCompare = a.date.localeCompare(b.date);
-                      if (dateCompare !== 0) return dateCompare;
-                      return a.startTime.localeCompare(b.startTime);
-                    })
-                    .map((record) => {
-                      const displayShiftName = getDisplayShiftName(record);
-                      const isSelected = selectedRecordIds.has(record.id);
-                      const roleLabel = getWorkRoleLabel(record.role, roles, record.roleName);
-                      const isInstructor = record.role === 'instructor';
-                      return (
-                        <tr 
-                          key={record.id} 
-                          className={isSelected ? styles.trSelected : ''}
-                        >
-                          <td style={{ textAlign: 'center' }}>
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => toggleRecordSelection(record.id)}
-                              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                            />
-                          </td>
-                          <td>
-                            {record.date} <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>({getWeekdayLabel(record.date)})</span>
-                          </td>
-                          <td>
-                            <span style={{
-                              padding: '0.25rem 0.6rem',
-                              borderRadius: '6px',
-                              fontSize: '0.85rem',
-                              fontWeight: '600',
-                              display: 'inline-block',
-                              background: isInstructor ? 'rgba(200, 141, 85, 0.18)' : 'rgba(95, 113, 134, 0.18)',
-                              color: isInstructor ? '#c88d55' : 'var(--color-secondary)',
-                              border: isInstructor ? '1px dashed rgba(200, 141, 85, 0.4)' : '1px dashed rgba(95, 113, 134, 0.4)',
-                            }}>
-                              {roleLabel}
-                            </span>
-                          </td>
-                          <td>
-                            {displayShiftName}
-                          </td>
-                          <td>
-                            {record.startTime} - {record.endTime}
-                          </td>
-                          <td style={{ textAlign: 'center' }}>
-                            {calculateHours(record).toFixed(2)}h
-                          </td>
-                          <td style={{ textAlign: 'right' }}>
-                            ${record.hourlyRate}
-                          </td>
-                          <td style={{ textAlign: 'right', fontWeight: 'bold', color: 'var(--color-primary)' }}>
-                            ${calculatePay(record).toLocaleString()}
-                          </td>
-                          <td style={{ textAlign: 'center' }}>
-                            <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
-                              <button
-                                type="button"
-                                onClick={() => onEditRecord(record)}
-                                style={{
-                                  padding: '0.25rem 0.6rem',
-                                  borderRadius: '6px',
-                                  border: '1px solid rgba(95, 113, 134, 0.4)',
-                                  background: 'rgba(95, 113, 134, 0.12)',
-                                  color: 'var(--color-secondary)',
-                                  fontSize: '0.8rem',
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                編輯
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => onCopyRecord(record)}
-                                style={{
-                                  padding: '0.25rem 0.6rem',
-                                  borderRadius: '6px',
-                                  border: '1px solid rgba(184, 126, 107, 0.4)',
-                                  background: 'rgba(184, 126, 107, 0.12)',
-                                  color: 'var(--color-primary)',
-                                  fontSize: '0.8rem',
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                複製
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => onDeleteRecord(record.id)}
-                                style={{
-                                  padding: '0.25rem 0.6rem',
-                                  borderRadius: '6px',
-                                  border: '1px solid rgba(239, 68, 68, 0.3)',
-                                  background: 'rgba(239, 68, 68, 0.1)',
-                                  color: '#dc2626',
-                                  fontSize: '0.8rem',
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                刪除
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                </tbody>
-                <tfoot>
-                  <tr style={{ 
-                    borderTop: '2px dashed rgba(220, 208, 194, 0.8)',
-                    background: 'rgba(220, 208, 194, 0.3)',
-                    fontWeight: 'bold',
-                  }}>
-                    <td colSpan={5} style={{ padding: '0.85rem 0.75rem', textAlign: 'right' }}>
-                      合計 ({filteredRecords.length} 筆記錄)：
-                    </td>
-                    <td style={{ padding: '0.85rem 0.75rem', textAlign: 'center', color: 'var(--color-secondary)' }}>
-                      {totalWorkHours.toFixed(2)}h
-                    </td>
-                    <td style={{ padding: '0.85rem 0.75rem', textAlign: 'right' }}>
-                      --
-                    </td>
-                    <td style={{ padding: '0.85rem 0.75rem', textAlign: 'right', color: 'var(--color-primary)', fontSize: '1.1rem' }}>
-                      ${totalSalary.toLocaleString()}
-                    </td>
-                    <td style={{ padding: '0.85rem 0.75rem' }}></td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-
-            {/* 行動端卡片視圖 */}
-            <div className={styles.mobileView}>
-              {[...filteredRecords]
-                .sort((a, b) => {
-                  const dateCompare = a.date.localeCompare(b.date);
-                  if (dateCompare !== 0) return dateCompare;
-                  return a.startTime.localeCompare(b.startTime);
-                })
-                .map((record) => {
-                  const displayShiftName = getDisplayShiftName(record);
-                  const isSelected = selectedRecordIds.has(record.id);
-                  const roleLabel = getWorkRoleLabel(record.role, roles, record.roleName);
-                  const isInstructor = record.role === 'instructor';
-                  const pay = calculatePay(record);
-                  const hours = calculateHours(record);
-
-                  return (
-                    <div
-                      key={record.id}
-                      className={`${styles.mobileCard} ${isSelected ? styles.mobileCardSelected : ''}`}
-                    >
-                      {/* 卡片頂部：勾選框、日期與職稱／職位、時薪 */}
-                      <div className={styles.mobileCardTop}>
-                        <div className={styles.dateBlock}>
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleRecordSelection(record.id)}
-                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                          />
-                          <span className={styles.dateText}>{record.date}</span>
-                          <span className={styles.weekdayBadge}>({getWeekdayLabel(record.date)})</span>
-                        </div>
-                        <span
-                          className={styles.roleBadge}
-                          style={{
-                            background: isInstructor ? 'rgba(200, 141, 85, 0.18)' : 'rgba(95, 113, 134, 0.18)',
-                            color: isInstructor ? '#c88d55' : 'var(--color-secondary)',
-                            border: isInstructor ? '1px dashed rgba(200, 141, 85, 0.4)' : '1px dashed rgba(95, 113, 134, 0.4)',
-                          }}
-                        >
-                          {roleLabel} NT$ {record.hourlyRate}/小時
-                        </span>
-                      </div>
-
-                      {/* 卡片中間：班別名稱與時間工時 */}
-                      <div className={styles.mobileCardBody}>
-                        <div className={styles.categoryTag}>
-                          {displayShiftName}
-                        </div>
-                        <div className={styles.timeInfo}>
-                          <span>⏰ {record.startTime} - {record.endTime}</span>
-                          <span className={styles.hoursText}>{hours.toFixed(2)}h</span>
-                        </div>
-                      </div>
-
-                      {/* 卡片底部：總金額與操作按鈕 */}
-                      <div className={styles.mobileCardFooter}>
-                        <span className={styles.payText}>${pay.toLocaleString()}</span>
-                        <div className={styles.actionGroup}>
-                          <button
-                            type="button"
-                            className={`${styles.cardActionBtn} ${styles.editActionBtn}`}
-                            onClick={() => onEditRecord(record)}
-                          >
-                            編輯
-                          </button>
-                          <button
-                            type="button"
-                            className={`${styles.cardActionBtn} ${styles.copyActionBtn}`}
-                            onClick={() => onCopyRecord(record)}
-                          >
-                            複製
-                          </button>
-                          <button
-                            type="button"
-                            className={`${styles.cardActionBtn} ${styles.deleteActionBtn}`}
-                            onClick={() => onDeleteRecord(record.id)}
-                          >
-                            刪除
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-
-              {/* 行動端合計卡片 */}
-              <div className={styles.mobileTotalCard}>
-                <span>合計 ({filteredRecords.length} 筆記錄)</span>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                  <span style={{ color: 'var(--color-secondary)' }}>{totalWorkHours.toFixed(2)}h</span>
-                  <span style={{ color: 'var(--color-primary)', fontSize: '1.15rem', fontWeight: '800' }}>
-                    ${totalSalary.toLocaleString()}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </>
+          <SalaryRecordTable
+            filteredRecords={filteredRecords}
+            roles={roles}
+            selectedRecordIds={selectedRecordIds}
+            toggleRecordSelection={toggleRecordSelection}
+            toggleSelectAll={toggleSelectAll}
+            onEditRecord={onEditRecord}
+            onCopyRecord={onCopyRecord}
+            onDeleteRecord={onDeleteRecord}
+            getDisplayShiftName={getDisplayShiftName}
+            calculatePay={calculatePay}
+            calculateHours={calculateHours}
+          />
         )}
       </div>
-
-      {/* 單筆編輯 Modal：沿用打工月曆的雙欄表單與共用模糊遮罩。 */}
-      {showEditModal && editingRecord && (
-        <Modal isOpen={showEditModal} onClose={onCancelEdit} title="編輯工作記錄" maxWidth="560px">
-          <ModalContent render={(requestClose) => (
-            <form
-              className={styles.recordEditForm}
-              onSubmit={(event) => {
-                event.preventDefault();
-                void onSaveEdit().then((didSave) => {
-                  if (didSave) requestClose();
-                });
-              }}
-            >
-              <div className={styles.recordEditRow}>
-                <div className={styles.recordEditGroup}>
-                  <label htmlFor="edit-record-date">日期</label>
-                  <input
-                    id="edit-record-date"
-                    type="date"
-                    value={editingRecord.date}
-                    onChange={(event) => setEditingRecord({ ...editingRecord, date: event.target.value })}
-                  />
-                </div>
-
-                <div className={styles.recordEditGroup}>
-                  <label htmlFor="edit-record-role">職稱／職位</label>
-                  <select
-                    id="edit-record-role"
-                    value={editingRecord.role}
-                    onChange={(event) => {
-                      const roleId: RoleType = event.target.value;
-                      const selectedRole = roles.find((role) => role.id === roleId);
-                      setEditingRecord({
-                        ...editingRecord,
-                        role: roleId,
-                        roleName: selectedRole?.name,
-                        hourlyRate: selectedRole?.hourlyRate ?? editingRecord.hourlyRate,
-                      });
-                    }}
-                  >
-                    {roles.length === 0 ? (
-                      <option value={editingRecord.role}>
-                        {getWorkRoleLabel(editingRecord.role, roles, editingRecord.roleName)}
-                      </option>
-                    ) : (
-                      <>
-                        {!roles.some((role) => role.id === editingRecord.role) && (
-                          <option value={editingRecord.role}>
-                            {getWorkRoleLabel(editingRecord.role, roles, editingRecord.roleName)}（已移除）
-                          </option>
-                        )}
-                        {roles.map((role) => (
-                          <option key={role.id} value={role.id}>
-                            {role.name} (NT$ {role.hourlyRate}/小時)
-                          </option>
-                        ))}
-                      </>
-                    )}
-                  </select>
-                </div>
-              </div>
-
-              <div className={styles.recordEditRow}>
-                <div className={styles.recordEditGroup}>
-                  <label htmlFor="edit-record-start-time">開始時間</label>
-                  <input
-                    id="edit-record-start-time"
-                    type="time"
-                    value={editingRecord.startTime}
-                    onChange={(event) => onEditStartTimeChange(event.target.value)}
-                  />
-                </div>
-
-                <div className={styles.recordEditGroup}>
-                  <label htmlFor="edit-record-end-time">結束時間</label>
-                  <input
-                    id="edit-record-end-time"
-                    type="time"
-                    value={editingRecord.endTime}
-                    onChange={(event) => onEditEndTimeChange(event.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className={styles.recordEditRow}>
-                <div className={styles.recordEditGroup}>
-                  <label htmlFor="edit-record-hours">工作時數</label>
-                  <input
-                    id="edit-record-hours"
-                    type="number"
-                    step="0.01"
-                    value={editingWorkHours}
-                    onChange={(event) => onEditWorkHoursChange(event.target.value)}
-                  />
-                </div>
-
-                <div className={styles.recordEditGroup}>
-                  <label htmlFor="edit-record-rate">時薪 (元)</label>
-                  <input
-                    id="edit-record-rate"
-                    type="number"
-                    value={editingRecord.hourlyRate}
-                    onChange={(event) => setEditingRecord({ ...editingRecord, hourlyRate: Number(event.target.value) })}
-                  />
-                </div>
-              </div>
-
-              <div className={styles.recordEditActions}>
-                <button type="button" onClick={requestClose} disabled={isSavingEdit} className={styles.cancelEditButton}>
-                  取消
-                </button>
-                <button type="submit" disabled={isSavingEdit} className={styles.saveEditButton}>
-                  {isSavingEdit ? '儲存中...' : '儲存'}
-                </button>
-              </div>
-            </form>
-          )} />
-        </Modal>
-      )}
-
-      {/* 批次編輯 Modal */}
-      {showBatchEditModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-        }}>
-          <div className="glass" style={{ width: '90%', maxWidth: '500px', padding: '1.5rem', background: '#f0ece1' }}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '1rem' }}>
-              批次修改 ({selectedRecordIds.size} 筆記錄)
-            </h3>
-            
-            <div style={{ display: 'grid', gap: '1rem', marginBottom: '1.5rem' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>修改時薪</label>
-                <input
-                  type="number"
-                  value={batchNewHourlyRate}
-                  onChange={(e) => setBatchNewHourlyRate(Number(e.target.value))}
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>修改職稱／職位（選填）</label>
-                <select
-                  value={batchEditData.role}
-                  onChange={(e) => setBatchEditData(prev => ({ ...prev, role: e.target.value }))}
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
-                >
-                  <option value="">-- 不修改 --</option>
-                  {roles.map((role) => (
-                    <option key={role.id} value={role.id}>{role.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>修改班別 (選填)</label>
-                <select
-                  value={batchEditData.shiftCategory}
-                  onChange={(e) => setBatchEditData(prev => ({ ...prev, shiftCategory: e.target.value }))}
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
-                >
-                  <option value="">-- 不修改 --</option>
-                  {shiftCategoryOptions.map(opt => (
-                    <option key={opt} value={opt}>{opt}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-              <button
-                type="button"
-                onClick={onCancelBatchEdit}
-                disabled={isSavingBatchEdit}
-                style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: '1px solid #ccc', background: 'transparent', cursor: 'pointer' }}
-              >
-                取消
-              </button>
-              <button
-                type="button"
-                onClick={onBatchEditHourlyRate}
-                disabled={isSavingBatchEdit}
-                style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', background: 'var(--color-primary)', color: '#fff', fontWeight: 600, cursor: 'pointer' }}
-              >
-                {isSavingBatchEdit ? '套用中...' : '套用修改'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <SalaryRecordDialogs
+        showEditModal={showEditModal}
+        editingRecord={editingRecord}
+        editingWorkHours={editingWorkHours}
+        roles={roles}
+        onEditWorkHoursChange={onEditWorkHoursChange}
+        onEditStartTimeChange={onEditStartTimeChange}
+        onEditEndTimeChange={onEditEndTimeChange}
+        onSaveEdit={onSaveEdit}
+        isSavingEdit={isSavingEdit}
+        onCancelEdit={onCancelEdit}
+        setEditingRecord={setEditingRecord}
+        showBatchEditModal={showBatchEditModal}
+        selectedRecordCount={selectedRecordIds.size}
+        batchNewHourlyRate={batchNewHourlyRate}
+        setBatchNewHourlyRate={setBatchNewHourlyRate}
+        batchEditData={batchEditData}
+        setBatchEditData={setBatchEditData}
+        shiftCategoryOptions={shiftCategoryOptions}
+        onBatchEditHourlyRate={onBatchEditHourlyRate}
+        isSavingBatchEdit={isSavingBatchEdit}
+        onCancelBatchEdit={onCancelBatchEdit}
+      />
     </>
   );
 }

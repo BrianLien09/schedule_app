@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useState, useTransition } from 'react';
-import { SchoolIcon, BriefcaseIcon, GamepadIcon, CalculatorIcon } from './Icons';
+import { SchoolIcon, BriefcaseIcon, GamepadIcon, CalculatorIcon } from '../shared/Icons';
 import styles from './GlassRadioNav.module.css';
 
 /**

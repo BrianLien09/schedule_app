@@ -4,7 +4,7 @@ import React from 'react';
 import type { ShiftTemplate } from '@/data/shiftTemplates';
 import type { WorkRole } from '@/data/workRoles';
 import { getWorkRoleLabel } from '@/data/workRoles';
-import Modal, { ModalContent } from '@/components/Modal';
+import Modal, { ModalContent } from '@/components/shared/Modal';
 import styles from './ShiftTemplateManager.module.css';
 
 type ShiftTemplateDraft = Omit<ShiftTemplate, 'id' | 'createdAt'>;

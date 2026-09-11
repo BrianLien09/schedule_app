@@ -1,8 +1,8 @@
 'use client';
-import AllowanceManager from '@/components/AllowanceManager';
+import AllowanceManager from '@/components/allowance/AllowanceManager';
 import { useAuth } from '@/context/AuthContext';
-import LoginPrompt from '@/components/LoginPrompt';
-import { LoadingSpinner } from '@/components/Loading';
+import LoginPrompt from '@/components/shared/LoginPrompt';
+import { LoadingSpinner } from '@/components/shared/Loading';
 
 export default function AllowancePage() {
   const { user, loading: authLoading } = useAuth();

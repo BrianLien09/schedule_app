@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { SchoolIcon, BriefcaseIcon, GamepadIcon, CalculatorIcon } from './Icons';
+import { SchoolIcon, BriefcaseIcon, GamepadIcon, CalculatorIcon } from '../shared/Icons';
 import GlassRadioNav from './GlassRadioNav';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';

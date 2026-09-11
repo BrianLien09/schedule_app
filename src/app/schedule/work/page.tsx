@@ -6,52 +6,19 @@ import { useScheduleData } from '../../../hooks/useScheduleData';
 import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
-import LoginPrompt from '../../../components/LoginPrompt';
-import WorkShiftEditor from '../../../components/WorkShiftEditor';
-import { LoadingSpinner } from '../../../components/Loading';
+import LoginPrompt from '../../../components/shared/LoginPrompt';
+import WorkShiftEditor from '../../../components/schedule/work/WorkShiftEditor';
+import { LoadingSpinner } from '../../../components/shared/Loading';
 import { useShiftTemplates } from '@/hooks/useShiftTemplates';
 import { useWorkRoles } from '@/hooks/useWorkRoles';
 import type { ShiftTemplate } from '@/data/shiftTemplates';
 import { getWorkRoleHourlyRate, getWorkRoleLabel } from '@/data/workRoles';
+import WorkCalendarView from '@/components/schedule/work/WorkCalendarView';
 import {
   findWorkShiftConflicts,
   formatConflictMessage,
 } from '@/utils/scheduleConflicts';
 import styles from './page.module.css';
-
-/**
- * 依據打工角色 (role) 與內容名稱 (title) 動態計算 Woven & Weft 大地色系標籤樣式
- */
-const getShiftBadgeStyle = (title: string, role?: string) => {
-  const isInstructor = role === 'instructor' || title.includes('講師');
-  const isAssistant = role === 'assistant' || title.includes('助教');
-
-  // 講師：暖陶琥珀色 (#c88d55)
-  if (isInstructor) {
-    return { background: '#c88d55', color: '#f0ece1' };
-  }
-
-  // 助教（且沒有其他特殊分類）：石板藍色 (#5f7186)
-  if (isAssistant) {
-    return { background: '#5f7186', color: '#f0ece1' };
-  }
-
-  // 其他打工類別：依名稱 Hash 散列其他大地色票
-  const palette = [
-    { background: '#b87e6b', color: '#f0ece1' }, // 鐵鏽紅 (Terracotta)
-    { background: '#6b8e78', color: '#f0ece1' }, // 鼠尾草綠 (Sage Green)
-    { background: '#886b86', color: '#f0ece1' }, // 灰紫紅 (Plum Slate)
-    { background: '#78716c', color: '#f0ece1' }, // 溫暖炭棕 (Warm Taupe)
-    { background: '#9e6d5b', color: '#f0ece1' }, // 深紅陶色
-  ];
-
-  let hash = 0;
-  for (let i = 0; i < title.length; i++) {
-    hash = title.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const index = Math.abs(hash) % palette.length;
-  return palette[index];
-};
 
 export default function WorkSchedulePage() {
   const { user, loading: authLoading } = useAuth();
@@ -216,6 +183,23 @@ export default function WorkSchedulePage() {
       setEditorMode('add');
       setIsEditorOpen(true);
     }
+  };
+
+  const handleAddShiftForDay = (day: number) => {
+    const dateStr = formatDate(day);
+    handleDateClick(day);
+    setEditingShift({
+      id: '',
+      date: dateStr,
+      startTime: '09:00',
+      endTime: '18:00',
+      role: roles[0]?.id || 'assistant',
+      roleName: getWorkRoleLabel(roles[0]?.id || 'assistant', roles),
+      hourlyRate: getWorkRoleHourlyRate(roles[0]?.id || 'assistant', roles),
+      note: '',
+    } as WorkShift);
+    setEditorMode('add');
+    setIsEditorOpen(true);
   };
 
   const handleStartMultiSelect = () => {
@@ -455,212 +439,26 @@ export default function WorkSchedulePage() {
             </div>
           )}
 
-          <div
-            key={monthKey}
-            className={`${styles.calendarGrid} ${
-              monthDirection === 'previous'
-                ? styles.calendarGridPrevious
-                : styles.calendarGridNext
-            }`}
-          >
-          {/* 週標題 */}
-          <div className={styles.weekdaysGrid}>
-            {['一', '二', '三', '四', '五', '六', '日'].map((d) => (
-              <div key={d} className={styles.weekdayLabel}>
-                {d}
-              </div>
-            ))}
-          </div>
-
-          {/* 日期格子 */}
-          <div className={styles.daysGrid}>
-            {/* 月初空白格 */}
-            {Array.from({ length: startDay }).map((_, i) => (
-              <div key={`empty-${i}`} className={styles.emptyCell} />
-            ))}
-
-            {/* 日期 */}
-            {Array.from({ length: days }).map((_, i) => {
-              const day = i + 1;
-              const dayShifts = getShiftsForDate(day);
-              const hasShifts = dayShifts.length > 0;
-              const isSelected = selectedDays.includes(day);
-              const isDragOver = dragOverDay === day;
-
-              return (
-                <div
-                  key={day}
-                  onClick={(e) => handleDayClick(day, e)}
-                  onDragOver={(e) => handleDragOver(day, e)}
-                  onDragLeave={handleDragLeave}
-                  onDrop={(e) => handleDrop(day, e)}
-                  className={`${styles.dayCell} ${
-                    hasShifts ? styles.dayCellWithShift : styles.dayCellEmpty
-                  } ${isSelected ? styles.dayCellSelected : ''} ${
-                    isDragOver ? styles.dayCellDragOver : ''
-                  } ${hasShifts ? 'card' : ''}`}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <div className={styles.dayCellHeader}>
-                    <div
-                      className={`${styles.dayNumber} ${
-                        hasShifts ? styles.dayNumberWithShift : styles.dayNumberEmpty
-                      }`}
-                    >
-                      {day}
-                    </div>
-                    {hasShifts && (
-                      <button
-                        type="button"
-                        className={styles.addShiftIconBtn}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const dateStr = formatDate(day);
-                          handleDateClick(day);
-                          setEditingShift({
-                            id: '',
-                            date: dateStr,
-                            startTime: '09:00',
-                            endTime: '18:00',
-                            role: roles[0]?.id || 'assistant',
-                            roleName: getWorkRoleLabel(roles[0]?.id || 'assistant', roles),
-                            hourlyRate: getWorkRoleHourlyRate(roles[0]?.id || 'assistant', roles),
-                            note: '',
-                          } as WorkShift);
-                          setEditorMode('add');
-                          setIsEditorOpen(true);
-                        }}
-                        title={`為 ${day} 日新增另一個排班`}
-                        aria-label={`為 ${day} 日新增排班`}
-                      >
-                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                          <line x1="6" y1="2" x2="6" y2="10" />
-                          <line x1="2" y1="6" x2="10" y2="6" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                  {dayShifts.map((shift) => {
-                    const badgeTitle = shift.shiftCategory || shift.note || '打工';
-                    const badgeStyle = getShiftBadgeStyle(badgeTitle, shift.role);
-                    return (
-                      <div
-                        key={shift.id}
-                        className={styles.shiftBadge}
-                        style={{
-                          background: badgeStyle.background,
-                          color: badgeStyle.color,
-                        }}
-                        draggable
-                        onDragStart={(e) => handleDragStart(shift, e)}
-                        onClick={(e) => handleOpenEditShift(shift, e)}
-                        title={`點擊編輯：${badgeTitle}`}
-                      >
-                        {badgeTitle}
-                      </div>
-                    );
-                  })}
-                  {isSelected && <div className={styles.selectedOverlay}>✓</div>}
-                </div>
-              );
-            })}
-          </div>
-          </div>
-
-          {/* 本月詳細列表 */}
-          <details className={styles.detailsSection} open>
-            <summary className={styles.detailsSummary}>
-              <span className={styles.sectionTitle}>本月詳細列表</span>
-              <span className={styles.detailsHints}>
-                <span className={styles.hintInline}>點擊班次編輯</span>
-                <span className={styles.hintDivider}>/</span>
-                <span className={styles.hintInline}>拖曳複製</span>
-                <span className={styles.hintDivider}>/</span>
-                <span className={styles.hintInline}>多選日期</span>
-              </span>
-              <span className={styles.detailsToggle}>
-                <span className={styles.detailsChevron} aria-hidden="true" />
-                <span className={styles.detailsToggleClosed}>展開</span>
-                <span className={styles.detailsToggleOpen}>收合</span>
-              </span>
-            </summary>
-            <div className={styles.detailsContent}>
-              <div className={styles.shiftsGrid}>
-                {currentMonthShifts.length === 0 ? (
-                  <p style={{ opacity: 0.7, padding: '1rem' }}>本月尚無排定打工班表。</p>
-                ) : (
-                  currentMonthShifts.map((shift: WorkShift) => {
-                    const isSelected = selectedDate === shift.date;
-                    const roleLabel = getWorkRoleLabel(shift.role, roles, shift.roleName);
-                    const rate = shift.hourlyRate ?? getWorkRoleHourlyRate(shift.role, roles);
-                    const shiftTitle = shift.shiftCategory || shift.note || '打工';
-                    const badgeStyle = getShiftBadgeStyle(shiftTitle, shift.role);
-
-                    return (
-                      <div
-                        key={shift.id}
-                        data-date={shift.date}
-                        className={`${styles.shiftCard} ${
-                          isSelected ? styles.shiftCardSelected : styles.shiftCardNormal
-                        }`}
-                      >
-                        {/* 卡片頁首：日期與角色/時薪 */}
-                        <div className={styles.cardHeader}>
-                          <div className={styles.shiftDateBadge}>
-                            {shift.date.split('-')[2]} 日
-                          </div>
-                          <div
-                            className={styles.roleBadge}
-                            style={{
-                              background: shift.role === 'instructor' ? 'rgba(200, 141, 85, 0.18)' : 'rgba(95, 113, 134, 0.18)',
-                              color: shift.role === 'instructor' ? '#c88d55' : 'var(--color-secondary)',
-                              border: shift.role === 'instructor' ? '1px dashed rgba(200, 141, 85, 0.4)' : '1px dashed rgba(95, 113, 134, 0.4)',
-                            }}
-                          >
-                            {roleLabel} ${rate}/h
-                          </div>
-                        </div>
-
-                        {/* 卡片內文：打工名稱與時間工時 */}
-                        <div className={styles.cardBody}>
-                          <div
-                            className={styles.shiftNameTag}
-                            style={{
-                              background: badgeStyle.background,
-                              color: badgeStyle.color,
-                            }}
-                          >
-                            {shiftTitle}
-                          </div>
-                          <div className={styles.shiftTimeText}>
-                            ⏰ {shift.startTime} - {shift.endTime} ({shift.workHours ?? '-'}小時)
-                          </div>
-                        </div>
-
-                        {/* 卡片頁尾：操作按鈕 */}
-                        <div className={styles.cardFooter}>
-                          <button
-                            className={`${styles.actionBtn} ${styles.editBtn}`}
-                            onClick={() => handleOpenEditShift(shift)}
-                            title="編輯班表"
-                          >
-                            ✏️ 編輯
-                          </button>
-                          <button
-                            className={`${styles.actionBtn} ${styles.deleteBtn}`}
-                            onClick={() => handleDeleteShift(shift.id)}
-                            title="刪除班表"
-                          >
-                            🗑️ 刪除
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          </details>
+          <WorkCalendarView
+            days={days}
+            startDay={startDay}
+            monthKey={monthKey}
+            monthDirection={monthDirection}
+            selectedDate={selectedDate}
+            currentMonthShifts={currentMonthShifts}
+            selectedDays={selectedDays}
+            dragOverDay={dragOverDay}
+            roles={roles}
+            getShiftsForDate={getShiftsForDate}
+            onDayClick={handleDayClick}
+            onAddShift={handleAddShiftForDay}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onOpenEditShift={handleOpenEditShift}
+            onDeleteShift={handleDeleteShift}
+          />
         </div>
       </div>
 

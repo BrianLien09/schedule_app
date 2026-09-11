@@ -11,8 +11,8 @@ import { ReactNode } from 'react';
 import { AuthProvider } from '@/context/AuthContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { ConfirmProvider } from '@/context/ConfirmContext';
-import ToastContainer from '@/components/Toast';
-import ConfirmDialog from '@/components/ConfirmDialog';
+import ToastContainer from '@/components/shared/Toast';
+import ConfirmDialog from '@/components/shared/ConfirmDialog';
 
 interface ProvidersProps {
   children: ReactNode;

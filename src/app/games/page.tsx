@@ -15,12 +15,12 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useGameGuides } from '@/hooks/useGameGuides';
 import { useAuth } from '@/context/AuthContext';
 import { useConfirm } from '@/context/ConfirmContext';
-import { GuideCard, CategoryBadge } from '@/components/GuideComponents';
-import { GuideEditForm } from '@/components/GuideEditForm';
+import { GuideCard, CategoryBadge } from '@/components/games/GuideComponents';
+import { GuideEditForm } from '@/components/games/GuideEditForm';
 import type { GameGuide, GuideCategory } from '@/data/gameGuides';
 import { GUIDE_CATEGORIES } from '@/data/gameGuides';
 import { games } from '@/data/games';
-import { LoadingSpinner } from '@/components/Loading';
+import { LoadingSpinner } from '@/components/shared/Loading';
 import styles from './page.module.css';
 
 export default function GamesPage() {

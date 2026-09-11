@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
-import type { Course, WorkShift } from '../data/schedule';
+import type { Course, WorkShift } from '../../../data/schedule';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
-import Modal, { ModalContent } from './Modal';
+import Modal, { ModalContent } from '../../shared/Modal';
 import styles from './CourseEditor.module.css';
 import { findCourseConflicts, formatConflictMessage } from '@/utils/scheduleConflicts';
 
