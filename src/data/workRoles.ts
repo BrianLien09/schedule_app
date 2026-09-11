@@ -1,3 +1,5 @@
+import { PERSONAL_COLLECTIONS } from '@/services/firestoreCollections';
+
 export type RoleType = string;
 
 export interface WorkRole {
@@ -9,7 +11,8 @@ export interface WorkRole {
 
 export type WorkRoleInput = Pick<WorkRole, 'name' | 'hourlyRate'>;
 
-export const WORK_ROLES_COLLECTION = 'workRoles';
+/** 保留既有匯出名稱，實際值由集中集合常數提供。 */
+export const WORK_ROLES_COLLECTION = PERSONAL_COLLECTIONS.workRoles;
 export const WORK_ROLES_CONFIG_ID = 'role-config';
 
 /** 首次啟用職稱／職位管理時寫入的預設資料。 */

@@ -25,3 +25,18 @@ export const SHARED_COLLECTIONS = {
 
 export type SharedCollectionName =
   (typeof SHARED_COLLECTIONS)[keyof typeof SHARED_COLLECTIONS];
+
+/** Firestore 固定根路徑，避免資料層散落相同的路徑字串。 */
+export const FIRESTORE_PATHS = {
+  usersCollection: 'users',
+  sharedCollection: 'shared',
+  sharedDataDocument: 'data',
+} as const;
+
+/** family-web 使用的外部資料集合名稱。 */
+export const FAMILY_COLLECTIONS = {
+  schedules: 'schedules',
+} as const;
+
+export type FamilyCollectionName =
+  (typeof FAMILY_COLLECTIONS)[keyof typeof FAMILY_COLLECTIONS];

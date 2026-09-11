@@ -6,10 +6,9 @@ import {
   deleteDocument,
   subscribeToCollection,
 } from '@/services/firestoreService';
+import { PERSONAL_COLLECTIONS } from '@/services/firestoreCollections';
 import { hasWriteAccess } from '@/config/permissions';
 import { sortShiftTemplates, type ShiftTemplate } from '@/data/shiftTemplates';
-
-const SHIFT_TEMPLATES_COLLECTION = 'shiftTemplates';
 
 export function useShiftTemplates() {
   const { user } = useAuth();
@@ -34,7 +33,7 @@ export function useShiftTemplates() {
 
     const unsubscribe = subscribeToCollection<ShiftTemplate>(
       user.uid,
-      SHIFT_TEMPLATES_COLLECTION,
+      PERSONAL_COLLECTIONS.shiftTemplates,
       (data) => {
         setTemplates(data);
         setLoading(false);
@@ -53,7 +52,7 @@ export function useShiftTemplates() {
       console.warn('❌ 無編輯權限');
       return;
     }
-    await setDocument(user.uid, SHIFT_TEMPLATES_COLLECTION, template.id, template);
+    await setDocument(user.uid, PERSONAL_COLLECTIONS.shiftTemplates, template.id, template);
   };
 
   const updateTemplate = async (id: string, updates: Partial<ShiftTemplate>) => {
@@ -61,7 +60,7 @@ export function useShiftTemplates() {
       console.warn('❌ 無編輯權限');
       return;
     }
-    await updateDocument(user.uid, SHIFT_TEMPLATES_COLLECTION, id, updates);
+    await updateDocument(user.uid, PERSONAL_COLLECTIONS.shiftTemplates, id, updates);
   };
 
   const deleteTemplate = async (id: string) => {
@@ -69,7 +68,7 @@ export function useShiftTemplates() {
       console.warn('❌ 無編輯權限');
       return;
     }
-    await deleteDocument(user.uid, SHIFT_TEMPLATES_COLLECTION, id);
+    await deleteDocument(user.uid, PERSONAL_COLLECTIONS.shiftTemplates, id);
   };
 
   return {

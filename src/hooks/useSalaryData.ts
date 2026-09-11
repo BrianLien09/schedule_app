@@ -7,6 +7,7 @@ import {
   subscribeToCollection,
   batchSetDocuments,
 } from '@/services/firestoreService';
+import { PERSONAL_COLLECTIONS } from '@/services/firestoreCollections';
 import { hasWriteAccess } from '@/config/permissions';
 import type { SalaryRecord } from '@/data/workRecords';
 
@@ -35,7 +36,7 @@ export function useSalaryData() {
 
     const unsubscribe = subscribeToCollection<SalaryRecord>(
       user.uid,
-      'salaryRecords',
+      PERSONAL_COLLECTIONS.salaryRecords,
       (data) => {
         setRecords(data);
         setLoading(false);
@@ -51,7 +52,7 @@ export function useSalaryData() {
       return;
     }
 
-    await setDocument(user.uid, 'salaryRecords', record.id, record);
+    await setDocument(user.uid, PERSONAL_COLLECTIONS.salaryRecords, record.id, record);
   };
 
   const updateRecord = async (id: string, updatedRecord: Partial<SalaryRecord>) => {
@@ -60,7 +61,7 @@ export function useSalaryData() {
       return;
     }
 
-    await updateDocument(user.uid, 'salaryRecords', id, updatedRecord);
+    await updateDocument(user.uid, PERSONAL_COLLECTIONS.salaryRecords, id, updatedRecord);
   };
 
   const deleteRecord = async (id: string) => {
@@ -71,10 +72,10 @@ export function useSalaryData() {
 
     const targetRecord = records.find((record) => record.id === id);
 
-    await deleteDocument(user.uid, 'salaryRecords', id);
+    await deleteDocument(user.uid, PERSONAL_COLLECTIONS.salaryRecords, id);
 
     if (targetRecord?.workShiftId) {
-      await deleteDocument(user.uid, 'workShifts', targetRecord.workShiftId);
+      await deleteDocument(user.uid, PERSONAL_COLLECTIONS.workShifts, targetRecord.workShiftId);
     }
   };
 
@@ -84,7 +85,7 @@ export function useSalaryData() {
       return;
     }
 
-    await batchSetDocuments(user.uid, 'salaryRecords', newRecords);
+    await batchSetDocuments(user.uid, PERSONAL_COLLECTIONS.salaryRecords, newRecords);
   };
 
   const batchUpdateRecords = async (
@@ -96,7 +97,7 @@ export function useSalaryData() {
     }
 
     const promises = updates.map(({ id, data }) =>
-      updateDocument(user.uid, 'salaryRecords', id, data)
+      updateDocument(user.uid, PERSONAL_COLLECTIONS.salaryRecords, id, data)
     );
     await Promise.all(promises);
   };
@@ -109,12 +110,14 @@ export function useSalaryData() {
 
     const recordsToDelete = records.filter((record) => ids.includes(record.id));
     const salaryDeletePromises = ids.map((id) =>
-      deleteDocument(user.uid, 'salaryRecords', id)
+      deleteDocument(user.uid, PERSONAL_COLLECTIONS.salaryRecords, id)
     );
     const legacyShiftDeletePromises = recordsToDelete
       .map((record) => record.workShiftId)
       .filter((workShiftId): workShiftId is string => Boolean(workShiftId))
-      .map((workShiftId) => deleteDocument(user.uid, 'workShifts', workShiftId));
+      .map((workShiftId) =>
+        deleteDocument(user.uid, PERSONAL_COLLECTIONS.workShifts, workShiftId)
+      );
 
     await Promise.all([...salaryDeletePromises, ...legacyShiftDeletePromises]);
   };

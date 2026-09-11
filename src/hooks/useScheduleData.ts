@@ -1,32 +1,28 @@
 import { startTransition, useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import {
-  workShifts as defaultWorkShifts,
-  importantEvents,
-  DEFAULT_COURSE_SEMESTER,
-  Course,
-  WorkShift,
-  Event,
-} from '../data/schedule';
+import { DEFAULT_COURSE_SEMESTER } from '../data/schedule';
+import type { Course, WorkShift, Event } from '../data/schedule';
 import { normalizeCourses, type CourseCollectionSource } from '@/utils/courseSemesters';
 import {
-  getDocuments,
   setDocument,
   updateDocument,
   deleteDocument,
   subscribeToCollection,
   subscribeToSharedCollection,
-  batchSetDocuments,
 } from '@/services/firestoreService';
+import {
+  PERSONAL_COLLECTIONS,
+  SHARED_COLLECTIONS,
+} from '@/services/firestoreCollections';
+import { bootstrapScheduleData } from '@/services/scheduleBootstrapService';
 import {
   hasFamilyWebSyncAccess,
   hasWriteAccess,
   isBrianAccount,
 } from '@/config/permissions';
 import {
-  createSalaryRecordFromWorkShift,
-  isSalaryRecordLinkedToShift,
   mapSalaryRecordToWorkShift,
+  createSalaryRecordFromWorkShift,
   type SalaryRecord,
 } from '@/data/workRecords';
 import {
@@ -38,54 +34,6 @@ import {
 
 function getCourseCollectionSource(email: string | null | undefined): CourseCollectionSource {
   return isBrianAccount(email) ? 'personal' : 'shared';
-}
-
-async function migrateLegacyWorkShifts(
-  userId: string,
-  existingSalaryRecords: SalaryRecord[],
-  legacyShifts: WorkShift[]
-): Promise<void> {
-  const recordsToCreate = legacyShifts
-    .filter(
-      (shift) =>
-        !existingSalaryRecords.some((record) => isSalaryRecordLinkedToShift(record, shift))
-    )
-    .map((shift) =>
-      createSalaryRecordFromWorkShift(shift, {
-        id: `salary-${shift.id}`,
-        legacyWorkShiftId: shift.id,
-      })
-    );
-
-  if (recordsToCreate.length > 0) {
-    await batchSetDocuments(userId, 'salaryRecords', recordsToCreate);
-  }
-}
-
-async function initializeDefaultData(userId: string): Promise<void> {
-  try {
-    const existingLegacyShifts = await getDocuments<WorkShift>(userId, 'workShifts');
-    const existingSalaryRecords = await getDocuments<SalaryRecord>(userId, 'salaryRecords');
-    const existingEvents = await getDocuments<Event>(userId, 'events');
-
-    if (existingSalaryRecords.length === 0 && existingLegacyShifts.length === 0) {
-      const seededSalaryRecords = defaultWorkShifts.map((shift) =>
-        createSalaryRecordFromWorkShift(shift, {
-          id: `salary-${shift.id}`,
-          legacyWorkShiftId: shift.id,
-        })
-      );
-      await batchSetDocuments(userId, 'salaryRecords', seededSalaryRecords);
-    } else if (existingLegacyShifts.length > 0) {
-      await migrateLegacyWorkShifts(userId, existingSalaryRecords, existingLegacyShifts);
-    }
-
-    if (existingEvents.length === 0) {
-      await batchSetDocuments(userId, 'events', importantEvents);
-    }
-  } catch (error) {
-    console.error('初始化個人資料失敗', error);
-  }
 }
 
 export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
@@ -117,7 +65,7 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
       setCanEdit(hasWriteAccess(user.email));
     });
 
-    initializeDefaultData(user.uid).then(() => {
+    bootstrapScheduleData(user.uid).then(() => {
       setLoading(false);
     });
 
@@ -126,12 +74,12 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
     };
 
     const unsubscribeCourses = courseCollectionSource === 'shared'
-      ? subscribeToSharedCollection<Course>('courses', handleCourses)
-      : subscribeToCollection<Course>(user.uid, 'courses', handleCourses);
+      ? subscribeToSharedCollection<Course>(SHARED_COLLECTIONS.courses, handleCourses)
+      : subscribeToCollection<Course>(user.uid, PERSONAL_COLLECTIONS.courses, handleCourses);
 
     const unsubscribeShifts = subscribeToCollection<SalaryRecord>(
       user.uid,
-      'salaryRecords',
+      PERSONAL_COLLECTIONS.salaryRecords,
       (data) =>
         setShifts(
           data
@@ -145,7 +93,7 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
 
     const unsubscribeEvents = subscribeToCollection<Event>(
       user.uid,
-      'events',
+      PERSONAL_COLLECTIONS.events,
       (data) => setEvents(data)
     );
 
@@ -163,7 +111,7 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
     }
 
     const courseData = { ...course, semester: course.semester ?? selectedSemester };
-    await setDocument(user.uid, 'courses', course.id, courseData);
+    await setDocument(user.uid, PERSONAL_COLLECTIONS.courses, course.id, courseData);
   };
 
   const updateCourse = async (id: string, updatedCourse: Partial<Course>) => {
@@ -173,7 +121,7 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
     }
 
     const courseData = { ...updatedCourse, semester: selectedSemester };
-    await updateDocument(user.uid, 'courses', id, courseData);
+    await updateDocument(user.uid, PERSONAL_COLLECTIONS.courses, id, courseData);
   };
 
   const deleteCourse = async (id: string) => {
@@ -182,7 +130,7 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
       return;
     }
 
-    await deleteDocument(user.uid, 'courses', id);
+    await deleteDocument(user.uid, PERSONAL_COLLECTIONS.courses, id);
   };
 
   const addWorkShift = async (shift: WorkShift) => {
@@ -197,7 +145,7 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
       legacyWorkShiftId: shift.legacyWorkShiftId,
     });
 
-    await setDocument(user.uid, 'salaryRecords', record.id, record);
+    await setDocument(user.uid, PERSONAL_COLLECTIONS.salaryRecords, record.id, record);
     await syncWorkShiftToFamilyWeb(shift, user.email);
   };
 
@@ -227,7 +175,7 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
       Object.entries(record).filter(([key]) => key !== 'id')
     );
 
-    await updateDocument(user.uid, 'salaryRecords', id, recordData);
+    await updateDocument(user.uid, PERSONAL_COLLECTIONS.salaryRecords, id, recordData);
     await updateWorkShiftInFamilyWeb(id, mergedShift, user.email);
   };
 
@@ -238,10 +186,10 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
     }
 
     const targetShift = shifts.find((shift) => shift.id === id);
-    await deleteDocument(user.uid, 'salaryRecords', id);
+    await deleteDocument(user.uid, PERSONAL_COLLECTIONS.salaryRecords, id);
 
     if (targetShift?.legacyWorkShiftId) {
-      await deleteDocument(user.uid, 'workShifts', targetShift.legacyWorkShiftId);
+      await deleteDocument(user.uid, PERSONAL_COLLECTIONS.workShifts, targetShift.legacyWorkShiftId);
     }
     await deleteWorkShiftFromFamilyWeb(id, user.email);
   };
@@ -252,7 +200,7 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
       return;
     }
 
-    await setDocument(user.uid, 'events', event.id, event);
+    await setDocument(user.uid, PERSONAL_COLLECTIONS.events, event.id, event);
   };
 
   const updateEvent = async (id: string, updatedEvent: Partial<Event>) => {
@@ -261,7 +209,7 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
       return;
     }
 
-    await updateDocument(user.uid, 'events', id, updatedEvent);
+    await updateDocument(user.uid, PERSONAL_COLLECTIONS.events, id, updatedEvent);
   };
 
   const deleteEvent = async (id: string) => {
@@ -270,7 +218,7 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
       return;
     }
 
-    await deleteDocument(user.uid, 'events', id);
+    await deleteDocument(user.uid, PERSONAL_COLLECTIONS.events, id);
   };
 
   return {

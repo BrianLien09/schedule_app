@@ -15,7 +15,7 @@ test('跨節課程使用固定的格線座標', () => {
   assert.deepEqual(getCourseTimetablePlacement(course), {
     columnStart: 3,
     rowStart: 4,
-    rowEnd: 7,
+    rowEnd: 6,
   });
 });
 

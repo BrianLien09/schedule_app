@@ -36,9 +36,10 @@ import {
   Unsubscribe,
 } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from '@/lib/firebase';
-import type {
-  PersonalCollectionName,
-  SharedCollectionName,
+import {
+  FIRESTORE_PATHS,
+  type PersonalCollectionName,
+  type SharedCollectionName,
 } from '@/services/firestoreCollections';
 
 /**
@@ -72,7 +73,7 @@ export function getUserCollection(
   if (!userId.trim()) {
     throw new Error('缺少使用者 UID，無法取得個人資料');
   }
-  return collection(db, 'users', userId, collectionName);
+  return collection(db, FIRESTORE_PATHS.usersCollection, userId, collectionName);
 }
 
 /** 取得 shared/data 下的共用 Collection 參考。 */
@@ -80,7 +81,12 @@ function getSharedCollection(collectionName: SharedCollectionName) {
   if (!isFirebaseConfigured || !db) {
     throw new Error('Firebase 未設定，請檢查環境變數');
   }
-  return collection(db, 'shared', 'data', collectionName);
+  return collection(
+    db,
+    FIRESTORE_PATHS.sharedCollection,
+    FIRESTORE_PATHS.sharedDataDocument,
+    collectionName
+  );
 }
 
 /**

@@ -6,6 +6,7 @@ import {
   deleteDocument,
   subscribeToCollection,
 } from '@/services/firestoreService';
+import { PERSONAL_COLLECTIONS } from '@/services/firestoreCollections';
 import { hasWriteAccess } from '@/config/permissions';
 import { AllowanceRecord, DEFAULT_SOURCE_TYPES } from '@/data/allowance';
 
@@ -15,9 +16,6 @@ import { AllowanceRecord, DEFAULT_SOURCE_TYPES } from '@/data/allowance';
  * 每位登入者的生活費資料儲存在自己的 /users/{uid}/ 路徑下，避免家庭帳號互相看到財務資料。
  * 權限控制由 Firestore Security Rules 再次確認使用者只能存取自己的 UID。
  */
-const ALLOWANCE_COLLECTION = 'allowanceRecords';
-const SOURCE_TYPES_COLLECTION = 'allowanceSourceTypes';
-
 /**
  * Allowance Data Management Hook
  * 
@@ -58,7 +56,7 @@ export function useAllowanceData() {
     // 訂閱即時資料變更（生活費記錄）
     const unsubscribeRecords = subscribeToCollection<AllowanceRecord>(
       user.uid,
-      ALLOWANCE_COLLECTION,
+      PERSONAL_COLLECTIONS.allowanceRecords,
       (data) => {
         // 按時間戳記排序（最新在前）
         const sorted = data.sort((a, b) => b.timestamp - a.timestamp);
@@ -70,7 +68,7 @@ export function useAllowanceData() {
     // 訂閱即時資料變更（來源類型）
     const unsubscribeSourceTypes = subscribeToCollection<{ id: string; types: string[] }>(
       user.uid,
-      SOURCE_TYPES_COLLECTION,
+      PERSONAL_COLLECTIONS.allowanceSourceTypes,
       (data) => {
         if (data.length > 0 && data[0].types) {
           setSourceTypes(data[0].types);
@@ -98,7 +96,7 @@ export function useAllowanceData() {
       return;
     }
 
-    await setDocument(user.uid, ALLOWANCE_COLLECTION, record.id, record);
+    await setDocument(user.uid, PERSONAL_COLLECTIONS.allowanceRecords, record.id, record);
   };
 
   /**
@@ -113,7 +111,7 @@ export function useAllowanceData() {
       return;
     }
 
-    await updateDocument(user.uid, ALLOWANCE_COLLECTION, id, updatedRecord);
+    await updateDocument(user.uid, PERSONAL_COLLECTIONS.allowanceRecords, id, updatedRecord);
   };
 
   /**
@@ -127,7 +125,7 @@ export function useAllowanceData() {
       return;
     }
 
-    await deleteDocument(user.uid, ALLOWANCE_COLLECTION, id);
+    await deleteDocument(user.uid, PERSONAL_COLLECTIONS.allowanceRecords, id);
   };
 
   // ========== 來源類型管理 ==========
@@ -153,7 +151,7 @@ export function useAllowanceData() {
     setSourceTypes(newTypes);
 
     // 儲存到 Firestore（使用固定 ID 'config'）
-    await setDocument(user.uid, SOURCE_TYPES_COLLECTION, 'config', {
+    await setDocument(user.uid, PERSONAL_COLLECTIONS.allowanceSourceTypes, 'config', {
       id: 'config',
       types: newTypes,
     });
@@ -180,7 +178,7 @@ export function useAllowanceData() {
     setSourceTypes(newTypes);
 
     // 更新 Firestore
-    await setDocument(user.uid, SOURCE_TYPES_COLLECTION, 'config', {
+    await setDocument(user.uid, PERSONAL_COLLECTIONS.allowanceSourceTypes, 'config', {
       id: 'config',
       types: newTypes,
     });

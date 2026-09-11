@@ -7,6 +7,7 @@
 
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { familyDb } from '@/lib/firebase';
+import { FAMILY_COLLECTIONS } from '@/services/firestoreCollections';
 import {
   getFamilyWebScheduleCategory,
   getFamilyWebTitlePrefix,
@@ -71,7 +72,11 @@ export async function syncWorkShiftToFamilyWeb(
   if (!context) return;
 
   try {
-    const docRef = doc(context.db, 'schedules', getFamilyDocId(shift.id, context.titlePrefix));
+    const docRef = doc(
+      context.db,
+      FAMILY_COLLECTIONS.schedules,
+      getFamilyDocId(shift.id, context.titlePrefix)
+    );
     await setDoc(
       docRef,
       mapShiftToFamilySchedule(shift, context.titlePrefix, context.category),
@@ -94,7 +99,11 @@ export async function updateWorkShiftInFamilyWeb(
   if (!context) return;
 
   try {
-    const docRef = doc(context.db, 'schedules', getFamilyDocId(id, context.titlePrefix));
+    const docRef = doc(
+      context.db,
+      FAMILY_COLLECTIONS.schedules,
+      getFamilyDocId(id, context.titlePrefix)
+    );
     const updatePayload: Record<string, string> = {
       updatedAt: new Date().toISOString(),
       category: context.category,
@@ -131,7 +140,9 @@ export async function deleteWorkShiftFromFamilyWeb(
   if (!context) return;
 
   try {
-    await deleteDoc(doc(context.db, 'schedules', getFamilyDocId(id, context.titlePrefix)));
+    await deleteDoc(
+      doc(context.db, FAMILY_COLLECTIONS.schedules, getFamilyDocId(id, context.titlePrefix))
+    );
   } catch (error) {
     console.error('[FamilySync] 刪除 family-web 項目失敗:', error);
   }
