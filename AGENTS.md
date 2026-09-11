@@ -52,7 +52,14 @@ src/
 │   ├── login/              # 登入頁面
 │   ├── schedule/           # 學校課表、打工月曆
 │   └── tools/salary/       # 薪資計算器
-├── components/             # 可覆用 React 元件（23 個檔案）
+├── components/             # 依功能歸類的可覆用 React 元件
+│   ├── allowance/          # 生活費與記錄相關元件
+│   ├── games/              # 遊戲攻略元件
+│   ├── home/               # 首頁摘要元件
+│   ├── layout/             # 導覽列、Provider 與頁面外框元件
+│   ├── salary/             # 薪資計算、記錄與設定元件
+│   ├── schedule/           # 學校課表與打工月曆元件
+│   └── shared/             # 跨功能共用 UI 元件
 ├── hooks/                  # Custom Hooks（useScheduleData, useHomeDashboard 等）
 ├── context/                # React Context（AuthContext）
 ├── services/               # Firestore 服務層（firestoreService.ts）
@@ -94,7 +101,7 @@ import { getDocuments, addDocument } from '@/services/firestoreService';
 import type { Course, WorkShift } from '@/data/schedule';
 
 // 5. 元件
-import Navbar from '@/components/Navbar';
+import Navbar from '@/components/layout/Navbar';
 
 // 6. 樣式（CSS Modules）
 import styles from './page.module.css';
