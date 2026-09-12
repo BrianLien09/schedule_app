@@ -181,81 +181,38 @@ export default function SalaryAnalytics({
             }}>
               月度收入趨勢（最近 6 個月）
             </h4>
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'flex-end', 
-              justifyContent: 'space-around',
-              gap: '1rem',
-              height: '260px',
-              padding: '1rem 1.25rem',
-              background: '#f0ece1',
-              borderRadius: '12px',
-              border: '2px dashed rgba(220, 208, 194, 0.7)',
-              boxShadow: 'var(--glass-shadow)',
-              position: 'relative',
-            }}>
+            <div className={styles.chartContainer}>
               {monthlyStats.map((stat) => {
                 const heightPercent = (stat.totalPay / maxMonthlyPay) * 100;
-                const barHeight = Math.max(heightPercent, 5);
+                const barHeight = Math.max(heightPercent, 8);
                 const [, month] = stat.month.split('-');
-                
-                const labelTop = stat.totalPay === 0 
-                  ? 'calc(100% - 50px)' 
-                  : `${100 - barHeight - 12}%`;
                 
                 return (
                   <div
                     key={stat.month}
                     className={styles.chartColumn}
-                    style={{
-                      flex: 1,
-                      maxWidth: '100px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      height: '100%',
-                      position: 'relative',
-                    }}
                   >
-                    {/* 數值標記 */}
-                    <div className={styles.chartValue} style={{
-                      position: 'absolute',
-                      top: labelTop,
-                      fontSize: '0.85rem',
-                      fontWeight: '600',
-                      color: stat.totalPay === 0 ? 'var(--muted)' : 'var(--color-primary)',
-                      whiteSpace: 'nowrap',
-                      transform: 'translateY(-100%)',
-                      opacity: stat.totalPay === 0 ? 0.6 : 1,
-                    }}>
-                      ${(stat.totalPay / 1000).toFixed(1)}k
+                    <div className={styles.chartPlot}>
+                      <div className={styles.chartBarArea}>
+                        {/* 數值標記與長條共用同一個定位基準，確保間距固定。 */}
+                        <div className={styles.chartValue} style={{
+                          bottom: `calc(${barHeight}% + 0.5rem)`,
+                          color: stat.totalPay === 0 ? 'var(--muted)' : 'var(--color-primary)',
+                          opacity: stat.totalPay === 0 ? 0.6 : 1,
+                        }}>
+                          ${(stat.totalPay / 1000).toFixed(1)}k
+                        </div>
+
+                        {/* 長條本體 */}
+                        <div
+                          className={styles.chartBar}
+                          style={{ height: `${barHeight}%` }}
+                          title={`${stat.month}: $${stat.totalPay.toLocaleString()} (${stat.totalHours.toFixed(2)}h, ${stat.recordCount}天)`}
+                        />
+                      </div>
                     </div>
-                    
-                    <div style={{ flex: 1 }}></div>
-                    
-                    {/* 長條本體 */}
-                    <div
-                      className={styles.chartBar}
-                      style={{
-                        width: '100%',
-                        height: `${barHeight}%`,
-                        minHeight: '20px',
-                        background: 'linear-gradient(to top, var(--color-primary, #b87e6b) 0%, #d89e8b 100%)',
-                        borderRadius: '8px 8px 0 0',
-                        cursor: 'pointer',
-                        boxShadow: '0 4px 12px rgba(184, 126, 107, 0.2)',
-                      }}
-                      title={`${stat.month}: $${stat.totalPay.toLocaleString()} (${stat.totalHours.toFixed(2)}h, ${stat.recordCount}天)`}
-                    />
-                    
                     {/* 月份標籤 */}
-                    <div style={{
-                      fontSize: '0.85rem',
-                      fontWeight: '600',
-                      color: 'var(--text-secondary)',
-                      textAlign: 'center',
-                      marginTop: '0.75rem',
-                    }}>
+                    <div className={styles.chartMonth}>
                       {month}月
                     </div>
                   </div>

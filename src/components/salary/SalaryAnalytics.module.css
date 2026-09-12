@@ -20,16 +20,77 @@
 
 .chartColumn {
   position: relative;
+  flex: 1;
+  max-width: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  min-width: 0;
+}
+
+.chartContainer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 1rem;
+  height: 260px;
+  padding: 1rem 1.25rem;
+  background: #f0ece1;
+  border-radius: 12px;
+  border: 2px dashed rgba(220, 208, 194, 0.7);
+  box-shadow: var(--glass-shadow);
+  position: relative;
+}
+
+.chartPlot {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+
+.chartBarArea {
+  position: absolute;
+  top: 2.25rem;
+  right: 0;
+  bottom: 0;
+  left: 0;
 }
 
 .chartValue {
+  position: absolute;
+  left: 50%;
+  z-index: 1;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
   animation: chartValueReveal 220ms ease-out both;
 }
 
 .chartBar {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: linear-gradient(to top, var(--color-primary, #b87e6b) 0%, #d89e8b 100%);
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(184, 126, 107, 0.2);
   transform-origin: bottom;
   animation: chartBarRise 420ms var(--ease-standard) both;
   transition: box-shadow 180ms ease, filter 180ms ease;
+}
+
+.chartMonth {
+  flex: 0 0 auto;
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
 }
 
 .chartColumn:nth-child(2) .chartBar {
@@ -93,11 +154,11 @@
 @keyframes chartValueReveal {
   from {
     opacity: 0;
-    transform: translateY(-90%);
+    transform: translate(-50%, 4px);
   }
   to {
     opacity: 1;
-    transform: translateY(-100%);
+    transform: translate(-50%, 0);
   }
 }
 
