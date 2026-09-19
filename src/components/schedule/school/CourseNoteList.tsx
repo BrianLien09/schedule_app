@@ -6,10 +6,11 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type ReactNode } from 'react';
 import type { CourseNote, NoteType } from '@/data/courseNotes';
 import { NOTE_TYPE_LABELS, NOTE_TYPE_COLORS, PRIORITY_COLORS } from '@/data/courseNotes';
 import { useConfirm } from '@/context/ConfirmContext';
+import { parseMarkdown, type MarkdownInlineNode } from './markdownRenderer';
 import styles from './CourseNoteList.module.css';
 
 interface CourseNoteListProps {
@@ -17,6 +18,15 @@ interface CourseNoteListProps {
   onEdit: (note: CourseNote) => void;
   onDelete: (noteId: string) => void;
   onToggleComplete: (noteId: string, completed: boolean) => void;
+}
+
+function renderInlineMarkdown(nodes: MarkdownInlineNode[]): ReactNode {
+  return nodes.map((node, nodeIndex) => {
+    if (node.type === 'strong') return <strong key={nodeIndex}>{node.value}</strong>;
+    if (node.type === 'emphasis') return <em key={nodeIndex}>{node.value}</em>;
+    if (node.type === 'code') return <code key={nodeIndex}>{node.value}</code>;
+    return node.value;
+  });
 }
 
 export default function CourseNoteList({
@@ -52,28 +62,35 @@ export default function CourseNoteList({
     });
   };
 
-  // 渲染 Markdown（簡易版）
-  const renderMarkdown = (text: string) => {
-    return text
-      .split('\n')
-      .map((line, i) => {
-        // 標題
-        if (line.startsWith('## ')) {
-          return <h3 key={i} className={styles.mdHeading}>{line.substring(3)}</h3>;
-        }
-        // 項目符號
-        if (line.startsWith('- ')) {
-          return <li key={i} className={styles.mdListItem}>{line.substring(2)}</li>;
-        }
-        // 粗體和斜體
-        const formatted = line
-          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-          .replace(/\*(.*?)\*/g, '<em>$1</em>')
-          .replace(/`(.*?)`/g, '<code>$1</code>');
+  // 只將明確允許的 Markdown 節點轉成 React 元素，避免原始 HTML 被解譯。
+  const renderMarkdown = (text: string) =>
+    parseMarkdown(text).map((block, blockIndex) => {
+      if (block.type === 'heading') {
+        return (
+          <h3 key={`heading-${blockIndex}`} className={styles.mdHeading}>
+            {renderInlineMarkdown(block.content)}
+          </h3>
+        );
+      }
 
-        return <p key={i} dangerouslySetInnerHTML={{ __html: formatted }} />;
-      });
-  };
+      if (block.type === 'list') {
+        return (
+          <ul key={`list-${blockIndex}`} className={styles.mdList}>
+            {block.items.map((item, itemIndex) => (
+              <li key={itemIndex} className={styles.mdListItem}>
+                {renderInlineMarkdown(item)}
+              </li>
+            ))}
+          </ul>
+        );
+      }
+
+      return (
+        <p key={`paragraph-${blockIndex}`}>
+          {renderInlineMarkdown(block.content)}
+        </p>
+      );
+    });
 
   if (notes.length === 0) {
     return (
