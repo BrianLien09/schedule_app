@@ -4,6 +4,7 @@ import Navbar from "@/components/layout/Navbar";
 import BackToTop from "@/components/layout/BackToTop";
 import PWAHandler from "@/components/layout/PWAHandler";
 import PageTransition from "@/components/layout/PageTransition";
+import DataSyncStatus from "@/components/layout/DataSyncStatus";
 import "./globals.css";
 
 const BASE_PATH = process.env.NODE_ENV === "production" ? "/schedule_app" : "";
@@ -42,6 +43,7 @@ export default function RootLayout({
           <PWAHandler />
           <Navbar />
           <main className="container site-main">
+            <DataSyncStatus />
             <PageTransition>{children}</PageTransition>
           </main>
           <BackToTop />

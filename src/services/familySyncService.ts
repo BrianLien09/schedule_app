@@ -13,6 +13,7 @@ import {
   getFamilyWebTitlePrefix,
 } from '@/config/permissions';
 import type { WorkShift } from '@/data/schedule';
+import { trackDataOperation } from '@/services/dataStatusStore';
 
 type FamilySyncShift = WorkShift;
 
@@ -67,9 +68,9 @@ function getSyncContext(email: string | null | undefined) {
 export async function syncWorkShiftToFamilyWeb(
   shift: FamilySyncShift,
   email: string | null | undefined
-): Promise<void> {
+): Promise<boolean> {
   const context = getSyncContext(email);
-  if (!context) return;
+  if (!context) return false;
 
   try {
     const docRef = doc(
@@ -77,13 +78,15 @@ export async function syncWorkShiftToFamilyWeb(
       FAMILY_COLLECTIONS.schedules,
       getFamilyDocId(shift.id, context.titlePrefix)
     );
-    await setDoc(
+    await trackDataOperation('family', docRef.path, () => setDoc(
       docRef,
       mapShiftToFamilySchedule(shift, context.titlePrefix, context.category),
       { merge: true }
-    );
+    ));
+    return true;
   } catch (error) {
     console.error('[FamilySync] 同步至 family-web 失敗:', error);
+    return false;
   }
 }
 
@@ -123,7 +126,7 @@ export async function updateWorkShiftInFamilyWeb(
       updatePayload.description = note && note !== displayName ? note : updatePayload.title;
     }
 
-    await setDoc(docRef, updatePayload, { merge: true });
+    await trackDataOperation('family', docRef.path, () => setDoc(docRef, updatePayload, { merge: true }));
   } catch (error) {
     console.error('[FamilySync] 更新 family-web 失敗:', error);
   }
@@ -140,9 +143,8 @@ export async function deleteWorkShiftFromFamilyWeb(
   if (!context) return;
 
   try {
-    await deleteDoc(
-      doc(context.db, FAMILY_COLLECTIONS.schedules, getFamilyDocId(id, context.titlePrefix))
-    );
+    const docRef = doc(context.db, FAMILY_COLLECTIONS.schedules, getFamilyDocId(id, context.titlePrefix));
+    await trackDataOperation('family', docRef.path, () => deleteDoc(docRef));
   } catch (error) {
     console.error('[FamilySync] 刪除 family-web 項目失敗:', error);
   }
@@ -156,8 +158,10 @@ export async function batchSyncWorkShiftsToFamilyWeb(
   email: string | null | undefined
 ): Promise<number> {
   const context = getSyncContext(email);
-  if (!context) return 0;
+  if (!context) throw new Error('家庭月曆同步尚未設定或沒有同步權限');
 
-  await Promise.all(shifts.map((shift) => syncWorkShiftToFamilyWeb(shift, email)));
-  return shifts.length;
+  const results = await Promise.all(shifts.map((shift) => syncWorkShiftToFamilyWeb(shift, email)));
+  const count = results.filter(Boolean).length;
+  if (count !== shifts.length) throw new Error(`家庭月曆仍有 ${shifts.length - count} 筆同步失敗`);
+  return count;
 }

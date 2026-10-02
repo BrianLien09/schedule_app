@@ -65,12 +65,16 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
       setCanEdit(hasWriteAccess(user.email));
     });
 
-    bootstrapScheduleData(user.uid).then(() => {
-      setLoading(false);
-    });
+    void bootstrapScheduleData(user.uid);
+    const loadedCollections = new Set<string>();
+    const markLoaded = (collection: string): void => {
+      loadedCollections.add(collection);
+      if (loadedCollections.size === 3) setLoading(false);
+    };
 
     const handleCourses = (data: Course[]) => {
       setCourses(normalizeCourses(data, selectedSemester, courseCollectionSource));
+      markLoaded('courses');
     };
 
     const unsubscribeCourses = courseCollectionSource === 'shared'
@@ -80,7 +84,7 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
     const unsubscribeShifts = subscribeToCollection<SalaryRecord>(
       user.uid,
       PERSONAL_COLLECTIONS.salaryRecords,
-      (data) =>
+      (data) => {
         setShifts(
           data
             .map(mapSalaryRecordToWorkShift)
@@ -88,13 +92,15 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
               (a, b) =>
                 a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)
             )
-        )
+        );
+        markLoaded('shifts');
+      }
     );
 
     const unsubscribeEvents = subscribeToCollection<Event>(
       user.uid,
       PERSONAL_COLLECTIONS.events,
-      (data) => setEvents(data)
+      (data) => { setEvents(data); markLoaded('events'); }
     );
 
     return () => {

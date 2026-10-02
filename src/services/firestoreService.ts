@@ -25,7 +25,6 @@ import {
   doc,
   getDoc,
   getDocs,
-  addDoc,
   setDoc,
   updateDoc,
   deleteDoc,
@@ -36,6 +35,7 @@ import {
   Unsubscribe,
 } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from '@/lib/firebase';
+import { registerDataRead, trackDataOperation } from '@/services/dataStatusStore';
 import {
   FIRESTORE_PATHS,
   type PersonalCollectionName,
@@ -100,9 +100,12 @@ export function subscribeToSharedCollection<T>(
   const colRef = getSharedCollection(collectionName);
   const q = constraints.length > 0 ? query(colRef, ...constraints) : colRef;
 
-  return onSnapshot(
+  const read = registerDataRead();
+  const unsubscribe = onSnapshot(
     q,
+    { includeMetadataChanges: true },
     (querySnapshot) => {
+      read.update({ fromCache: querySnapshot.metadata.fromCache, pending: querySnapshot.metadata.hasPendingWrites, failed: false });
       const data = querySnapshot.docs.map((documentSnapshot) => ({
         ...documentSnapshot.data(),
         // 文件路徑才是唯一識別值，不能讓舊資料欄位覆蓋它。
@@ -111,9 +114,11 @@ export function subscribeToSharedCollection<T>(
       callback(data);
     },
     (error) => {
+      read.update({ fromCache: true, pending: false, failed: true });
       console.error(`[Firestore] 讀取共用 ${collectionName} 失敗:`, error);
     }
   );
+  return () => { unsubscribe(); read.remove(); };
 }
 
 /** 取得共用 Collection 中的文件。 */
@@ -138,10 +143,12 @@ export async function addSharedDocument(
   data: DocumentData
 ): Promise<string> {
   const timestamp = new Date().toISOString();
-  const docRef = await addDoc(
-    getSharedCollection(collectionName),
+  const colRef = getSharedCollection(collectionName);
+  const docRef = doc(colRef);
+  await trackDataOperation('save', docRef.path, () => setDoc(
+    docRef,
     cleanUndefined({ ...data, createdAt: timestamp, updatedAt: timestamp })
-  );
+  ));
   return docRef.id;
 }
 
@@ -151,10 +158,11 @@ export async function updateSharedDocument(
   docId: string,
   data: Partial<DocumentData>
 ): Promise<void> {
-  await updateDoc(
-    doc(getSharedCollection(collectionName), docId),
+  const docRef = doc(getSharedCollection(collectionName), docId);
+  await trackDataOperation('save', docRef.path, () => updateDoc(
+    docRef,
     cleanUndefined({ ...data, updatedAt: new Date().toISOString() })
-  );
+  ));
 }
 
 /** 刪除共用文件。 */
@@ -162,7 +170,8 @@ export async function deleteSharedDocument(
   collectionName: SharedCollectionName,
   docId: string
 ): Promise<void> {
-  await deleteDoc(doc(getSharedCollection(collectionName), docId));
+  const docRef = doc(getSharedCollection(collectionName), docId);
+  await trackDataOperation('save', docRef.path, () => deleteDoc(docRef));
 }
 
 /**
@@ -184,7 +193,8 @@ export async function addDocument(
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
-  const docRef = await addDoc(colRef, cleanedData);
+  const docRef = doc(colRef);
+  await trackDataOperation('save', docRef.path, () => setDoc(docRef, cleanedData));
   return docRef.id;
 }
 
@@ -213,7 +223,7 @@ export async function setDocument(
     ...data,
     updatedAt: new Date().toISOString(),
   });
-  await setDoc(docRef, cleanedData);
+  await trackDataOperation('save', docRef.path, () => setDoc(docRef, cleanedData));
 }
 
 /**
@@ -289,7 +299,7 @@ export async function updateDocument(
     ...data,
     updatedAt: new Date().toISOString(),
   });
-  await updateDoc(docRef, cleanedData);
+  await trackDataOperation('save', docRef.path, () => updateDoc(docRef, cleanedData));
 }
 
 /**
@@ -309,7 +319,7 @@ export async function deleteDocument(
     throw new Error('Firebase 未設定，請檢查環境變數');
   }
   const docRef = doc(getUserCollection(userId, collectionName), docId);
-  await deleteDoc(docRef);
+  await trackDataOperation('save', docRef.path, () => deleteDoc(docRef));
 }
 
 /**
@@ -345,9 +355,12 @@ export function subscribeToCollection<T>(
   const colRef = getUserCollection(userId, collectionName);
   const q = constraints.length > 0 ? query(colRef, ...constraints) : colRef;
   
-  return onSnapshot(
+  const read = registerDataRead();
+  const unsubscribe = onSnapshot(
     q,
+    { includeMetadataChanges: true },
     (querySnapshot) => {
+      read.update({ fromCache: querySnapshot.metadata.fromCache, pending: querySnapshot.metadata.hasPendingWrites, failed: false });
       const data = querySnapshot.docs.map(doc => ({
         ...doc.data(),
         // 文件路徑才是唯一識別值，不能讓舊資料欄位覆蓋它。
@@ -356,10 +369,12 @@ export function subscribeToCollection<T>(
       callback(data);
     },
     (error) => {
+      read.update({ fromCache: true, pending: false, failed: true });
       // 即時監聽被 rules 拒絕時，不能默默維持空陣列，否則會誤判成沒有資料。
       console.error(`[Firestore] 讀取 ${collectionName} 失敗:`, error);
     }
   );
+  return () => { unsubscribe(); read.remove(); };
 }
 
 /**
@@ -400,6 +415,8 @@ export async function clearCollection(
   const colRef = getUserCollection(userId, collectionName);
   const querySnapshot = await getDocs(colRef);
   
-  const promises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
+  const promises = querySnapshot.docs.map(document =>
+    trackDataOperation('save', document.ref.path, () => deleteDoc(document.ref))
+  );
   await Promise.all(promises);
 }

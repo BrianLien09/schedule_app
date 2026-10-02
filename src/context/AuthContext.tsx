@@ -23,6 +23,7 @@ import {
   onAuthStateChanged 
 } from 'firebase/auth';
 import { auth, isFirebaseConfigured } from '@/lib/firebase';
+import { resetDataStatus } from '@/services/dataStatusStore';
 
 /**
  * AuthContext 的值型別定義
@@ -73,6 +74,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      resetDataStatus();
       setUser(user);
       setLoading(false);
     });

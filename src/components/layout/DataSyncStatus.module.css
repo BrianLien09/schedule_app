@@ -1,0 +1,48 @@
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  background-color: var(--glass-bg);
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.messages, .actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-sm) var(--spacing-md);
+  min-width: 0;
+}
+
+.messages { overflow-wrap: anywhere; }
+
+.actions button {
+  padding: 0.5rem 0.625rem;
+  min-height: 44px;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  background-color: transparent;
+  color: var(--foreground);
+  font: inherit;
+  cursor: pointer;
+}
+
+.actions button:hover { background-color: var(--glass-bg-hover); }
+.actions button:disabled { cursor: not-allowed; opacity: 0.6; }
+.actions button:active { background-color: var(--bg-base); }
+.actions button:focus-visible {
+  outline: 2px solid var(--color-secondary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .bar { align-items: flex-start; }
+  .messages, .actions { width: 100%; }
+}
