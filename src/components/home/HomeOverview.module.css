@@ -1,0 +1,88 @@
+.page { max-width: 1240px; margin: 0 auto; padding: 0 0 40px; display: flex; flex-direction: column; gap: 20px; }
+.header, .panelHeader { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.header h1 { font-size: clamp(1.6rem, 3vw, 2rem); margin: 0; }
+.eyebrow { color: var(--muted); font-size: 0.875rem; margin: 0 0 6px; }
+.primaryLink { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 16px; background-color: var(--color-primary); color: var(--glass-bg); border-radius: 12px; font-weight: 600; }
+.primaryLink:hover { background-color: var(--color-primary-hover); }
+.focus, .panel { background-color: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 18px; padding: 24px; }
+.focus { display: grid; grid-template-columns: 1fr 1fr; gap: 0; padding: 0; overflow: hidden; }
+.focusBlock { min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 24px; }
+.currentBlock { background-color: color-mix(in srgb, var(--color-primary) 13%, var(--glass-bg)); }
+.nextBlock { background-color: color-mix(in srgb, var(--color-secondary) 10%, var(--glass-bg)); }
+.focusLabel { display: flex; align-items: center; gap: 10px; color: var(--color-primary-hover); font-size: 0.875rem; font-weight: 600; margin-bottom: 8px; }
+.nextBlock .focusLabel { color: var(--color-secondary); }
+.iconBadge { width: 40px; height: 40px; flex-shrink: 0; display: inline-grid; place-items: center; border-radius: 12px; background-color: color-mix(in srgb, var(--color-primary) 16%, var(--glass-bg)); color: var(--color-primary-hover); }
+.nextBlock .iconBadge, .calendarBadge { color: var(--color-secondary); background-color: color-mix(in srgb, var(--color-secondary) 13%, var(--glass-bg)); }
+.taskBadge { color: var(--color-primary-hover); }
+.headingGroup { display: flex; align-items: center; gap: 12px; }
+.headingGroup .eyebrow { margin-bottom: 4px; }
+.workKind, .eventKind { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; }
+.workKind { color: var(--color-primary-hover); }
+.eventKind { color: var(--color-secondary); }
+.workKind span, .eventKind span { display: inline-flex; }
+.focus h2 { font-size: clamp(1.15rem, 2vw, 1.45rem); overflow-wrap: anywhere; }
+.nextLink { display: block; padding: 8px; margin: -8px; border-radius: 8px; }
+.nextLink:hover { background-color: var(--glass-bg-hover); }
+.columns { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+.panel { min-width: 0; }
+.panelHeader { margin-bottom: 16px; }
+.panelHeader h2 { font-size: 1.2rem; }
+.meta { color: var(--muted); font-size: 0.875rem; line-height: 1.6; overflow-wrap: anywhere; }
+.textLink, .textButton { color: var(--color-secondary); font-size: 0.875rem; font-weight: 600; }
+.textLink:hover, .textButton:hover { text-decoration: underline; }
+.list { list-style: none; padding: 0; margin: 0; }
+.list > li + li { border-top: 1px solid var(--glass-border); }
+.eventRow { display: flex; gap: 16px; padding: 15px 8px; margin: 0 -8px; border-radius: 8px; }
+.eventRow:hover { background-color: var(--glass-bg-hover); }
+.date { color: var(--color-secondary); font-size: 0.875rem; width: 78px; flex-shrink: 0; padding-top: 2px; }
+.rowBody, .taskTitle { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.rowBody strong, .taskTitle strong { font-size: 1rem; overflow-wrap: anywhere; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.filters button, .textButton { padding: 10px 12px; border: 1px solid var(--glass-border); border-radius: 8px; font: inherit; background-color: transparent; color: var(--foreground); cursor: pointer; }
+.filters button:hover { background-color: var(--glass-bg-hover); }
+.filters .selected { background-color: var(--color-secondary); color: var(--glass-bg); border-color: var(--color-secondary); }
+.filters .selected:hover { background-color: var(--color-secondary); color: var(--glass-bg); }
+.addTodo { display: inline-flex; align-items: center; gap: 6px; padding: 10px 12px; border: 1px solid var(--color-primary); border-radius: 10px; background-color: var(--color-primary); color: var(--glass-bg); font: inherit; cursor: pointer; }
+.addTodo:hover { background-color: var(--color-primary-hover); }
+.taskRow { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 12px 0; }
+.completeButton { width: 40px; height: 40px; border: 1px solid var(--glass-border); border-radius: 10px; color: var(--color-secondary); background-color: transparent; cursor: pointer; display: grid; place-items: center; }
+.completeButton:hover { background-color: var(--glass-bg-hover); border-color: var(--color-secondary); }
+.completeButton:disabled { opacity: 0.5; cursor: not-allowed; }
+.taskTitle { text-align: left; border: 0; background-color: transparent; color: var(--foreground); font: inherit; cursor: pointer; padding: 4px; border-radius: 6px; }
+.taskTitle:hover { background-color: var(--glass-bg-hover); }
+.due, .overdue { font-size: 0.8rem; color: var(--muted); max-width: 100px; }
+.overdue { color: var(--color-primary-hover); font-weight: 700; padding: 5px 8px; background-color: color-mix(in srgb, var(--color-primary) 12%, var(--glass-bg)); border-radius: 8px; }
+.empty { color: var(--muted); padding: 20px 0; line-height: 1.6; }
+.textButton { margin-top: 12px; color: var(--color-secondary); }
+.shortcuts { display: flex; flex-wrap: wrap; gap: 16px; font-size: 0.875rem; }
+.shortcuts a { padding: 8px 0; color: var(--muted); }
+.shortcuts a:hover { color: var(--color-primary); }
+.page a { cursor: pointer; }
+.page a:active, .page button:active { opacity: 0.75; }
+.page a:focus-visible, .page button:focus-visible { outline: 2px solid var(--color-secondary); outline-offset: 3px; }
+.page a, .page button { transition: transform 180ms var(--ease-standard), background-color 180ms ease, color 180ms ease, border-color 180ms ease; }
+.primaryLink:hover { transform: translateY(-2px); }
+.primaryLink:hover svg { transform: rotate(-8deg); }
+.primaryLink svg, .completeButton svg { transition: transform 180ms var(--ease-standard); }
+.completeButton:hover:not(:disabled) svg { transform: scale(1.18); }
+.completeButton:active:not(:disabled), .primaryLink:active { transform: scale(0.96); }
+.list { animation: listEnter 260ms var(--ease-standard) both; }
+.eventRow:hover { transform: translateX(3px); }
+.currentBlock .iconBadge svg { animation: clockEnter 600ms var(--ease-standard) both; }
+@keyframes listEnter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes clockEnter { from { opacity: 0; transform: rotate(-25deg) scale(0.8); } to { opacity: 1; transform: rotate(0) scale(1); } }
+@media (max-width: 850px) {
+  .columns { grid-template-columns: 1fr; }
+  .panel:last-child { grid-row: 1; }
+}
+@media (max-width: 560px) {
+  .focus { grid-template-columns: 1fr; }
+  .focusBlock, .panel { padding: 20px; }
+  .taskRow { grid-template-columns: 40px minmax(0, 1fr); gap: 8px; }
+  .due, .overdue { grid-column: 2; max-width: none; padding-left: 4px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page a, .page button, .page svg { transition: none; }
+  .list, .currentBlock .iconBadge svg { animation: none; }
+  .page a:hover, .page a:active, .page button:active, .page button:hover svg, .primaryLink:hover svg { transform: none; }
+}

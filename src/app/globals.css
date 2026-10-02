@@ -478,6 +478,10 @@ textarea:focus-visible {
   padding-top: 1.25rem;
 }
 
+.site-main:has(> .page-transition-compact) {
+  padding-top: var(--spacing-xs);
+}
+
 .page-transition {
   /* 只使用透明度，避免含有 Modal 時改變 fixed 定位的參考座標 */
   animation: pageOpacityIn 0.55s var(--ease-standard) both;

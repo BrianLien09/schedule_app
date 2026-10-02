@@ -439,7 +439,7 @@ export default function SchoolSchedulePage() {
       </div>
 
       {/* 課程筆記區塊 */}
-      <div className="glass page-section-enter page-section-enter-delay-1" style={{ padding: '1.5rem' }}>
+      <div id="course-notes" className="glass page-section-enter page-section-enter-delay-1" style={{ padding: '1.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <h3 style={{ fontSize: '1.3rem', margin: 0 }}>
             📝 課程筆記

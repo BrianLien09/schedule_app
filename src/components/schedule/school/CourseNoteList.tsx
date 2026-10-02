@@ -6,10 +6,11 @@
 
 'use client';
 
-import { useState, useMemo, type ReactNode } from 'react';
+import { startTransition, useEffect, useState, useMemo, type ReactNode } from 'react';
 import type { CourseNote, NoteType } from '@/data/courseNotes';
 import { NOTE_TYPE_LABELS, NOTE_TYPE_COLORS, PRIORITY_COLORS } from '@/data/courseNotes';
 import { useConfirm } from '@/context/ConfirmContext';
+import { dateLabel, isTaskOverdue, localDateKey } from '@/utils/agenda';
 import { parseMarkdown, type MarkdownInlineNode } from './markdownRenderer';
 import styles from './CourseNoteList.module.css';
 
@@ -39,6 +40,26 @@ export default function CourseNoteList({
   const [filterType, setFilterType] = useState<NoteType | 'all'>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  useEffect(() => {
+    let frame: number | undefined;
+    const revealLinkedNote = (): void => {
+      let id: string;
+      try { id = decodeURIComponent(window.location.hash.slice(1)); } catch { return; }
+      const note = notes.find((entry) => `note-${entry.id}` === id);
+      if (!note) return;
+      // 筆記晚於頁面載入，因此在資料到齊後才展開並定位週視圖連結。
+      startTransition(() => { setFilterType('all'); setExpandedId(note.id); });
+      if (frame !== undefined) window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ block: 'start' }));
+    };
+    revealLinkedNote();
+    window.addEventListener('hashchange', revealLinkedNote);
+    return () => {
+      window.removeEventListener('hashchange', revealLinkedNote);
+      if (frame !== undefined) window.cancelAnimationFrame(frame);
+    };
+  }, [notes]);
+
   // 篩選筆記
   const filteredNotes = useMemo(() => {
     if (filterType === 'all') return notes;
@@ -47,19 +68,9 @@ export default function CourseNoteList({
 
   // 格式化日期顯示
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    const date = dateString.slice(0, 10);
     const now = new Date();
-    const diffDays = Math.floor((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) return '已過期';
-    if (diffDays === 0) return '今天';
-    if (diffDays === 1) return '明天';
-    if (diffDays <= 7) return `${diffDays} 天後`;
-
-    return date.toLocaleDateString('zh-TW', {
-      month: 'short',
-      day: 'numeric',
-    });
+    return date < localDateKey(now) ? '已過期' : dateLabel(date, now);
   };
 
   // 只將明確允許的 Markdown 節點轉成 React 元素，避免原始 HTML 被解譯。
@@ -130,11 +141,12 @@ export default function CourseNoteList({
       <div className={styles.noteList}>
         {filteredNotes.map((note) => {
           const isExpanded = expandedId === note.id;
-          const isOverdue = note.dueDate && new Date(note.dueDate) < new Date() && !note.completed;
+          const isOverdue = isTaskOverdue(note, new Date());
 
           return (
             <div
               key={note.id}
+              id={`note-${note.id}`}
               className={`${styles.noteCard} ${note.completed ? styles.completed : ''} ${
                 isOverdue ? styles.overdue : ''
               }`}

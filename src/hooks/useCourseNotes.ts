@@ -28,6 +28,7 @@ export function useCourseNotes(options: UseCourseNotesOptions = {}) {
   const [notes, setNotes] = useState<CourseNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // 訂閱筆記資料（即時同步）
   useEffect(() => {
@@ -42,23 +43,29 @@ export function useCourseNotes(options: UseCourseNotesOptions = {}) {
     startTransition(() => {
       setLoading(true);
       setError(null);
+      setLoadError(null);
     });
 
     try {
+      const handleLoadError = (failure: Error): void => {
+        setLoadError(failure.message);
+        setLoading(false);
+      };
       const unsubscribe = options.courseId
         ? subscribeToCourseNotesByCourse(user.uid, options.courseId, (data) => {
             setNotes(data);
             setLoading(false);
-          })
+          }, handleLoadError)
         : subscribeToCourseNotes(user.uid, (data) => {
             setNotes(data);
             setLoading(false);
-          });
+          }, handleLoadError);
 
       return () => unsubscribe();
     } catch (err) {
       startTransition(() => {
         setError(err instanceof Error ? err.message : '載入筆記失敗');
+        setLoadError(err instanceof Error ? err.message : '載入筆記失敗');
         setLoading(false);
       });
     }
@@ -217,6 +224,7 @@ export function useCourseNotes(options: UseCourseNotesOptions = {}) {
     notes,
     loading,
     error,
+    loadError,
     addNote,
     updateNote,
     deleteNote,

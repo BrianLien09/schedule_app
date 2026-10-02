@@ -96,12 +96,14 @@ NEXT_PUBLIC_FAMILY_FIREBASE_APP_ID=...
 
 | 資料 | 家庭成員權限 |
 | --- | --- |
-| `/users/{自己的 UID}/courses`、`salaryRecords`、`workShifts`、`events`、`allowanceRecords`、`allowanceSourceTypes`、`shiftTemplates`、`courseNotes` | 只能讀寫自己的資料 |
+| `/users/{自己的 UID}/courses`、`salaryRecords`、`workShifts`、`events`、`allowanceRecords`、`allowanceSourceTypes`、`shiftTemplates`、`courseNotes`、`todos` | 只能讀寫自己的資料 |
 | `/shared/data/gameGuides` | 家庭成員可讀；只有管理帳號可寫入 |
-| family-web `/schedules` | 只同步 Brian 與 lovesweet 的班表摘要；Brian 標題加上「百頁」且標籤為「阿弟排班」，lovesweet 標題加上「布丁」且標籤為「布丁排班」，不包含薪資欄位 |
+| family-web `/schedules` | Brian 與 lovesweet 可同步班表及自行勾選的待辦；班表維持「百頁／布丁」前綴，待辦標題不加前綴，以 UID 與待辦 ID 隔離同步記錄，不包含薪資欄位 |
 | 其他所有路徑 | 禁止讀寫 |
 
 舊版 `/shared/data/courses` 等個人資料不會被程式自動刪除或複製；若要保留，請先手動遷移到對應使用者的 `/users/{uid}/{collection}` 路徑，再部署新規則。
+
+首頁待辦儲存在 `/users/{uid}/todos`，啟用前需將本專案的 `firestore.rules` 發布至實際使用的 Firebase 專案。起訖日期皆可選填；選擇家庭同步時至少需要一個日期，逐日同步範圍最多一年。家庭月曆需允許同步帳號讀寫 `/schedules`；編輯日期、取消同步、完成或刪除待辦時，會清理相同 UID 與待辦 ID 的舊記錄。家庭同步失敗不撤銷個人待辦的保存，可透過頁面上的同步狀態重試。
 
 family-web 同步白名單如下：`brianlien09@gmail.com` →「百頁」／「阿弟排班」、`lovesweet95170@gmail.com` →「布丁」／「布丁排班」。新增或編輯打工班表時會自動同步；打工月曆也提供按月重新同步按鈕，可用來補上既有班表的標題前綴與標籤。
 

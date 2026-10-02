@@ -352,6 +352,17 @@ export function subscribeToCollection<T>(
   callback: (data: T[]) => void,
   ...constraints: QueryConstraint[]
 ): Unsubscribe {
+  return subscribeToCollectionWithError(userId, collectionName, callback, undefined, ...constraints);
+}
+
+/** 讓需要區分載入失敗的畫面結束等待，仍共用相同訂閱與狀態追蹤。 */
+export function subscribeToCollectionWithError<T>(
+  userId: string,
+  collectionName: PersonalCollectionName,
+  callback: (data: T[]) => void,
+  onError: ((error: Error) => void) | undefined,
+  ...constraints: QueryConstraint[]
+): Unsubscribe {
   const colRef = getUserCollection(userId, collectionName);
   const q = constraints.length > 0 ? query(colRef, ...constraints) : colRef;
   
@@ -372,6 +383,7 @@ export function subscribeToCollection<T>(
       read.update({ fromCache: true, pending: false, failed: true });
       // 即時監聽被 rules 拒絕時，不能默默維持空陣列，否則會誤判成沒有資料。
       console.error(`[Firestore] 讀取 ${collectionName} 失敗:`, error);
+      onError?.(error);
     }
   );
   return () => { unsubscribe(); read.remove(); };

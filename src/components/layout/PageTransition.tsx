@@ -9,9 +9,10 @@ interface PageTransitionProps {
 
 export default function PageTransition({ children }: PageTransitionProps) {
   const pathname = usePathname();
+  const compact = pathname === '/' || pathname === '/schedule/overview';
 
   return (
-    <div key={pathname} className="page-transition">
+    <div key={pathname} className={`page-transition${compact ? ' page-transition-compact' : ''}`}>
       {children}
     </div>
   );

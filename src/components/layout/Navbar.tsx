@@ -303,7 +303,7 @@ export default function Navbar() {
               <li className={styles.mobileMenuItem}>
                 <Link
                   href="/"
-                  className={`${styles.mobileMenuLink} ${pathname === '/' ? styles.mobileMenuLinkActive : ''}`}
+                  className={`${styles.mobileMenuLink} ${pathname === '/' || pathname === '/schedule/overview' ? styles.mobileMenuLinkActive : ''}`}
                   onClick={closeMenu}
                 >
                   <div className={styles.linkContentGroup}>

@@ -13,6 +13,7 @@ export const PERSONAL_COLLECTIONS = {
   shiftTemplates: 'shiftTemplates',
   workRoles: 'workRoles',
   courseNotes: 'courseNotes',
+  todos: 'todos',
 } as const;
 
 export type PersonalCollectionName =

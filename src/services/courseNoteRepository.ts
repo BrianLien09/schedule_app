@@ -4,7 +4,7 @@ import {
   addDocument,
   deleteDocument,
   getDocuments,
-  subscribeToCollection,
+  subscribeToCollectionWithError,
   updateDocument,
 } from '@/services/firestoreService';
 import { PERSONAL_COLLECTIONS } from '@/services/firestoreCollections';
@@ -29,12 +29,14 @@ export function getCourseNotesByCourse(
 
 export function subscribeToCourseNotes(
   userId: string,
-  callback: (notes: CourseNote[]) => void
+  callback: (notes: CourseNote[]) => void,
+  onError?: (error: Error) => void,
 ) {
-  return subscribeToCollection<CourseNote>(
+  return subscribeToCollectionWithError<CourseNote>(
     userId,
     COURSE_NOTES_COLLECTION,
     callback,
+    onError,
     orderBy('createdAt', 'desc')
   );
 }
@@ -42,12 +44,14 @@ export function subscribeToCourseNotes(
 export function subscribeToCourseNotesByCourse(
   userId: string,
   courseId: string,
-  callback: (notes: CourseNote[]) => void
+  callback: (notes: CourseNote[]) => void,
+  onError?: (error: Error) => void,
 ) {
-  return subscribeToCollection<CourseNote>(
+  return subscribeToCollectionWithError<CourseNote>(
     userId,
     COURSE_NOTES_COLLECTION,
     callback,
+    onError,
     where('courseId', '==', courseId),
     orderBy('createdAt', 'desc')
   );

@@ -25,7 +25,7 @@ export default function GlassRadioNav() {
    * 4: 遊戲攻略
    */
   const getGliderPosition = useCallback((path: string): number => {
-    if (path === '/') return 0;
+    if (path === '/' || path === '/schedule/overview') return 0;
     if (path.startsWith('/schedule/school')) return 1;
     if (path.startsWith('/schedule/work')) return 2;
     if (path.startsWith('/tools/salary')) return 3;
@@ -58,7 +58,7 @@ export default function GlassRadioNav() {
         type="radio"
         name="nav"
         id="nav-overview"
-        checked={pathname === '/'}
+        checked={pathname === '/' || pathname === '/schedule/overview'}
         readOnly
       />
       <label 
