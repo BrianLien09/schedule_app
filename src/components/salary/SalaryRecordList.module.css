@@ -102,11 +102,19 @@
 }
 
 .roleBadge {
+  display: inline-block;
+  background-color: color-mix(in srgb, currentColor 18%, transparent);
+  border: 1px dashed color-mix(in srgb, currentColor 40%, transparent);
   font-size: 0.8rem;
   padding: 0.25rem 0.6rem;
   border-radius: 99px;
   font-weight: 600;
   white-space: nowrap;
+}
+
+.desktopRoleBadge {
+  border-radius: 6px;
+  font-size: 0.85rem;
 }
 
 .mobileCardBody {

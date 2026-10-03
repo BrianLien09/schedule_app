@@ -8,6 +8,7 @@ import styles from './SalaryRecordList.module.css';
 const WEEKDAY_SHORT_LABELS = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'] as const;
 
 interface SalaryRecordTableProps {
+  records: SalaryRecord[];
   filteredRecords: SalaryRecord[];
   roles: WorkRole[];
   selectedRecordIds: Set<string>;
@@ -23,6 +24,7 @@ interface SalaryRecordTableProps {
 
 /** 薪資記錄的桌面表格與行動卡片，集中處理排序、合計與單筆操作呈現。 */
 export default function SalaryRecordTable({
+  records,
   filteredRecords,
   roles,
   selectedRecordIds,
@@ -42,6 +44,23 @@ export default function SalaryRecordTable({
     }),
     [filteredRecords]
   );
+  const roleColors = useMemo(() => {
+    const colors: Record<string, string> = {
+      assistant: 'var(--color-secondary)',
+      instructor: '#c88d55',
+      admin: '#637c58',
+    };
+    // 使用完整職位清單配置顏色，切換月份不會改變同一職位的色調。
+    const customRoleIds = [...new Set([
+      ...roles.map((role) => role.id),
+      ...records.map((record) => record.role),
+    ])].filter((id) => !Object.hasOwn(colors, id)).sort();
+    customRoleIds.forEach((id, index) => {
+      const hue = 280 + (70 * index) / Math.max(customRoleIds.length - 1, 1);
+      colors[id] = `hsl(${hue} 30% 45%)`;
+    });
+    return colors;
+  }, [roles, records]);
   const totalWorkHours = useMemo(
     () => filteredRecords.reduce((sum, record) => sum + calculateHours(record), 0),
     [filteredRecords, calculateHours]
@@ -88,7 +107,6 @@ export default function SalaryRecordTable({
               const displayShiftName = getDisplayShiftName(record);
               const isSelected = selectedRecordIds.has(record.id);
               const roleLabel = getWorkRoleLabel(record.role, roles, record.roleName);
-              const isInstructor = record.role === 'instructor';
               return (
                 <tr key={record.id} className={isSelected ? styles.trSelected : ''}>
                   <td style={{ textAlign: 'center' }}>
@@ -103,16 +121,7 @@ export default function SalaryRecordTable({
                     {record.date} <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>({getWeekdayLabel(record.date)})</span>
                   </td>
                   <td>
-                    <span style={{
-                      padding: '0.25rem 0.6rem',
-                      borderRadius: '6px',
-                      fontSize: '0.85rem',
-                      fontWeight: '600',
-                      display: 'inline-block',
-                      background: isInstructor ? 'rgba(200, 141, 85, 0.18)' : 'rgba(95, 113, 134, 0.18)',
-                      color: isInstructor ? '#c88d55' : 'var(--color-secondary)',
-                      border: isInstructor ? '1px dashed rgba(200, 141, 85, 0.4)' : '1px dashed rgba(95, 113, 134, 0.4)',
-                    }}>
+                    <span className={`${styles.roleBadge} ${styles.desktopRoleBadge}`} style={{ color: roleColors[record.role] }}>
                       {roleLabel}
                     </span>
                   </td>
@@ -160,7 +169,6 @@ export default function SalaryRecordTable({
           const displayShiftName = getDisplayShiftName(record);
           const isSelected = selectedRecordIds.has(record.id);
           const roleLabel = getWorkRoleLabel(record.role, roles, record.roleName);
-          const isInstructor = record.role === 'instructor';
           const pay = calculatePay(record);
           const hours = calculateHours(record);
           return (
@@ -171,11 +179,7 @@ export default function SalaryRecordTable({
                   <span className={styles.dateText}>{record.date}</span>
                   <span className={styles.weekdayBadge}>({getWeekdayLabel(record.date)})</span>
                 </div>
-                <span className={styles.roleBadge} style={{
-                  background: isInstructor ? 'rgba(200, 141, 85, 0.18)' : 'rgba(95, 113, 134, 0.18)',
-                  color: isInstructor ? '#c88d55' : 'var(--color-secondary)',
-                  border: isInstructor ? '1px dashed rgba(200, 141, 85, 0.4)' : '1px dashed rgba(95, 113, 134, 0.4)',
-                }}>
+                <span className={styles.roleBadge} style={{ color: roleColors[record.role] }}>
                   {roleLabel} NT$ {record.hourlyRate}/小時
                 </span>
               </div>

@@ -386,6 +386,7 @@ export default function SalaryRecordList({
           </div>
         ) : (
           <SalaryRecordTable
+            records={records}
             filteredRecords={filteredRecords}
             roles={roles}
             selectedRecordIds={selectedRecordIds}
