@@ -15,6 +15,7 @@ import { LoadingSpinner } from '@/components/shared/Loading';
 import AllowanceRecordList from './AllowanceRecordList';
 import AllowanceRecordDialogs from './AllowanceRecordDialogs';
 import styles from './AllowanceManager.module.css';
+import DataReadError from '@/components/shared/DataReadError';
 
 export default function AllowanceManager() {
   // ========== 資料層 ==========
@@ -22,6 +23,7 @@ export default function AllowanceManager() {
     records,
     sourceTypes,
     loading,
+    loadError,
     canEdit,
     addRecord,
     updateRecord,
@@ -383,6 +385,7 @@ export default function AllowanceManager() {
 
   return (
     <div className={styles.container}>
+      <DataReadError message={loadError} />
       {/* 標題與新增按鈕 */}
       <div className={`${styles.header} page-section-enter`}>
         <h1 className={styles.title}>💰 生活費記錄</h1>

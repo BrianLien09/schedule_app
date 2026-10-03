@@ -7,9 +7,9 @@ import {
   setDocument,
   updateDocument,
   deleteDocument,
-  subscribeToCollection,
+  subscribeToCollectionWithError,
 } from '@/services/firestoreService';
-import { PERSONAL_COLLECTIONS } from '@/services/firestoreCollections';
+import { PERSONAL_COLLECTIONS, type PersonalCollectionName } from '@/services/firestoreCollections';
 import { bootstrapScheduleData } from '@/services/scheduleBootstrapService';
 import {
   hasFamilyWebSyncAccess,
@@ -43,6 +43,7 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
     data: Event[];
   }>({ userId: null, data: [] });
   const [loading, setLoading] = useState(true);
+  const [loadErrors, setLoadErrors] = useState<Record<string, string>>({});
   const [canEdit, setCanEdit] = useState(false);
   const canSyncToFamilyWeb = hasFamilyWebSyncAccess(user?.email);
   const courses = courseState.userId === user?.uid ? courseState.data : [];
@@ -58,12 +59,14 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
         setEventState({ userId: null, data: [] });
         setLoading(false);
         setCanEdit(false);
+        setLoadErrors({});
       });
       return;
     }
 
     startTransition(() => {
       setLoading(true);
+      setLoadErrors({});
       setCanEdit(hasWriteAccess(user.email));
     });
 
@@ -72,6 +75,19 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
     const markLoaded = (collection: string): void => {
       loadedCollections.add(collection);
       if (loadedCollections.size === 3) setLoading(false);
+    };
+    const subscriptions: Array<() => void> = [];
+    const subscribe = <T,>(collection: PersonalCollectionName, key: string, label: string, callback: (data: T[]) => void): void => {
+      const failed = (): void => {
+        setLoadErrors((previous) => ({ ...previous, [key]: `${label}讀取失敗` }));
+        markLoaded(key);
+      };
+      try {
+        subscriptions.push(subscribeToCollectionWithError<T>(user.uid, collection, (data) => {
+          setLoadErrors((previous) => { const next = { ...previous }; delete next[key]; return next; });
+          callback(data);
+        }, failed));
+      } catch { startTransition(failed); }
     };
 
     const handleCourses = (data: Course[]) => {
@@ -82,15 +98,15 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
       markLoaded('courses');
     };
 
-    const unsubscribeCourses = subscribeToCollection<Course>(
-      user.uid,
+    subscribe<Course>(
       PERSONAL_COLLECTIONS.courses,
+      'courses', '課表',
       handleCourses
     );
 
-    const unsubscribeShifts = subscribeToCollection<SalaryRecord>(
-      user.uid,
+    subscribe<SalaryRecord>(
       PERSONAL_COLLECTIONS.salaryRecords,
+      'shifts', '班表',
       (data) => {
         setShiftState({
           userId: user.uid,
@@ -105,9 +121,9 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
       }
     );
 
-    const unsubscribeEvents = subscribeToCollection<Event>(
-      user.uid,
+    subscribe<Event>(
       PERSONAL_COLLECTIONS.events,
+      'events', '事件',
       (data) => {
         setEventState({ userId: user.uid, data });
         markLoaded('events');
@@ -115,9 +131,7 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
     );
 
     return () => {
-      unsubscribeCourses();
-      unsubscribeShifts();
-      unsubscribeEvents();
+      subscriptions.forEach((unsubscribe) => unsubscribe());
     };
   }, [selectedSemester, user]);
 
@@ -243,6 +257,7 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
     shifts,
     events,
     loading,
+    loadError: Object.values(loadErrors).join('、') || null,
     canEdit,
     canEditCourses,
     addCourse,

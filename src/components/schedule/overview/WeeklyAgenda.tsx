@@ -7,10 +7,12 @@ import type { AgendaTask } from '@/data/todos';
 import { AGENDA_LABELS, addCalendarDays, agendaHref, buildAgenda, getWeekDays, localDateKey, type AgendaKind } from '@/utils/agenda';
 import styles from './WeeklyAgenda.module.css';
 import AgendaIcon from './AgendaIcon';
+import DataReadError from '@/components/shared/DataReadError';
 
 interface WeeklyAgendaProps {
   courses: Course[]; shifts: WorkShift[]; events: Event[]; notes: AgendaTask[];
   now: Date; loading: boolean; notesLoading: boolean; initialDate?: Date; notesError: string | null;
+  loadError?: string | null;
 }
 
 type AgendaFilter = 'all' | 'class' | 'work' | 'event' | 'tasks';
@@ -20,7 +22,7 @@ const FILTERS: Array<{ value: AgendaFilter; label: string }> = [
 ];
 const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日'];
 
-export default function WeeklyAgenda({ courses, shifts, events, notes, now, loading, notesLoading, initialDate, notesError }: WeeklyAgendaProps) {
+export default function WeeklyAgenda({ courses, shifts, events, notes, now, loading, loadError, notesLoading, initialDate, notesError }: WeeklyAgendaProps) {
   const [anchor, setAnchor] = useState(initialDate ?? now);
   const [selectedDay, setSelectedDay] = useState(((initialDate ?? now).getDay() + 6) % 7);
   const [filter, setFilter] = useState<AgendaFilter>('all');
@@ -47,6 +49,7 @@ export default function WeeklyAgenda({ courses, shifts, events, notes, now, load
       <div className={styles.dayPicker} aria-label="選擇日期">{days.map((day, index) => <button key={localDateKey(day)} aria-pressed={selectedDay === index} className={selectedDay === index ? styles.active : ''} onClick={() => setSelectedDay(index)}><span>週{WEEKDAYS[index]}</span><strong>{day.getDate()}</strong></button>)}</div>
 
       {notesError && <p className={styles.empty} role="alert">部分待辦讀取失敗，其他行程仍可查看。<button onClick={() => window.location.reload()}>重新讀取</button></p>}
+      <DataReadError message={loadError} />
 
       {isLoading ? <p className={styles.empty}>週行程載入中…</p> : <div className={styles.weekGrid} key={`${localDateKey(start)}-${filter}-${selectedDay}`}>
         {days.map((day, index) => {

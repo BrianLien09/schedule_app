@@ -95,6 +95,7 @@ function getSharedCollection(collectionName: SharedCollectionName) {
 export function subscribeToSharedCollection<T>(
   collectionName: SharedCollectionName,
   callback: (data: T[]) => void,
+  onError: ((error: Error) => void) | undefined,
   ...constraints: QueryConstraint[]
 ): Unsubscribe {
   const colRef = getSharedCollection(collectionName);
@@ -116,6 +117,7 @@ export function subscribeToSharedCollection<T>(
     (error) => {
       read.update({ fromCache: true, pending: false, failed: true });
       console.error(`[Firestore] 讀取共用 ${collectionName} 失敗:`, error);
+      onError?.(error);
     }
   );
   return () => { unsubscribe(); read.remove(); };

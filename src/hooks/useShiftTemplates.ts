@@ -4,7 +4,7 @@ import {
   setDocument,
   updateDocument,
   deleteDocument,
-  subscribeToCollection,
+  subscribeToCollectionWithError,
 } from '@/services/firestoreService';
 import { PERSONAL_COLLECTIONS } from '@/services/firestoreCollections';
 import { hasWriteAccess } from '@/config/permissions';
@@ -14,6 +14,7 @@ export function useShiftTemplates() {
   const { user } = useAuth();
   const [templates, setTemplates] = useState<ShiftTemplate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [canEdit, setCanEdit] = useState(false);
 
   useEffect(() => {
@@ -22,25 +23,23 @@ export function useShiftTemplates() {
         setTemplates([]);
         setLoading(false);
         setCanEdit(false);
+        setLoadError(null);
       });
       return;
     }
 
     startTransition(() => {
       setLoading(true);
+      setLoadError(null);
       setCanEdit(hasWriteAccess(user.email));
     });
 
-    const unsubscribe = subscribeToCollection<ShiftTemplate>(
-      user.uid,
-      PERSONAL_COLLECTIONS.shiftTemplates,
-      (data) => {
-        setTemplates(data);
-        setLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
+    const failed = (): void => { setLoadError('班別範本讀取失敗'); setLoading(false); };
+    try {
+      return subscribeToCollectionWithError<ShiftTemplate>(user.uid, PERSONAL_COLLECTIONS.shiftTemplates, (data) => {
+        setTemplates(data); setLoading(false); setLoadError(null);
+      }, failed);
+    } catch { startTransition(failed); }
   }, [user]);
 
   const sortedTemplates = useMemo(() => {
@@ -74,6 +73,7 @@ export function useShiftTemplates() {
   return {
     templates: sortedTemplates,
     loading,
+    loadError,
     canEdit,
     addTemplate,
     updateTemplate,

@@ -1,4 +1,5 @@
 'use client';
+import DataReadError from '@/components/shared/DataReadError';
 import { useState } from 'react';
 import { useScheduleData } from '../../../hooks/useScheduleData';
 import { useAuth } from '../../../context/AuthContext';
@@ -36,6 +37,7 @@ export default function SchoolSchedulePage() {
   // Brian 所有學期讀取個人路徑；其他帳戶讀取 shared 課表。
   const {
     courses,
+    loadError,
     shifts,
     addCourse,
     deleteCourse,
@@ -213,6 +215,7 @@ export default function SchoolSchedulePage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div className="glass page-section-enter" style={{ padding: '1.5rem', minHeight: '600px' }}>
+        <DataReadError message={loadError} />
           <div>
             {/* 標題列：標題 + 學期選擇器 + 功能按鈕 */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '10px' }}>

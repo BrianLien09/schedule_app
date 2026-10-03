@@ -14,6 +14,7 @@ import { useWorkRoles } from '@/hooks/useWorkRoles';
 import type { ShiftTemplate } from '@/data/shiftTemplates';
 import { getWorkRoleHourlyRate, getWorkRoleLabel } from '@/data/workRoles';
 import WorkCalendarView from '@/components/schedule/work/WorkCalendarView';
+import DataReadError from '@/components/shared/DataReadError';
 import {
   findWorkShiftConflicts,
   formatConflictMessage,
@@ -28,6 +29,7 @@ export default function WorkSchedulePage() {
   // 使用個人資料 Hook，避免不同 Google 帳號共用班表
   const {
     courses,
+    loadError,
     shifts,
     addWorkShift,
     updateWorkShift,
@@ -35,8 +37,8 @@ export default function WorkSchedulePage() {
     canSyncToFamilyWeb,
     syncAllWorkShiftsToFamilyWeb,
   } = useScheduleData();
-  const { templates, loading: templatesLoading } = useShiftTemplates();
-  const { roles } = useWorkRoles();
+  const { templates, loading: templatesLoading, loadError: templatesError } = useShiftTemplates();
+  const { roles, loadError: rolesError } = useWorkRoles();
   const [isSyncing, setIsSyncing] = useState(false);
 
   const {
@@ -362,6 +364,7 @@ export default function WorkSchedulePage() {
 
   return (
     <div className={styles.pageContainer}>
+      <DataReadError message={[loadError, templatesError, rolesError].filter(Boolean).join('、')} />
       <div className={`glass ${styles.calendarContainer} page-section-enter`}>
         <div className={styles.calendarContent}>
           {/* 月曆標題區 */}

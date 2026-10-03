@@ -22,12 +22,14 @@ import { GUIDE_CATEGORIES } from '@/data/gameGuides';
 import { games } from '@/data/games';
 import { LoadingSpinner } from '@/components/shared/Loading';
 import styles from './page.module.css';
+import DataReadError from '@/components/shared/DataReadError';
 
 export default function GamesPage() {
   const { user } = useAuth();
   const {
     guides,
     loading,
+    loadError,
     canEdit,
     addGuide,
     updateGuide,
@@ -157,6 +159,7 @@ export default function GamesPage() {
 
   return (
     <div className={styles.container}>
+      <DataReadError message={loadError} />
       {/* ============================================================
           工具列：標題 + 編輯模式切換
           ============================================================ */}

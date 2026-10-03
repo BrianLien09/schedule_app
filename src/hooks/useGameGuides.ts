@@ -24,6 +24,7 @@ export function useGameGuides() {
   const [guides, setGuides] = useState<GameGuide[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const canEdit = hasGameGuideWriteAccess(user?.email);
 
   // 訂閱 Firestore 資料變更
@@ -32,17 +33,20 @@ export function useGameGuides() {
       startTransition(() => {
         setLoading(false);
         setGuides([]);
+        setLoadError(null);
       });
       return;
     }
 
-    startTransition(() => setLoading(true));
-    const unsubscribe = subscribeToGameGuides((data) => {
-      setGuides(data);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    startTransition(() => { setLoading(true); setLoadError(null); });
+    const failed = (): void => { setLoadError('遊戲攻略讀取失敗'); setLoading(false); };
+    try {
+      return subscribeToGameGuides((data) => {
+        setGuides(data); setLoadError(null); setLoading(false);
+      }, failed);
+    } catch {
+      startTransition(failed);
+    }
   }, [user]);
 
   // 新增攻略
@@ -106,6 +110,7 @@ export function useGameGuides() {
     guides,
     loading,
     error,
+    loadError,
     canEdit,
     addGuide,
     updateGuide,

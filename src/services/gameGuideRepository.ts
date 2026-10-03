@@ -16,11 +16,13 @@ export function getAllGameGuides(): Promise<GameGuide[]> {
 }
 
 export function subscribeToGameGuides(
-  callback: (guides: GameGuide[]) => void
+  callback: (guides: GameGuide[]) => void,
+  onError?: (error: Error) => void,
 ) {
   return subscribeToSharedCollection<GameGuide>(
     GAME_GUIDES_COLLECTION,
     callback,
+    onError,
     orderBy('order', 'asc')
   );
 }

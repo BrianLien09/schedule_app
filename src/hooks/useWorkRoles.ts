@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { hasWriteAccess } from '@/config/permissions';
 import {
   deleteDocument,
   setDocument,
-  subscribeToCollection,
+  subscribeToCollectionWithError,
   updateDocument,
 } from '@/services/firestoreService';
 import {
@@ -74,7 +74,8 @@ export function useWorkRoles() {
     userId: string | null;
     roles: WorkRole[];
     loading: boolean;
-  }>({ userId: null, roles: [], loading: false });
+    loadError: string | null;
+  }>({ userId: null, roles: [], loading: false, loadError: null });
   const initializationRef = useRef<string | null>(null);
 
   const activeUserId = user?.uid ?? null;
@@ -94,12 +95,14 @@ export function useWorkRoles() {
     const writable = hasWriteAccess(user.email);
     initializationRef.current = null;
 
-    const unsubscribe = subscribeToCollection<StoredWorkRole>(
+    const failed = (): void => { setRoleState((previous) => ({ userId: user.uid, roles: previous.userId === user.uid ? previous.roles : [], loading: false, loadError: '職位資料讀取失敗' })); };
+    try {
+    return subscribeToCollectionWithError<StoredWorkRole>(
       user.uid,
       WORK_ROLES_COLLECTION,
       (data) => {
         const normalizedRoles = normalizeWorkRoles(data);
-        setRoleState({ userId: user.uid, roles: normalizedRoles, loading: false });
+        setRoleState({ userId: user.uid, roles: normalizedRoles, loading: false, loadError: null });
 
         const hasInitialized = data.some((item) => item.id === WORK_ROLES_CONFIG_ID);
         if (!hasInitialized && writable && initializationRef.current !== user.uid) {
@@ -109,10 +112,11 @@ export function useWorkRoles() {
             console.error('初始化身份資料失敗', error);
           });
         }
-      }
+      },
+      failed,
     );
 
-    return () => unsubscribe();
+    } catch { startTransition(failed); }
   }, [user]);
 
   const sortedRoles = useMemo(() => sortWorkRoles(activeRoles), [activeRoles]);
@@ -157,6 +161,7 @@ export function useWorkRoles() {
   return {
     roles: sortedRoles,
     loading: activeLoading,
+    loadError: roleState.userId === activeUserId ? roleState.loadError : null,
     canEdit: Boolean(user && hasWriteAccess(user.email)),
     addRole,
     updateRole,

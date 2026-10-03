@@ -4,9 +4,9 @@ import {
   setDocument,
   updateDocument,
   deleteDocument,
-  subscribeToCollection,
+  subscribeToCollectionWithError,
 } from '@/services/firestoreService';
-import { PERSONAL_COLLECTIONS } from '@/services/firestoreCollections';
+import { PERSONAL_COLLECTIONS, type PersonalCollectionName } from '@/services/firestoreCollections';
 import { hasWriteAccess } from '@/config/permissions';
 import { AllowanceRecord, DEFAULT_SOURCE_TYPES } from '@/data/allowance';
 
@@ -30,6 +30,7 @@ export function useAllowanceData() {
   const [records, setRecords] = useState<AllowanceRecord[]>([]);
   const [sourceTypes, setSourceTypes] = useState<string[]>(DEFAULT_SOURCE_TYPES);
   const [loading, setLoading] = useState(true);
+  const [loadErrors, setLoadErrors] = useState<Record<string, string>>({});
   const [canEdit, setCanEdit] = useState(false);
 
   /**
@@ -43,6 +44,7 @@ export function useAllowanceData() {
         setSourceTypes(DEFAULT_SOURCE_TYPES);
         setLoading(false);
         setCanEdit(false);
+        setLoadErrors({});
       });
       return;
     }
@@ -50,25 +52,37 @@ export function useAllowanceData() {
     // 已登入：使用共用資料路徑
     startTransition(() => {
       setLoading(true);
+      setLoadErrors({});
       setCanEdit(hasWriteAccess(user.email));
     });
 
     // 訂閱即時資料變更（生活費記錄）
-    const unsubscribeRecords = subscribeToCollection<AllowanceRecord>(
-      user.uid,
+    const settled = new Set<string>();
+    const subscriptions: Array<() => void> = [];
+    const subscribe = <T,>(collection: PersonalCollectionName, label: string, callback: (data: T[]) => void): void => {
+      const finish = (): void => { settled.add(collection); if (settled.size === 2) setLoading(false); };
+      const failed = (): void => { setLoadErrors((previous) => ({ ...previous, [collection]: `${label}讀取失敗` })); finish(); };
+      try {
+        subscriptions.push(subscribeToCollectionWithError<T>(user.uid, collection, (data) => {
+          setLoadErrors((previous) => { const next = { ...previous }; delete next[collection]; return next; });
+          callback(data); finish();
+        }, failed));
+      } catch { startTransition(failed); }
+    };
+    subscribe<AllowanceRecord>(
       PERSONAL_COLLECTIONS.allowanceRecords,
+      '生活費',
       (data) => {
         // 按時間戳記排序（最新在前）
         const sorted = data.sort((a, b) => b.timestamp - a.timestamp);
         setRecords(sorted);
-        setLoading(false);
       }
     );
 
     // 訂閱即時資料變更（來源類型）
-    const unsubscribeSourceTypes = subscribeToCollection<{ id: string; types: string[] }>(
-      user.uid,
+    subscribe<{ id: string; types: string[] }>(
       PERSONAL_COLLECTIONS.allowanceSourceTypes,
+      '生活費來源類型',
       (data) => {
         if (data.length > 0 && data[0].types) {
           setSourceTypes(data[0].types);
@@ -78,8 +92,7 @@ export function useAllowanceData() {
 
     // 清理函數：元件卸載時取消訂閱
     return () => {
-      unsubscribeRecords();
-      unsubscribeSourceTypes();
+      subscriptions.forEach((unsubscribe) => unsubscribe());
     };
   }, [user]);
 
@@ -188,6 +201,7 @@ export function useAllowanceData() {
     records,              // 所有生活費記錄（已排序）
     sourceTypes,          // 可用的來源類型列表
     loading,              // 資料載入中
+    loadError: Object.values(loadErrors).join('、') || null,
     canEdit,              // 是否有編輯權限
     addRecord,            // 新增記錄
     updateRecord,         // 更新記錄

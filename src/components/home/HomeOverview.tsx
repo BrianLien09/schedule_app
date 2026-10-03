@@ -7,6 +7,7 @@ import type { AgendaTask } from '@/data/todos';
 import { CalendarIcon } from '@/components/shared/Icons';
 import AgendaIcon from '@/components/schedule/overview/AgendaIcon';
 import HomeMonthlyWork from './HomeMonthlyWork';
+import DataReadError from '@/components/shared/DataReadError';
 import { AGENDA_LABELS, addCalendarDays, agendaHref, buildAgenda, dateLabel, getPendingTasks, isTaskOverdue, localDateKey, taskDueDate, todoDateTimeLabel } from '@/utils/agenda';
 import styles from './HomeOverview.module.css';
 
@@ -17,6 +18,7 @@ interface HomeOverviewProps {
   notes: AgendaTask[];
   now: Date;
   loading: boolean;
+  loadError?: string | null;
   notesLoading: boolean;
   notesError: string | null;
   busyTaskIds: Set<string>;
@@ -27,7 +29,7 @@ interface HomeOverviewProps {
   canEdit: boolean;
 }
 
-export default function HomeOverview({ courses, shifts, events, notes, now, loading, notesLoading, notesError, busyTaskIds, onComplete, onOpenNote, onAddTodo, onEditShift, canEdit }: HomeOverviewProps) {
+export default function HomeOverview({ courses, shifts, events, notes, now, loading, loadError, notesLoading, notesError, busyTaskIds, onComplete, onOpenNote, onAddTodo, onEditShift, canEdit }: HomeOverviewProps) {
   const [recentOnly, setRecentOnly] = useState(true);
   const [tasksExpanded, setTasksExpanded] = useState(false);
   const [eventsExpanded, setEventsExpanded] = useState(false);
@@ -44,6 +46,7 @@ export default function HomeOverview({ courses, shifts, events, notes, now, load
 
   return (
     <div className={styles.page}>
+      <DataReadError message={loadError} />
       <header className={`${styles.header} page-section-enter`}>
         <div><p className={styles.eyebrow}>{now.toLocaleDateString('zh-TW', { month: 'long', day: 'numeric', weekday: 'long' })}</p><h1>日常總覽</h1></div>
         <Link className={styles.primaryLink} href="/schedule/overview"><CalendarIcon size={18} />整合週視圖</Link>

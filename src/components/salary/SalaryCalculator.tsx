@@ -24,11 +24,13 @@ import WorkRoleManager from './WorkRoleManager';
 import SalaryCalculatorImportModal from './SalaryCalculatorImportModal';
 import SalaryCalculatorTabs, { type SalaryCalculatorTab } from './SalaryCalculatorTabs';
 import styles from './SalaryCalculator.module.css';
+import DataReadError from '@/components/shared/DataReadError';
 
 export default function SalaryCalculator() {
   const { shifts } = useScheduleData();
   const { 
     records, 
+    loadError,
     addRecord, 
     updateRecord, 
     deleteRecord,
@@ -39,6 +41,7 @@ export default function SalaryCalculator() {
   const {
     templates,
     loading: templatesLoading,
+    loadError: templatesError,
     canEdit: canEditTemplates,
     addTemplate,
     updateTemplate,
@@ -47,6 +50,7 @@ export default function SalaryCalculator() {
   const {
     roles,
     loading: rolesLoading,
+    loadError: rolesError,
     canEdit: canEditRoles,
     addRole,
     updateRole,
@@ -844,6 +848,7 @@ export default function SalaryCalculator() {
       `}</style>
 
       <div style={{ maxWidth: '1000px', margin: '0 auto' }} className={isPrintMode ? 'print-friendly' : ''} ref={pdfContentRef}>
+        {!isPrintMode && <DataReadError message={[loadError, templatesError, rolesError].filter(Boolean).join('、')} />}
         
         {/* 標題與速覽卡片列 */}
         <div className={!isPrintMode ? 'page-section-enter' : undefined} style={{ marginBottom: 'var(--spacing-lg)' }}>

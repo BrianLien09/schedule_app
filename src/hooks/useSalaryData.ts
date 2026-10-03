@@ -4,7 +4,7 @@ import {
   setDocument,
   updateDocument,
   deleteDocument,
-  subscribeToCollection,
+  subscribeToCollectionWithError,
   batchSetDocuments,
 } from '@/services/firestoreService';
 import { PERSONAL_COLLECTIONS } from '@/services/firestoreCollections';
@@ -20,6 +20,7 @@ export function useSalaryData() {
     data: SalaryRecord[];
   }>({ userId: null, data: [] });
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [canEdit, setCanEdit] = useState(false);
   const records = recordState.userId === user?.uid ? recordState.data : [];
 
@@ -29,25 +30,23 @@ export function useSalaryData() {
         setRecordState({ userId: null, data: [] });
         setLoading(false);
         setCanEdit(false);
+        setLoadError(null);
       });
       return;
     }
 
     startTransition(() => {
       setLoading(true);
+      setLoadError(null);
       setCanEdit(hasWriteAccess(user.email));
     });
 
-    const unsubscribe = subscribeToCollection<SalaryRecord>(
-      user.uid,
-      PERSONAL_COLLECTIONS.salaryRecords,
-      (data) => {
-        setRecordState({ userId: user.uid, data });
-        setLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
+    const failed = (): void => { setLoadError('薪資資料讀取失敗'); setLoading(false); };
+    try {
+      return subscribeToCollectionWithError<SalaryRecord>(user.uid, PERSONAL_COLLECTIONS.salaryRecords, (data) => {
+        setRecordState({ userId: user.uid, data }); setLoading(false); setLoadError(null);
+      }, failed);
+    } catch { startTransition(failed); }
   }, [user]);
 
   const addRecord = async (record: SalaryRecord) => {
@@ -129,6 +128,7 @@ export function useSalaryData() {
   return {
     records,
     loading,
+    loadError,
     canEdit,
     addRecord,
     updateRecord,
