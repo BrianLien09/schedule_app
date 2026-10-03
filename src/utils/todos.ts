@@ -8,6 +8,12 @@ export function validateTodo(input: TodoInput): string | null {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date) return '請填寫有效日期';
   }
   if (input.startDate && input.endDate && input.endDate < input.startDate) return '結束日期不能早於開始日期';
+  for (const [date, time] of [[input.startDate, input.startTime], [input.endDate, input.endTime]]) {
+    if (!time) continue;
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) return '請填寫有效時間';
+    if (!date) return '設定時間時也需要填寫日期';
+  }
+  if (input.startDate && input.startDate === input.endDate && input.startTime && input.endTime && input.endTime < input.startTime) return '結束時間不能早於開始時間';
   if (input.association !== 'none' && !input.associationId) return '請選擇關聯的課程或打工';
   if (input.syncToFamily && !input.startDate && !input.endDate) return '同步家庭月曆需要至少一個日期';
   return null;
@@ -23,8 +29,14 @@ export function todoDates(todo: Pick<Todo, 'startDate' | 'endDate'>): string[] {
 
 export function familyTodoPayload(todo: Todo, ownerUid: string, date: string): Record<string, string> {
   return {
-    title: todo.title.trim(), date, startTime: '', endTime: '', category: '待辦',
-    description: [todo.associationLabel, todo.startDate && `開始：${todo.startDate}`, todo.endDate && `結束：${todo.endDate}`].filter(Boolean).join(' · '),
+    title: todo.title.trim(), date, ...todoTimesForDate(todo, date), category: '待辦',
+    description: [todo.associationLabel, todo.startDate && `開始：${todo.startDate}${todo.startTime ? ` ${todo.startTime}` : ''}`, todo.endDate && `結束：${todo.endDate}${todo.endTime ? ` ${todo.endTime}` : ''}`].filter(Boolean).join(' · '),
     source: 'schedule-app-todo', todoId: todo.id, ownerUid, updatedAt: todo.updatedAt,
   };
+}
+
+/** 跨日待辦以兩個時間點標示起訖，避免在單日行程中產生倒置的時間區段。 */
+export function todoTimesForDate(todo: Pick<Todo, 'startDate' | 'endDate' | 'startTime' | 'endTime'>, date: string): { startTime: string; endTime: string } {
+  if (date === todo.startDate && date === todo.endDate) return { startTime: todo.startTime || todo.endTime || '', endTime: todo.startTime ? todo.endTime || '' : '' };
+  return { startTime: (date === todo.startDate ? todo.startTime : date === todo.endDate ? todo.endTime : '') || '', endTime: '' };
 }

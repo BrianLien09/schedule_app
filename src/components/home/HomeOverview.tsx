@@ -7,7 +7,7 @@ import type { AgendaTask } from '@/data/todos';
 import { CalendarIcon } from '@/components/shared/Icons';
 import AgendaIcon from '@/components/schedule/overview/AgendaIcon';
 import HomeMonthlyWork from './HomeMonthlyWork';
-import { AGENDA_LABELS, addCalendarDays, agendaHref, buildAgenda, dateLabel, getPendingTasks, isTaskOverdue, localDateKey, taskDueDate } from '@/utils/agenda';
+import { AGENDA_LABELS, addCalendarDays, agendaHref, buildAgenda, dateLabel, getPendingTasks, isTaskOverdue, localDateKey, taskDueDate, todoDateTimeLabel } from '@/utils/agenda';
 import styles from './HomeOverview.module.css';
 
 interface HomeOverviewProps {
@@ -84,7 +84,7 @@ export default function HomeOverview({ courses, shifts, events, notes, now, load
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
               </button>
               <button className={styles.taskTitle} disabled={busyTaskIds.has(note.id)} onClick={() => onOpenNote(note)}><strong>{note.title}</strong><span className={styles.meta}>{note.type === 'todo' ? note.associationLabel || '無關聯' : note.courseName || courses.find((course) => course.id === note.courseId)?.name || '課程'} · {note.type === 'todo' ? '待辦' : note.type === 'exam' ? '考試' : '作業'}</span></button>
-              <span className={overdue ? styles.overdue : styles.due}>{busyTaskIds.has(note.id) ? '保存中' : due ? `${overdue ? '逾期 · ' : ''}${note.type === 'todo' && note.startDate && note.endDate && note.startDate !== note.endDate ? `${dateLabel(note.startDate, now)}–${dateLabel(note.endDate, now)}` : dateLabel(due, now)}` : '未設定日期'}</span>
+              <span className={overdue ? styles.overdue : styles.due}>{busyTaskIds.has(note.id) ? '保存中' : due ? `${overdue ? '逾期 · ' : ''}${note.type === 'todo' ? todoDateTimeLabel(note, now) : dateLabel(due, now)}` : '未設定日期'}</span>
             </li>;
           })}</ul> : <p className={styles.empty}>{recentOnly ? notesError ? '暫時無法取得完整待辦。' : '近期沒有未完成的待辦。' : notesError ? '暫時無法取得完整待辦。' : '目前沒有未完成的待辦。'}</p>}
           {tasks.length > 6 && <button className={styles.textButton} onClick={() => setTasksExpanded((value) => !value)}>{tasksExpanded ? '收起待辦' : `顯示其餘 ${tasks.length - 6} 個待辦`}</button>}

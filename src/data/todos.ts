@@ -6,6 +6,8 @@ export interface Todo {
   title: string;
   startDate: string;
   endDate: string;
+  startTime?: string;
+  endTime?: string;
   association: 'none' | 'course' | 'work';
   associationId: string;
   associationLabel: string;

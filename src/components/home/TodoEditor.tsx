@@ -6,6 +6,7 @@ import type { Course, WorkShift } from '@/data/schedule';
 import Modal from '@/components/shared/Modal';
 import { localDateKey } from '@/utils/agenda';
 import { validateTodo } from '@/utils/todos';
+import { defaultTodoDateTimes } from '@/utils/todoDefaults';
 import styles from './TodoEditor.module.css';
 
 interface TodoEditorProps {
@@ -17,8 +18,11 @@ interface TodoEditorProps {
 
 export default function TodoEditor({ todo, courses, shifts, now, canSync, onSave, onDelete, onClose }: TodoEditorProps) {
   const [title, setTitle] = useState(todo?.title ?? '');
-  const [startDate, setStartDate] = useState(todo?.startDate ?? '');
-  const [endDate, setEndDate] = useState(todo?.endDate ?? '');
+  const [defaults] = useState(() => defaultTodoDateTimes(now));
+  const [startDate, setStartDate] = useState(todo?.startDate ?? defaults.startDate);
+  const [endDate, setEndDate] = useState(todo?.endDate ?? defaults.endDate);
+  const [startTime, setStartTime] = useState(todo ? todo.startTime ?? '' : defaults.startTime ?? '');
+  const [endTime, setEndTime] = useState(todo ? todo.endTime ?? '' : defaults.endTime ?? '');
   const [association, setAssociation] = useState<Todo['association']>(todo?.association ?? 'none');
   const [associationId, setAssociationId] = useState(todo?.associationId ?? '');
   const [syncToFamily, setSyncToFamily] = useState(todo?.syncToFamily ?? false);
@@ -31,7 +35,7 @@ export default function TodoEditor({ todo, courses, shifts, now, canSync, onSave
   const submit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     if (busy) return;
-    const input: TodoInput = { title, startDate, endDate, association, associationId: association === 'none' ? '' : associationId, associationLabel: association === 'none' ? '' : options.find((option) => option.id === associationId)?.label ?? '', syncToFamily };
+    const input: TodoInput = { title, startDate, endDate, startTime, endTime, association, associationId: association === 'none' ? '' : associationId, associationLabel: association === 'none' ? '' : options.find((option) => option.id === associationId)?.label ?? '', syncToFamily };
     const failure = validateTodo(input);
     if (failure) { setError(failure); return; }
     setBusy(true); setError('');
@@ -47,11 +51,22 @@ export default function TodoEditor({ todo, courses, shifts, now, canSync, onSave
     <form className={styles.form} onSubmit={(event) => { void submit(event); }}>
       <fieldset disabled={busy} className={styles.fields} onChange={() => setError('')}>
         <label>標題<input required maxLength={200} value={title} onChange={(event) => setTitle(event.target.value)} placeholder="這次需要完成什麼？" /></label>
-        <div className={styles.dates}><label>開始日期（選填）<input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} /></label><label>結束日期（選填）<input type="date" min={startDate || undefined} value={endDate} onChange={(event) => setEndDate(event.target.value)} /></label></div>
+        <div className={styles.dates}>{(['start', 'end'] as const).map((endpoint) => {
+          const isStart = endpoint === 'start';
+          const date = isStart ? startDate : endDate;
+          const time = isStart ? startTime : endTime;
+          const setDate = isStart ? setStartDate : setEndDate;
+          const setTime = isStart ? setStartTime : setEndTime;
+          const label = isStart ? '開始' : '結束';
+          return <div className={styles.dateTime} key={endpoint}>
+            <label>{label}日期<input type="date" min={isStart ? undefined : startDate || undefined} value={date} onChange={(event) => { setDate(event.target.value); if (!event.target.value) setTime(''); }} /></label>
+            <label>{label}時間<input type="time" step={60} min={!isStart && startDate === endDate ? startTime || undefined : undefined} value={time} onChange={(event) => { setTime(event.target.value); if (event.target.value && !date) setDate(localDateKey(new Date())); }} /></label>
+          </div>;
+        })}</div>
         <label>隸屬類型<select value={association} onChange={(event) => { setAssociation(event.target.value as Todo['association']); setAssociationId(''); }}><option value="none">無</option><option value="course">課程</option><option value="work">打工</option></select></label>
         {association !== 'none' && <label>{association === 'course' ? '選擇課程' : '選擇當月打工'}<select required value={associationId} onChange={(event) => setAssociationId(event.target.value)}><option value="">請選擇</option>{options.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</select>{!options.length && <span className={styles.hint}>{association === 'course' ? '目前沒有課程可選。' : '本月沒有打工班次可選。'}</span>}</label>}
         <label className={styles.sync}><input type="checkbox" checked={syncToFamily} disabled={!canSync} onChange={(event) => setSyncToFamily(event.target.checked)} />同步至家庭月曆</label>
-        <p className={styles.hint}>{canSync ? '只同步開始日與結束日；同一天只顯示一筆。' : '此帳號尚未開放家庭同步。'}</p>
+        <p className={styles.hint}>{canSync ? '同步起訖日期與時間；同一天只顯示一筆。' : '此帳號尚未開放家庭同步。'}</p>
       </fieldset>
       {error && <p role="alert" className={styles.error}>{error}</p>}
       <div className={styles.actions}>{todo && <button type="button" disabled={busy} onClick={() => { void remove(); }}>刪除待辦</button>}<button type="button" disabled={busy} onClick={onClose}>取消</button><button className={styles.save} type="submit" disabled={busy}>{busy ? '保存中…' : '保存待辦'}</button></div>

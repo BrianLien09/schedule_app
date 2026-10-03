@@ -1,5 +1,6 @@
 import type { Course, Event, WorkShift } from '@/data/schedule';
 import type { AgendaTask } from '@/data/todos';
+import { todoTimesForDate } from '@/utils/todos';
 
 export type AgendaKind = 'class' | 'work' | 'event' | 'homework' | 'exam' | 'todo';
 export interface AgendaItem {
@@ -42,7 +43,11 @@ export function taskDueDate(note: AgendaTask): string | undefined {
 
 export function isTaskOverdue(note: AgendaTask, now: Date): boolean {
   const due = taskDueDate(note);
-  return !note.completed && Boolean(due && due < localDateKey(now));
+  if (note.completed || !due) return false;
+  const today = localDateKey(now);
+  const time = note.type === 'todo' ? note.endDate ? note.endTime : note.startTime : undefined;
+  const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  return due < today || Boolean(due === today && time && time < currentTime);
 }
 
 export function getPendingTasks<T extends AgendaTask>(notes: T[], now: Date, recentOnly: boolean): T[] {
@@ -55,6 +60,7 @@ export function getPendingTasks<T extends AgendaTask>(notes: T[], now: Date, rec
     return !recentOnly || Boolean(due && due <= lastDate);
   }).sort((a, b) =>
     (taskDueDate(a) ?? '9999').localeCompare(taskDueDate(b) ?? '9999') ||
+    (a.type === 'todo' ? (a.endDate ? a.endTime : a.startTime) || '23:59' : '23:59').localeCompare(b.type === 'todo' ? (b.endDate ? b.endTime : b.startTime) || '23:59' : '23:59') ||
     priority[a.priority ?? 'medium'] - priority[b.priority ?? 'medium'] ||
     a.title.localeCompare(b.title)
   );
@@ -86,10 +92,17 @@ export function buildAgenda(
         .map((note): AgendaItem => ({
           id: `task-${key}-${note.id}`, sourceId: note.id, kind: note.type === 'todo' ? 'todo' : note.type === 'exam' ? 'exam' : 'homework',
           title: note.title, date: key, detail: note.type === 'todo' ? note.associationLabel : note.courseName,
+          ...(note.type === 'todo' ? todoTimesForDate(note, key) : {}),
         })),
     ];
     return items.sort((a, b) => (a.startTime ?? '').localeCompare(b.startTime ?? '') || a.title.localeCompare(b.title));
   });
+}
+
+export function todoDateTimeLabel(todo: Extract<AgendaTask, { type: 'todo' }>, now: Date): string {
+  const start = todo.startDate ? `${dateLabel(todo.startDate, now)}${todo.startTime ? ` ${todo.startTime}` : ''}` : '';
+  const end = todo.endDate ? `${todo.endDate === todo.startDate && todo.startTime && todo.endTime ? '' : dateLabel(todo.endDate, now)}${todo.endTime ? ` ${todo.endTime}` : ''}`.trim() : '';
+  return start && end ? start === end ? start : `${start}–${end}` : start || end || '未設定日期';
 }
 
 export function agendaHref(item: AgendaItem): string {

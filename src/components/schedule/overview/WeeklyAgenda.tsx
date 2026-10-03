@@ -56,7 +56,7 @@ export default function WeeklyAgenda({ courses, shifts, events, notes, now, load
           return <section key={key} className={`${styles.day} ${index === selectedDay ? styles.selectedDay : ''} ${today ? styles.today : ''}`} aria-label={`${day.getMonth() + 1}月${day.getDate()}日週${WEEKDAYS[index]}`}>
             <h3><span>週{WEEKDAYS[index]}</span><span>{day.getMonth() + 1}/{day.getDate()}{today && <small>今天</small>}</span></h3>
             {dayItems.length ? <ul className={styles.list}>{dayItems.map((item) => <li key={item.id} className={styles.item}>
-              <p className={styles.time}>{item.startTime ? `${item.startTime}–${item.endTime}` : item.kind === 'homework' || item.kind === 'exam' || item.kind === 'todo' ? item.kind === 'todo' ? '全天' : '截止日' : '全天'}</p>
+              <p className={styles.time}>{item.startTime ? `${item.startTime}${item.endTime ? `–${item.endTime}` : ''}` : item.kind === 'homework' || item.kind === 'exam' || item.kind === 'todo' ? item.kind === 'todo' ? '全天' : '截止日' : '全天'}</p>
               <span className={`${styles.kind} ${item.kind === 'work' ? styles.work : item.kind === 'homework' || item.kind === 'exam' || item.kind === 'todo' ? styles.task : ''}`}><span aria-hidden="true"><AgendaIcon kind={item.kind} size={15} /></span>{AGENDA_LABELS[item.kind]}</span>
               {item.kind === 'event' ? <strong className={styles.title}>{item.title}</strong> : <Link className={styles.title} href={agendaHref(item)}>{item.title}</Link>}
               {item.detail && <p className={styles.detail}>{item.detail}</p>}
