@@ -23,7 +23,7 @@
 .focus h2 { font-size: clamp(1.15rem, 2vw, 1.45rem); overflow-wrap: anywhere; }
 .nextLink { display: block; padding: 8px; margin: -8px; border-radius: 8px; }
 .nextLink:hover { background-color: var(--glass-bg-hover); }
-.columns { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+.columns { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: stretch; }
 .panel { min-width: 0; }
 .panelHeader { margin-bottom: 16px; }
 .panelHeader h2 { font-size: 1.2rem; }
@@ -44,19 +44,16 @@
 .filters .selected:hover { background-color: var(--color-secondary); color: var(--glass-bg); }
 .addTodo { display: inline-flex; align-items: center; gap: 6px; padding: 10px 12px; border: 1px solid var(--color-primary); border-radius: 10px; background-color: var(--color-primary); color: var(--glass-bg); font: inherit; cursor: pointer; }
 .addTodo:hover { background-color: var(--color-primary-hover); }
-.taskRow { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 12px 0; }
+.taskRow { display: grid; grid-template-columns: 40px minmax(0, 1fr) minmax(160px, 200px); gap: 10px; align-items: center; padding: 12px 0; }
 .completeButton { width: 40px; height: 40px; border: 1px solid var(--glass-border); border-radius: 10px; color: var(--color-secondary); background-color: transparent; cursor: pointer; display: grid; place-items: center; }
 .completeButton:hover { background-color: var(--glass-bg-hover); border-color: var(--color-secondary); }
 .completeButton:disabled { opacity: 0.5; cursor: not-allowed; }
 .taskTitle { text-align: left; border: 0; background-color: transparent; color: var(--foreground); font: inherit; cursor: pointer; padding: 4px; border-radius: 6px; }
 .taskTitle:hover { background-color: var(--glass-bg-hover); }
-.due, .overdue { font-size: 0.8rem; color: var(--muted); max-width: 100px; }
+.due, .overdue { justify-self: start; text-align: left; font-size: 0.8rem; color: var(--muted); max-width: none; overflow-wrap: anywhere; }
 .overdue { color: var(--color-primary-hover); font-weight: 700; padding: 5px 8px; background-color: color-mix(in srgb, var(--color-primary) 12%, var(--glass-bg)); border-radius: 8px; }
 .empty { color: var(--muted); padding: 20px 0; line-height: 1.6; }
 .textButton { margin-top: 12px; color: var(--color-secondary); }
-.shortcuts { display: flex; flex-wrap: wrap; gap: 16px; font-size: 0.875rem; }
-.shortcuts a { padding: 8px 0; color: var(--muted); }
-.shortcuts a:hover { color: var(--color-primary); }
 .page a { cursor: pointer; }
 .page a:active, .page button:active { opacity: 0.75; }
 .page a:focus-visible, .page button:focus-visible { outline: 2px solid var(--color-secondary); outline-offset: 3px; }
@@ -79,7 +76,7 @@
   .focus { grid-template-columns: 1fr; }
   .focusBlock, .panel { padding: 20px; }
   .taskRow { grid-template-columns: 40px minmax(0, 1fr); gap: 8px; }
-  .due, .overdue { grid-column: 2; max-width: none; padding-left: 4px; }
+  .due, .overdue { grid-column: 2; justify-self: start; max-width: none; padding-left: 4px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .page a, .page button, .page svg { transition: none; }

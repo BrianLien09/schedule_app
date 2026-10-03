@@ -80,7 +80,9 @@ export function buildAgenda(
         id: `event-${event.id}`, sourceId: event.id, kind: 'event', title: event.title,
         date: key, detail: event.description,
       })),
-      ...notes.filter((note) => !note.completed && note.type !== 'note' && (note.type === 'todo' ? key >= (note.startDate || note.endDate) && key <= (note.endDate || note.startDate) : taskDueDate(note) === key))
+      ...notes.filter((note) => !note.completed && note.type !== 'note' && (note.type === 'todo'
+        ? Boolean(note.startDate && key === note.startDate) || Boolean(note.endDate && key === note.endDate)
+        : taskDueDate(note) === key))
         .map((note): AgendaItem => ({
           id: `task-${key}-${note.id}`, sourceId: note.id, kind: note.type === 'todo' ? 'todo' : note.type === 'exam' ? 'exam' : 'homework',
           title: note.title, date: key, detail: note.type === 'todo' ? note.associationLabel : note.courseName,

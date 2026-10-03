@@ -6,6 +6,7 @@ import type { Course, Event, WorkShift } from '@/data/schedule';
 import type { AgendaTask } from '@/data/todos';
 import { CalendarIcon } from '@/components/shared/Icons';
 import AgendaIcon from '@/components/schedule/overview/AgendaIcon';
+import HomeMonthlyWork from './HomeMonthlyWork';
 import { AGENDA_LABELS, addCalendarDays, agendaHref, buildAgenda, dateLabel, getPendingTasks, isTaskOverdue, localDateKey, taskDueDate } from '@/utils/agenda';
 import styles from './HomeOverview.module.css';
 
@@ -22,9 +23,11 @@ interface HomeOverviewProps {
   onComplete: (note: AgendaTask) => void;
   onOpenNote: (note: AgendaTask) => void;
   onAddTodo: () => void;
+  onEditShift: (shift: WorkShift) => void;
+  canEdit: boolean;
 }
 
-export default function HomeOverview({ courses, shifts, events, notes, now, loading, notesLoading, notesError, busyTaskIds, onComplete, onOpenNote, onAddTodo }: HomeOverviewProps) {
+export default function HomeOverview({ courses, shifts, events, notes, now, loading, notesLoading, notesError, busyTaskIds, onComplete, onOpenNote, onAddTodo, onEditShift, canEdit }: HomeOverviewProps) {
   const [recentOnly, setRecentOnly] = useState(true);
   const [tasksExpanded, setTasksExpanded] = useState(false);
   const [eventsExpanded, setEventsExpanded] = useState(false);
@@ -87,7 +90,7 @@ export default function HomeOverview({ courses, shifts, events, notes, now, load
           {tasks.length > 6 && <button className={styles.textButton} onClick={() => setTasksExpanded((value) => !value)}>{tasksExpanded ? '收起待辦' : `顯示其餘 ${tasks.length - 6} 個待辦`}</button>}
         </section>
       </div>
-      <nav className={styles.shortcuts} aria-label="其他功能"><Link href="/schedule/school">學校課表</Link><Link href="/schedule/work">打工月曆</Link><Link href="/tools/salary">薪資明細與分析</Link></nav>
+      <HomeMonthlyWork shifts={shifts} now={now} loading={loading} canEdit={canEdit} onEdit={onEditShift} />
     </div>
   );
 }

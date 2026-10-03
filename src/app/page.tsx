@@ -13,6 +13,8 @@ import HomeOverview from '@/components/home/HomeOverview';
 import CourseNoteEditor from '@/components/schedule/school/CourseNoteEditor';
 import LoginPrompt from '@/components/shared/LoginPrompt';
 import { LoadingSpinner } from '@/components/shared/Loading';
+import WorkShiftEditor from '@/components/schedule/work/WorkShiftEditor';
+import type { WorkShift } from '@/data/schedule';
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
@@ -22,6 +24,7 @@ export default function Home() {
   const [busyTaskIds, setBusyTaskIds] = useState<Set<string>>(new Set());
   const [editingNote, setEditingNote] = useState<CourseNote | null>(null);
   const [todoEditor, setTodoEditor] = useState<Todo | 'new' | null>(null);
+  const [editingShift, setEditingShift] = useState<WorkShift | null>(null);
   const openedLink = useRef(false);
   useEffect(() => {
     if (openedLink.current) return;
@@ -65,11 +68,30 @@ export default function Home() {
     toast.success('已保存筆記');
   };
 
+  const handleSaveShift = async (shift: WorkShift): Promise<boolean> => {
+    try {
+      await data.updateWorkShift(shift.id, shift);
+      toast.success('已更新打工班表');
+      setEditingShift(null);
+      return true;
+    } catch {
+      toast.error('更新班表失敗，請再試一次');
+      return false;
+    }
+  };
+  const handleDeleteShift = async (id: string): Promise<void> => {
+    if (!await confirm({ title: '刪除打工班表', message: '確定刪除這個班次及對應的薪資記錄？', confirmText: '刪除', danger: true })) return;
+    await data.deleteWorkShift(id);
+    toast.success('已刪除打工班表與薪資記錄');
+    setEditingShift(null);
+  };
+
   if (authLoading) return <LoadingSpinner />;
   if (!user) return <LoginPrompt />;
 
   return <>
-    <HomeOverview {...data} busyTaskIds={busyTaskIds} onComplete={(note) => { void handleComplete(note); }} onOpenNote={(note) => { if (note.type === 'todo') setTodoEditor(note); else setEditingNote(note); }} onAddTodo={() => setTodoEditor('new')} />
+    <HomeOverview {...data} busyTaskIds={busyTaskIds} onComplete={(note) => { void handleComplete(note); }} onOpenNote={(note) => { if (note.type === 'todo') setTodoEditor(note); else setEditingNote(note); }} onAddTodo={() => setTodoEditor('new')} onEditShift={setEditingShift} />
+    {editingShift && <WorkShiftEditor isOpen key={editingShift.id} onClose={() => setEditingShift(null)} onSave={handleSaveShift} onDelete={(id) => { void handleDeleteShift(id).catch(() => toast.error('刪除班表失敗，請再試一次')); }} shift={editingShift} mode="edit" existingCourses={data.courses} existingShifts={data.shifts} />}
     {todoEditor && <TodoEditor key={todoEditor === 'new' ? 'new' : todoEditor.id} todo={todoEditor === 'new' ? undefined : todoEditor}
       courses={data.courses} shifts={data.shifts} now={data.now} canSync={hasFamilyWebSyncAccess(user.email)}
       onSave={handleSaveTodo} onDelete={handleDeleteTodo} onClose={() => setTodoEditor(null)} />}

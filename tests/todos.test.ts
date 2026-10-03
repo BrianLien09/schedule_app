@@ -41,10 +41,10 @@ test('無日期與進行中的長期待辦仍顯示，完成者排除，結束�
   assert.equal(isTaskOverdue({ ...todo, endDate: '2026-10-01' }, now), true);
 });
 
-test('週視圖顯示個人待辦完整起訖期間，不將無日期待辦塞入每一天', () => {
+test('週視圖只在個人待辦的起始日與結束日顯示，不將無日期待辦塞入行程', () => {
   const days = getWeekDays(new Date(2026, 9, 2));
   const range = { ...todo, id: 'range', startDate: '2026-09-30', endDate: '2026-10-02' };
   const items = buildAgenda(days, [], [], [], [todo, range, { ...range, id: 'done', completed: true }]);
-  assert.deepEqual(items.map((item) => item.date), days.map(localDateKey).slice(2, 5));
-  assert.equal(new Set(items.map((item) => item.id)).size, 3);
+  assert.deepEqual(items.map((item) => item.date), [localDateKey(days[2]), localDateKey(days[4])]);
+  assert.equal(new Set(items.map((item) => item.id)).size, 2);
 });

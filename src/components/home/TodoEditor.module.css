@@ -2,7 +2,7 @@
 .fields { border: 0; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
 .fields label { display: flex; flex-direction: column; gap: 8px; font-weight: 600; min-width: 0; }
 .fields input:not([type='checkbox']), .fields select { width: 100%; min-width: 0; padding: 12px 14px; border: 1px solid var(--glass-border); border-radius: 10px; background-color: var(--glass-bg-hover); color: var(--foreground); font: inherit; }
-.fields input:focus-visible, .fields select:focus-visible { outline: 2px solid var(--color-secondary); outline-offset: 2px; }
+.fields input:focus-visible, .fields select:focus-visible { outline: 2px solid var(--color-secondary); outline-offset: -2px; }
 .dates { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .fields .sync { flex-direction: row; align-items: center; gap: 10px; }
 .sync input { width: 20px; height: 20px; accent-color: var(--color-secondary); }
