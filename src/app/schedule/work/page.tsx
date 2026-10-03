@@ -55,6 +55,7 @@ export default function WorkSchedulePage() {
 
   const handleMonthChange = (offset: number) => {
     setMonthDirection(offset < 0 ? 'previous' : 'next');
+    setSelectedDays([]);
     changeMonth(offset);
   };
 
@@ -84,6 +85,7 @@ export default function WorkSchedulePage() {
    * 格式化日期為 YYYY-MM-DD
    */
   const formatDate = (day: number): string => {
+    if (!Number.isInteger(day) || day < 1 || day > days) throw new Error('請重新選取有效的班表日期');
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth() + 1;
     return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
