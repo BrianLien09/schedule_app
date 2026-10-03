@@ -17,7 +17,7 @@ export async function removeTodo(uid: string, id: string): Promise<void> {
   await deleteDocument(uid, PERSONAL_COLLECTIONS.todos, id);
 }
 
-/** 同一待辦共用重試識別碼；重試先讀取現況再重建日期，避免編輯後留下舊日期。 */
+/** 只保留同一待辦的起訖日，重新同步時移除原有的中間日期與舊日期。 */
 export async function syncTodoToFamily(uid: string, email: string | null | undefined, todo: Todo, remove = false): Promise<void> {
   const database = familyDb;
   if (!database || !hasFamilyWebSyncAccess(email)) throw new Error('家庭同步尚未設定或此帳號沒有同步權限');

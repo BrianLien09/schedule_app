@@ -51,7 +51,7 @@ export default function TodoEditor({ todo, courses, shifts, now, canSync, onSave
         <label>隸屬類型<select value={association} onChange={(event) => { setAssociation(event.target.value as Todo['association']); setAssociationId(''); }}><option value="none">無</option><option value="course">課程</option><option value="work">打工</option></select></label>
         {association !== 'none' && <label>{association === 'course' ? '選擇課程' : '選擇當月打工'}<select required value={associationId} onChange={(event) => setAssociationId(event.target.value)}><option value="">請選擇</option>{options.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</select>{!options.length && <span className={styles.hint}>{association === 'course' ? '目前沒有課程可選。' : '本月沒有打工班次可選。'}</span>}</label>}
         <label className={styles.sync}><input type="checkbox" checked={syncToFamily} disabled={!canSync} onChange={(event) => setSyncToFamily(event.target.checked)} />同步至家庭月曆</label>
-        <p className={styles.hint}>{canSync ? '有日期才可同步；起訖期間逐日顯示，標題不加前綴。' : '此帳號尚未開放家庭同步。'}</p>
+        <p className={styles.hint}>{canSync ? '只同步開始日與結束日；同一天只顯示一筆。' : '此帳號尚未開放家庭同步。'}</p>
       </fieldset>
       {error && <p role="alert" className={styles.error}>{error}</p>}
       <div className={styles.actions}>{todo && <button type="button" disabled={busy} onClick={() => { void remove(); }}>刪除待辦</button>}<button type="button" disabled={busy} onClick={onClose}>取消</button><button className={styles.save} type="submit" disabled={busy}>{busy ? '保存中…' : '保存待辦'}</button></div>

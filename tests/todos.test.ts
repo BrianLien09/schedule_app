@@ -17,11 +17,11 @@ test('待辦日期可不填，家庭同步至少需要單一日期，且驗證�
   assert.ok(validateTodo({ ...input, startDate: '2026-10-04', endDate: '2026-10-02' }));
 });
 
-test('起訖範圍跨月逐日同步，只有單一日期也可同步，限制大量展開', () => {
-  assert.deepEqual(todoDates({ startDate: '2026-09-30', endDate: '2026-10-02' }), ['2026-09-30', '2026-10-01', '2026-10-02']);
+test('起訖範圍跨月只同步開始日與結束日，只有單一日期也可同步', () => {
+  assert.deepEqual(todoDates({ startDate: '2026-09-30', endDate: '2026-10-02' }), ['2026-09-30', '2026-10-02']);
   assert.deepEqual(todoDates({ startDate: '', endDate: '2026-10-02' }), ['2026-10-02']);
   assert.deepEqual(todoDates(input), []);
-  assert.ok(validateTodo({ ...input, syncToFamily: true, startDate: '2026-01-01', endDate: '2028-01-01' }));
+  assert.equal(validateTodo({ ...input, syncToFamily: true, startDate: '2026-01-01', endDate: '2028-01-01' }), null);
 });
 
 test('家庭標題不加百頁前綴，來源、擁有者與待辦識別碼不混入班表', () => {
