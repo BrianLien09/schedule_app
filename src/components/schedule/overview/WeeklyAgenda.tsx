@@ -63,7 +63,7 @@ export default function WeeklyAgenda({ courses, shifts, events, notes, now, load
               <span className={`${styles.kind} ${item.kind === 'work' ? styles.work : item.kind === 'homework' || item.kind === 'exam' || item.kind === 'todo' ? styles.task : ''}`}><span aria-hidden="true"><AgendaIcon kind={item.kind} size={15} /></span>{AGENDA_LABELS[item.kind]}</span>
               {item.kind === 'event' ? <strong className={styles.title}>{item.title}</strong> : <Link className={styles.title} href={agendaHref(item)}>{item.title}</Link>}
               {item.detail && <p className={styles.detail}>{item.detail}</p>}
-            </li>)}</ul> : <p className={styles.empty}>{filter === 'all' ? '沒有行程' : '沒有此類行程'}</p>}
+            </li>)}</ul> : <p className={styles.empty}>{loadError || notesError ? '暫時無法取得完整行程' : filter === 'all' ? '沒有行程' : '沒有此類行程'}</p>}
           </section>;
         })}
       </div>}

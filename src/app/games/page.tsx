@@ -260,7 +260,7 @@ export default function GamesPage() {
           ============================================================ */}
       {filteredGuides.length === 0 ? (
         <div className={`${styles.emptyState} page-section-enter page-section-enter-delay-3`}>
-          <p>📝 目前沒有攻略資料</p>
+          <p>{loadError ? '暫時無法取得攻略資料' : '目前沒有攻略資料'}</p>
           {editMode && (
             <button className={styles.btnAddGuide} onClick={() => setShowAddForm(true)}>
               + 新增第一筆攻略

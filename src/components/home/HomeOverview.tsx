@@ -53,7 +53,7 @@ export default function HomeOverview({ courses, shifts, events, notes, now, load
       </header>
 
       <section className={`${styles.focus} page-section-enter page-section-enter-delay-1`} aria-label="現在與下一個行程">
-        {loading ? <p className={styles.empty}>行程載入中…</p> : <>
+        {loading ? <p className={styles.empty}>行程載入中…</p> : loadError && agenda.length === 0 ? <p className={styles.empty}>暫時無法取得行程。</p> : <>
           <div className={`${styles.focusBlock} ${styles.currentBlock}`}><p className={styles.focusLabel}><span className={styles.iconBadge} aria-hidden="true"><AgendaIcon kind="clock" size={22} /></span>{current.length ? '進行中' : '現在'}</p>
             {current.length ? current.map((item) => <div key={item.id}><h2>{item.title}</h2><p className={styles.meta}>{item.startTime}–{item.endTime}{item.detail && ` · ${item.detail}`}</p></div>) : <><h2>目前沒有進行中的行程</h2><p className={styles.meta}>接下來的安排與期限都在下方。</p></>}
           </div>
@@ -68,7 +68,7 @@ export default function HomeOverview({ courses, shifts, events, notes, now, load
           <div className={styles.panelHeader}><div className={styles.headingGroup}><span className={`${styles.iconBadge} ${styles.calendarBadge}`} aria-hidden="true"><AgendaIcon kind="event" size={22} /></span><div><p className={styles.eyebrow}>今天起七天內</p><h2 id="upcoming-title">近期重要安排</h2></div></div><Link className={styles.textLink} href="/schedule/overview">全部行程</Link></div>
           {loading ? <p className={styles.empty}>行程載入中…</p> : shownEvents.length ? <ul className={styles.list}>{shownEvents.map((item) => <li key={item.id}><Link className={styles.eventRow} href={agendaHref(item)}>
             <span className={styles.date}>{dateLabel(item.date, now)}</span><div className={styles.rowBody}><strong>{item.title}</strong><span className={styles.meta}><span className={item.kind === "work" ? styles.workKind : styles.eventKind}><span aria-hidden="true"><AgendaIcon kind={item.kind} size={14} /></span>{AGENDA_LABELS[item.kind]}</span> · {item.startTime ? `${item.startTime}–${item.endTime}` : '全天'}{item.detail && ` · ${item.detail}`}</span></div>
-          </Link></li>)}</ul> : <p className={styles.empty}>近期沒有打工或重要事件。</p>}
+          </Link></li>)}</ul> : <p className={styles.empty}>{loadError ? '暫時無法取得完整安排。' : '近期沒有打工或重要事件。'}</p>}
           {important.length > 6 && <button className={styles.textButton} onClick={() => setEventsExpanded((value) => !value)}>{eventsExpanded ? '收起安排' : `顯示其餘 ${important.length - 6} 個安排`}</button>}
         </section>
 
@@ -93,7 +93,7 @@ export default function HomeOverview({ courses, shifts, events, notes, now, load
           {tasks.length > 6 && <button className={styles.textButton} onClick={() => setTasksExpanded((value) => !value)}>{tasksExpanded ? '收起待辦' : `顯示其餘 ${tasks.length - 6} 個待辦`}</button>}
         </section>
       </div>
-      <HomeMonthlyWork shifts={shifts} now={now} loading={loading} canEdit={canEdit} onEdit={onEditShift} />
+      {loadError && shifts.length === 0 ? <p className={styles.empty}>暫時無法取得打工班次。</p> : <HomeMonthlyWork shifts={shifts} now={now} loading={loading} canEdit={canEdit} onEdit={onEditShift} />}
     </div>
   );
 }
