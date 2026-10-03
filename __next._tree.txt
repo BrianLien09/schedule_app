@@ -1,4 +1,4 @@
 :HL["/schedule_app/_next/static/chunks/f3e81124529f7f28.css","style"]
-:HL["/schedule_app/_next/static/chunks/c552d9e41b50e362.css","style"]
+:HL["/schedule_app/_next/static/chunks/c7b795edd9b0561d.css","style"]
 :HL["/schedule_app/_next/static/chunks/76e372acfbb3c1ea.css","style"]
-0:{"buildId":"JLgRv8crNSzXaT0pPFHXz","tree":{"name":"","paramType":null,"paramKey":"","hasRuntimePrefetch":false,"slots":{"children":{"name":"__PAGE__","paramType":null,"paramKey":"__PAGE__","hasRuntimePrefetch":false,"slots":null,"isRootLayout":false}},"isRootLayout":true},"staleTime":300}
+0:{"buildId":"_AbEJgXndwH7SijPId-yX","tree":{"name":"","paramType":null,"paramKey":"","hasRuntimePrefetch":false,"slots":{"children":{"name":"__PAGE__","paramType":null,"paramKey":"__PAGE__","hasRuntimePrefetch":false,"slots":null,"isRootLayout":false}},"isRootLayout":true},"staleTime":300}
