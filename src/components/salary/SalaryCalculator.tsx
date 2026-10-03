@@ -605,7 +605,7 @@ export default function SalaryCalculator() {
     return Math.round(statsTotalPay / statsTotalHours);
   }, [statsTotalPay, statsTotalHours]);
 
-  const statsWorkDays = useMemo(() => statsRecords.length, [statsRecords]);
+  const statsWorkDays = useMemo(() => new Set(statsRecords.map((record) => record.date)).size, [statsRecords]);
 
   const getMonthlyStats = (): MonthStats[] => {
     const statsMap = new Map<string, MonthStats>();
