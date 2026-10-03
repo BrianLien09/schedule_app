@@ -117,7 +117,7 @@ export default function SalaryCalculator() {
   const [editingWorkHours, setEditingWorkHours] = useState<string>(''); 
   const [showEditModal, setShowEditModal] = useState(false);
   const [showStats, setShowStats] = useState(true); 
-  const [selectedRecordIds, setSelectedRecordIds] = useState<Set<string>>(new Set()); 
+  const [selection, setSelection] = useState<{ month: string; ids: Set<string> }>({ month: filterMonth, ids: new Set() });
   const [showBatchEditModal, setShowBatchEditModal] = useState(false);
   const [batchNewHourlyRate, setBatchNewHourlyRate] = useState<number>(200);
 
@@ -151,6 +151,8 @@ export default function SalaryCalculator() {
   const [isAddingRecord, setIsAddingRecord] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [isSavingBatchEdit, setIsSavingBatchEdit] = useState(false);
+  const [isDeletingBatch, setIsDeletingBatch] = useState(false);
+  const batchOperationRef = useRef(false);
   const [isConfirmingImport, setIsConfirmingImport] = useState(false);
   const [showAllImportRecords, setShowAllImportRecords] = useState(false); 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -164,6 +166,9 @@ export default function SalaryCalculator() {
   };
 
   const updateFilterMonth = (month: string) => {
+    if (batchOperationRef.current) return;
+    setSelection({ month, ids: new Set() });
+    setShowBatchEditModal(false);
     setFilterMonth(month);
   };
 
@@ -211,6 +216,11 @@ export default function SalaryCalculator() {
     if (!detailFilterMonth) return records;
     return records.filter(record => record.date.startsWith(detailFilterMonth));
   }, [records, detailFilterMonth]);
+  // 批次範圍只包含目前篩選中仍存在的記錄，避免隱藏或已刪除的選取被送出。
+  const selectedRecordIds = new Set(selection.month === detailFilterMonth ? filteredRecords.filter((record) => selection.ids.has(record.id)).map((record) => record.id) : []);
+  const setSelectedRecordIds = (ids: Set<string>): void => {
+    if (!batchOperationRef.current) setSelection({ month: detailFilterMonth, ids });
+  };
 
   const quickFilters = useMemo(() => {
     return [
@@ -513,7 +523,8 @@ export default function SalaryCalculator() {
   };
 
   const handleBatchEditHourlyRate = async () => {
-    if (isSavingBatchEdit) return;
+    if (batchOperationRef.current) return;
+    if (selectedRecordIds.size === 0) { toast.warning('請重新選擇要編輯的記錄'); return; }
     const updateData: Partial<SalaryRecord> = {};
     if (batchNewHourlyRate > 0) {
       updateData.hourlyRate = batchNewHourlyRate;
@@ -552,16 +563,18 @@ export default function SalaryCalculator() {
       data: updateData
     }));
     
+    batchOperationRef.current = true;
     setIsSavingBatchEdit(true);
     try {
       await batchUpdateRecords(updates);
       setShowBatchEditModal(false);
-      setSelectedRecordIds(new Set());
-      toast.success(`已成功更新 ${selectedRecordIds.size} 筆記錄！`);
+      setSelection({ month: detailFilterMonth, ids: new Set() });
+      toast.success(`已成功更新 ${updates.length} 筆記錄！`);
     } catch {
-      toast.error('批次更新失敗，請稍後再試');
+      toast.error('更新未全部完成，請確認資料後重試');
     } finally {
       setIsSavingBatchEdit(false);
+      batchOperationRef.current = false;
     }
   };
 
@@ -570,22 +583,33 @@ export default function SalaryCalculator() {
   };
 
   const handleBatchDelete = async () => {
+    if (batchOperationRef.current) return;
     if (selectedRecordIds.size === 0) {
       toast.warning('請先選擇要刪除的記錄！');
       return;
     }
 
-    const confirmed = await confirm({
-      title: '刪除記錄',
-      message: `確定要刪除 ${selectedRecordIds.size} 筆記錄嗎？此操作無法復原！`,
-      confirmText: '刪除',
-      danger: true,
-    });
-    if (!confirmed) return;
+    const ids = [...selectedRecordIds];
+    batchOperationRef.current = true;
+    setIsDeletingBatch(true);
+    try {
+      const confirmed = await confirm({
+        title: '刪除記錄',
+        message: `確定要刪除 ${ids.length} 筆記錄嗎？此操作無法復原！`,
+        confirmText: '刪除',
+        danger: true,
+      });
+      if (!confirmed) return;
 
-    batchDeleteRecords(Array.from(selectedRecordIds));
-    setSelectedRecordIds(new Set());
-    toast.success('已刪除選取的記錄');
+      await batchDeleteRecords(ids);
+      setSelection({ month: detailFilterMonth, ids: new Set() });
+      toast.success(`已刪除 ${ids.length} 筆記錄`);
+    } catch {
+      toast.error('刪除未全部完成，請確認資料後重試');
+    } finally {
+      setIsDeletingBatch(false);
+      batchOperationRef.current = false;
+    }
   };
 
   const handlePrint = () => {
@@ -865,7 +889,7 @@ export default function SalaryCalculator() {
           </h2>
 
           {/* 四大核心 KPI 速覽 */}
-          {!isPrintMode && (
+          {!isPrintMode && !(loadError && records.length === 0) && (
             <SalaryHeaderStats
               totalPay={statsTotalPay}
               totalHours={statsTotalHours}
@@ -901,6 +925,7 @@ export default function SalaryCalculator() {
             {/* 明細表格與操作 */}
             <SalaryRecordList
               records={records}
+              loadError={loadError}
               filteredRecords={filteredRecords}
               roles={roles}
               filterMonth={detailFilterMonth}
@@ -943,12 +968,13 @@ export default function SalaryCalculator() {
               shiftCategoryOptions={shiftCategoryOptions}
               onBatchEditHourlyRate={handleBatchEditHourlyRate}
               isSavingBatchEdit={isSavingBatchEdit}
+              isDeletingBatch={isDeletingBatch}
               onCancelBatchEdit={handleCancelBatchEdit}
             />
           </>
         )}
 
-        {activeTab === 'analytics' && (
+        {activeTab === 'analytics' && !(loadError && records.length === 0) && (
           <SalaryAnalytics
             statsFilter={statsFilter}
             setStatsFilter={setStatsFilter}

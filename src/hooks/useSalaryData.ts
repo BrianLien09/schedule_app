@@ -3,7 +3,7 @@ import { useAuth } from '@/context/AuthContext';
 import {
   setDocument,
   updateDocument,
-  deleteDocument,
+  deleteRelatedDocuments,
   subscribeToCollectionWithError,
   batchSetDocuments,
 } from '@/services/firestoreService';
@@ -75,11 +75,10 @@ export function useSalaryData() {
 
     const targetRecord = records.find((record) => record.id === id);
 
-    await deleteDocument(user.uid, PERSONAL_COLLECTIONS.salaryRecords, id);
-
-    if (targetRecord?.workShiftId) {
-      await deleteDocument(user.uid, PERSONAL_COLLECTIONS.workShifts, targetRecord.workShiftId);
-    }
+    await deleteRelatedDocuments(user.uid, [
+      { collectionName: PERSONAL_COLLECTIONS.salaryRecords, id },
+      ...(targetRecord?.workShiftId ? [{ collectionName: PERSONAL_COLLECTIONS.workShifts, id: targetRecord.workShiftId }] : []),
+    ]);
   };
 
   const batchAddRecords = async (newRecords: SalaryRecord[]) => {
@@ -95,34 +94,30 @@ export function useSalaryData() {
     updates: Array<{ id: string; data: Partial<SalaryRecord> }>
   ) => {
     if (!user || !canEdit) {
-      console.warn('目前沒有寫入權限');
-      return;
+      throw new Error('目前沒有批次修改權限');
     }
 
     const promises = updates.map(({ id, data }) =>
       updateDocument(user.uid, PERSONAL_COLLECTIONS.salaryRecords, id, data)
     );
-    await Promise.all(promises);
+    const results = await Promise.allSettled(promises);
+    if (results.some((result) => result.status === 'rejected')) throw new Error('部分記錄更新失敗');
   };
 
   const batchDeleteRecords = async (ids: string[]) => {
     if (!user || !canEdit) {
-      console.warn('目前沒有寫入權限');
-      return;
+      throw new Error('目前沒有批次刪除權限');
     }
 
-    const recordsToDelete = records.filter((record) => ids.includes(record.id));
-    const salaryDeletePromises = ids.map((id) =>
-      deleteDocument(user.uid, PERSONAL_COLLECTIONS.salaryRecords, id)
-    );
-    const legacyShiftDeletePromises = recordsToDelete
-      .map((record) => record.workShiftId)
-      .filter((workShiftId): workShiftId is string => Boolean(workShiftId))
-      .map((workShiftId) =>
-        deleteDocument(user.uid, PERSONAL_COLLECTIONS.workShifts, workShiftId)
-      );
-
-    await Promise.all([...salaryDeletePromises, ...legacyShiftDeletePromises]);
+    const promises = ids.map((id) => {
+      const record = records.find((record) => record.id === id);
+      return deleteRelatedDocuments(user.uid, [
+        { collectionName: PERSONAL_COLLECTIONS.salaryRecords, id },
+        ...(record?.workShiftId ? [{ collectionName: PERSONAL_COLLECTIONS.workShifts, id: record.workShiftId }] : []),
+      ]);
+    });
+    const results = await Promise.allSettled(promises);
+    if (results.some((result) => result.status === 'rejected')) throw new Error('部分記錄刪除失敗');
   };
 
   return {

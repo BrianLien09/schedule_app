@@ -8,6 +8,7 @@ import SalaryRecordTable from './SalaryRecordTable';
 
 interface SalaryRecordListProps {
   records: SalaryRecord[];
+  loadError: string | null;
   filteredRecords: SalaryRecord[];
   roles: WorkRole[];
   filterMonth: string;
@@ -72,6 +73,7 @@ interface SalaryRecordListProps {
   shiftCategoryOptions: string[];
   onBatchEditHourlyRate: () => void;
   isSavingBatchEdit: boolean;
+  isDeletingBatch: boolean;
   onCancelBatchEdit: () => void;
 }
 /**
@@ -79,6 +81,7 @@ interface SalaryRecordListProps {
  */
 export default function SalaryRecordList({
   records,
+  loadError,
   filteredRecords,
   roles,
   filterMonth,
@@ -121,11 +124,12 @@ export default function SalaryRecordList({
   shiftCategoryOptions,
   onBatchEditHourlyRate,
   isSavingBatchEdit,
+  isDeletingBatch,
   onCancelBatchEdit,
 }: SalaryRecordListProps) {
 
   return (
-    <>
+    <fieldset disabled={isSavingBatchEdit || isDeletingBatch} style={{ border: 0, padding: 0, minWidth: 0 }}>
       {/* 跨月份提醒 */}
       {records.length > 0 && filteredRecords.length === 0 && Boolean(filterMonth) && (
         <div
@@ -207,7 +211,7 @@ export default function SalaryRecordList({
                     cursor: 'pointer',
                   }}
                 >
-                  批量刪除 ({selectedRecordIds.size})
+                  {isDeletingBatch ? '刪除中…' : `批量刪除 (${selectedRecordIds.size})`}
                 </button>
                 <button
                   type="button"
@@ -382,7 +386,7 @@ export default function SalaryRecordList({
         {/* 表格 / 清單呈現 */}
         {filteredRecords.length === 0 ? (
           <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)' }}>
-            目前沒有打工記錄
+            {loadError ? '暫時無法取得打工記錄' : '目前沒有打工記錄'}
           </div>
         ) : (
           <SalaryRecordTable
@@ -424,6 +428,6 @@ export default function SalaryRecordList({
         isSavingBatchEdit={isSavingBatchEdit}
         onCancelBatchEdit={onCancelBatchEdit}
       />
-    </>
+    </fieldset>
   );
 }

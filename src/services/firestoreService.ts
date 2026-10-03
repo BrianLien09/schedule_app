@@ -28,6 +28,7 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
+  writeBatch,
   query,
   onSnapshot,
   QueryConstraint,
@@ -322,6 +323,21 @@ export async function deleteDocument(
   }
   const docRef = doc(getUserCollection(userId, collectionName), docId);
   await trackDataOperation('save', docRef.path, () => deleteDoc(docRef));
+}
+
+/** 將關聯文件一起刪除，避免部分成功後失去重試所需的關聯資訊。 */
+export async function deleteRelatedDocuments(
+  userId: string,
+  documents: Array<{ collectionName: PersonalCollectionName; id: string }>
+): Promise<void> {
+  if (!isFirebaseConfigured || !db) {
+    throw new Error('Firebase 未設定，請檢查環境變數');
+  }
+  if (documents.length === 0) return;
+  const batch = writeBatch(db);
+  const refs = documents.map(({ collectionName, id }) => doc(getUserCollection(userId, collectionName), id));
+  refs.forEach((ref) => batch.delete(ref));
+  await trackDataOperation('save', refs.map((ref) => ref.path).join(','), () => batch.commit());
 }
 
 /**
