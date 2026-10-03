@@ -2,7 +2,7 @@
  * 課表資料啟動與舊資料遷移服務。
  *
  * 將一次性的資料準備工作放在服務層，讓 Hook 只負責訂閱資料與管理畫面狀態，
- * 同時保留既有預設資料與舊版班表轉換規則。
+ * 只轉換登入者已儲存的班表，不將個人的內建資料寫入其他帳號。
  */
 
 import {
@@ -10,11 +10,7 @@ import {
   getDocuments,
 } from '@/services/firestoreService';
 import { PERSONAL_COLLECTIONS } from '@/services/firestoreCollections';
-import {
-  importantEvents,
-  workShifts as defaultWorkShifts,
-} from '@/data/schedule';
-import type { Event, WorkShift } from '@/data/schedule';
+import type { WorkShift } from '@/data/schedule';
 import {
   createSalaryRecordFromWorkShift,
   isSalaryRecordLinkedToShift,
@@ -44,10 +40,9 @@ async function migrateLegacyWorkShifts(
 }
 
 /**
- * 初始化個人課表所需的預設資料，並將舊版班表轉成薪資記錄。
+ * 將登入者自己的舊版班表轉成薪資記錄。
  *
- * 這個流程維持冪等性：只有在對應集合為空時建立預設資料，
- * 舊班表也只會補上尚未連結的薪資記錄，因此重複進入頁面不會新增重複資料。
+ * 空白帳號維持空白；舊班表只補上尚未連結的薪資記錄，避免重複建立資料。
  */
 export async function bootstrapScheduleData(userId: string): Promise<void> {
   try {
@@ -59,29 +54,8 @@ export async function bootstrapScheduleData(userId: string): Promise<void> {
       userId,
       PERSONAL_COLLECTIONS.salaryRecords
     );
-    const existingEvents = await getDocuments<Event>(
-      userId,
-      PERSONAL_COLLECTIONS.events
-    );
-
-    if (existingSalaryRecords.length === 0 && existingLegacyShifts.length === 0) {
-      const seededSalaryRecords = defaultWorkShifts.map((shift) =>
-        createSalaryRecordFromWorkShift(shift, {
-          id: `salary-${shift.id}`,
-          legacyWorkShiftId: shift.id,
-        })
-      );
-      await batchSetDocuments(
-        userId,
-        PERSONAL_COLLECTIONS.salaryRecords,
-        seededSalaryRecords
-      );
-    } else if (existingLegacyShifts.length > 0) {
+    if (existingLegacyShifts.length > 0) {
       await migrateLegacyWorkShifts(userId, existingSalaryRecords, existingLegacyShifts);
-    }
-
-    if (existingEvents.length === 0) {
-      await batchSetDocuments(userId, PERSONAL_COLLECTIONS.events, importantEvents);
     }
   } catch (error) {
     console.error('初始化個人資料失敗', error);

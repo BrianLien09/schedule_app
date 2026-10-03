@@ -65,30 +65,6 @@ export const schoolSchedule: Course[] = [
   { id: 'fri-3', name: 'C程式設計', day: 5, startTime: '13:10', endTime: '16:00', location: '博愛G512電腦教室', color: '#FB7185' },
 ];
 
-export const workShifts: WorkShift[] = [
-  // Autumn Class (Jan)
-  { id: 'aut-1', date: '2026-01-11', startTime: '09:00', endTime: '18:00', note: '秋季班' },
-  { id: 'aut-2', date: '2026-01-17', startTime: '09:00', endTime: '18:00', note: '秋季班' },
-  { id: 'aut-3', date: '2026-01-18', startTime: '09:00', endTime: '18:00', note: '秋季班' },
-
-  // Winter Camp (Jan - Feb)
-  { id: 'win-1', date: '2026-01-27', startTime: '09:00', endTime: '18:00', note: '冬令營助教' },
-  { id: 'win-2', date: '2026-01-29', startTime: '09:00', endTime: '18:00', note: '冬令營助教' },
-  { id: 'win-3', date: '2026-02-02', startTime: '09:00', endTime: '18:00', note: '冬令營助教' },
-  { id: 'win-4', date: '2026-02-04', startTime: '09:00', endTime: '18:00', note: '冬令營助教' },
-  { id: 'win-5', date: '2026-02-05', startTime: '09:00', endTime: '18:00', note: '冬令營助教' },
-  { id: 'win-6', date: '2026-02-06', startTime: '09:00', endTime: '18:00', note: '冬令營助教' },
-  { id: 'win-7', date: '2026-02-09', startTime: '09:00', endTime: '18:00', note: '冬令營助教' },
-  { id: 'win-8', date: '2026-02-10', startTime: '09:00', endTime: '18:00', note: '冬令營助教' },
-  { id: 'win-9', date: '2026-02-11', startTime: '09:00', endTime: '18:00', note: '冬令營助教' },
-  { id: 'win-10', date: '2026-02-13', startTime: '09:00', endTime: '18:00', note: '冬令營助教' },
-];
-
-export const importantEvents: Event[] = [
-  { id: 'evt-1', title: '期中考週', date: '2026-04-13', type: 'exam', description: '準備資料結構與C程式設計' },
-  { id: 'evt-2', title: '期末考週', date: '2026-06-15', type: 'exam', description: '本學期最後一週' },
-];
-
 export function generateWorkShiftId(): string {
   return `shift-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
 }

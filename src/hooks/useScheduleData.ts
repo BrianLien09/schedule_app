@@ -2,23 +2,18 @@ import { startTransition, useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { DEFAULT_COURSE_SEMESTER } from '../data/schedule';
 import type { Course, WorkShift, Event } from '../data/schedule';
-import { normalizeCourses, type CourseCollectionSource } from '@/utils/courseSemesters';
+import { normalizeCourses } from '@/utils/courseSemesters';
 import {
   setDocument,
   updateDocument,
   deleteDocument,
   subscribeToCollection,
-  subscribeToSharedCollection,
 } from '@/services/firestoreService';
-import {
-  PERSONAL_COLLECTIONS,
-  SHARED_COLLECTIONS,
-} from '@/services/firestoreCollections';
+import { PERSONAL_COLLECTIONS } from '@/services/firestoreCollections';
 import { bootstrapScheduleData } from '@/services/scheduleBootstrapService';
 import {
   hasFamilyWebSyncAccess,
   hasWriteAccess,
-  isBrianAccount,
 } from '@/config/permissions';
 import {
   mapSalaryRecordToWorkShift,
@@ -32,28 +27,35 @@ import {
   updateWorkShiftInFamilyWeb,
 } from '@/services/familySyncService';
 
-function getCourseCollectionSource(email: string | null | undefined): CourseCollectionSource {
-  return isBrianAccount(email) ? 'personal' : 'shared';
-}
-
 export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
   const { user } = useAuth();
 
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [shifts, setShifts] = useState<WorkShift[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
+  const [courseState, setCourseState] = useState<{
+    userId: string | null;
+    data: Course[];
+  }>({ userId: null, data: [] });
+  const [shiftState, setShiftState] = useState<{
+    userId: string | null;
+    data: WorkShift[];
+  }>({ userId: null, data: [] });
+  const [eventState, setEventState] = useState<{
+    userId: string | null;
+    data: Event[];
+  }>({ userId: null, data: [] });
   const [loading, setLoading] = useState(true);
   const [canEdit, setCanEdit] = useState(false);
   const canSyncToFamilyWeb = hasFamilyWebSyncAccess(user?.email);
-  const courseCollectionSource = getCourseCollectionSource(user?.email);
-  const canEditCourses = canEdit && isBrianAccount(user?.email);
+  const courses = courseState.userId === user?.uid ? courseState.data : [];
+  const shifts = shiftState.userId === user?.uid ? shiftState.data : [];
+  const events = eventState.userId === user?.uid ? eventState.data : [];
+  const canEditCourses = canEdit;
 
   useEffect(() => {
     if (!user) {
       startTransition(() => {
-        setCourses([]);
-        setShifts([]);
-        setEvents([]);
+        setCourseState({ userId: null, data: [] });
+        setShiftState({ userId: null, data: [] });
+        setEventState({ userId: null, data: [] });
         setLoading(false);
         setCanEdit(false);
       });
@@ -73,26 +75,32 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
     };
 
     const handleCourses = (data: Course[]) => {
-      setCourses(normalizeCourses(data, selectedSemester, courseCollectionSource));
+      setCourseState({
+        userId: user.uid,
+        data: normalizeCourses(data, selectedSemester, 'personal'),
+      });
       markLoaded('courses');
     };
 
-    const unsubscribeCourses = courseCollectionSource === 'shared'
-      ? subscribeToSharedCollection<Course>(SHARED_COLLECTIONS.courses, handleCourses)
-      : subscribeToCollection<Course>(user.uid, PERSONAL_COLLECTIONS.courses, handleCourses);
+    const unsubscribeCourses = subscribeToCollection<Course>(
+      user.uid,
+      PERSONAL_COLLECTIONS.courses,
+      handleCourses
+    );
 
     const unsubscribeShifts = subscribeToCollection<SalaryRecord>(
       user.uid,
       PERSONAL_COLLECTIONS.salaryRecords,
       (data) => {
-        setShifts(
-          data
+        setShiftState({
+          userId: user.uid,
+          data: data
             .map(mapSalaryRecordToWorkShift)
             .sort(
               (a, b) =>
                 a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)
-            )
-        );
+            ),
+        });
         markLoaded('shifts');
       }
     );
@@ -100,7 +108,10 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
     const unsubscribeEvents = subscribeToCollection<Event>(
       user.uid,
       PERSONAL_COLLECTIONS.events,
-      (data) => { setEvents(data); markLoaded('events'); }
+      (data) => {
+        setEventState({ userId: user.uid, data });
+        markLoaded('events');
+      }
     );
 
     return () => {
@@ -108,7 +119,7 @@ export function useScheduleData(selectedSemester = DEFAULT_COURSE_SEMESTER) {
       unsubscribeShifts();
       unsubscribeEvents();
     };
-  }, [courseCollectionSource, selectedSemester, user]);
+  }, [selectedSemester, user]);
 
   const addCourse = async (course: Course) => {
     if (!user || !canEditCourses) {

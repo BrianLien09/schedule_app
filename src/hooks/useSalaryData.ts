@@ -15,14 +15,18 @@ export type { RoleType, SalaryRecord } from '@/data/workRecords';
 
 export function useSalaryData() {
   const { user } = useAuth();
-  const [records, setRecords] = useState<SalaryRecord[]>([]);
+  const [recordState, setRecordState] = useState<{
+    userId: string | null;
+    data: SalaryRecord[];
+  }>({ userId: null, data: [] });
   const [loading, setLoading] = useState(true);
   const [canEdit, setCanEdit] = useState(false);
+  const records = recordState.userId === user?.uid ? recordState.data : [];
 
   useEffect(() => {
     if (!user) {
       startTransition(() => {
-        setRecords([]);
+        setRecordState({ userId: null, data: [] });
         setLoading(false);
         setCanEdit(false);
       });
@@ -38,7 +42,7 @@ export function useSalaryData() {
       user.uid,
       PERSONAL_COLLECTIONS.salaryRecords,
       (data) => {
-        setRecords(data);
+        setRecordState({ userId: user.uid, data });
         setLoading(false);
       }
     );
