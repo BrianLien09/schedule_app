@@ -25,7 +25,7 @@ function MonthlyWork({ shifts, now, loading, canEdit, onEdit }: HomeMonthlyWorkP
   const shown = expanded ? filtered : filtered.slice(0, 8);
   const hours = (value: number): string => Number(value.toFixed(2)).toLocaleString();
   return <section className={`${styles.panel} page-section-enter`} aria-labelledby="monthly-work-title">
-    <header className={styles.header}><div className={styles.heading}><span className={styles.icon} aria-hidden="true"><AgendaIcon kind="work" size={23} /></span><h2 id="monthly-work-title">本月打工安排</h2><span className={styles.tag}>{now.getMonth() + 1} 月份班表（{summary.items.length} 班）</span></div><Link href="/schedule/work">完整打工月曆 →</Link></header>
+    <header className={styles.header}><div className={styles.heading}><span className={styles.icon} aria-hidden="true"><AgendaIcon kind="work" size={23} /></span><h2 id="monthly-work-title">本月打工安排</h2><span className={styles.tag}>{now.getMonth() + 1} 月份班表（{summary.items.length} 班）</span></div><Link href="/schedule/work">完整行程月曆 →</Link></header>
     {loading ? <p className={styles.empty}>班表載入中…</p> : <>
       <dl className={styles.metrics}><div><dt>排班天數</dt><dd>{summary.days} 天</dd></div><div><dt>工時累計</dt><dd>{hours(summary.completedHours)}h <small>/ {hours(summary.totalHours)}h</small></dd></div><div><dt>排班進度</dt><dd>{summary.progress}%</dd></div><div><dt>本月總收入</dt><dd>NT$ {Math.round(summary.totalPay).toLocaleString()}</dd></div></dl>
       {summary.items.length > 0 && <><div className={styles.progress}><div><strong>班次達成進度</strong><span>已完成 {summary.completedCount} 班 · 剩餘 {summary.remainingCount} 班</span></div><progress aria-label="班次達成進度" max={summary.items.length} value={summary.completedCount} /></div>

@@ -8,6 +8,11 @@ import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import LoginPrompt from '../../../components/shared/LoginPrompt';
 import WorkShiftEditor from '../../../components/schedule/work/WorkShiftEditor';
+import EntryTypeTabs, { type EntryType } from '../../../components/schedule/work/EntryTypeTabs';
+import TodoEditor from '@/components/home/TodoEditor';
+import { useTodos } from '@/hooks/useTodos';
+import { hasFamilyWebSyncAccess } from '@/config/permissions';
+import type { Todo, TodoInput } from '@/data/todos';
 import { LoadingSpinner } from '../../../components/shared/Loading';
 import { useShiftTemplates } from '@/hooks/useShiftTemplates';
 import { useWorkRoles } from '@/hooks/useWorkRoles';
@@ -39,6 +44,9 @@ export default function WorkSchedulePage() {
   } = useScheduleData();
   const { templates, loading: templatesLoading, loadError: templatesError } = useShiftTemplates();
   const { roles, loadError: rolesError } = useWorkRoles();
+  const { todos, error: todosError, save: saveTodo, remove: removeTodo } = useTodos();
+  // 代辦編輯器的預設時間只需在進入頁面時取一次，避免每次渲染產生新的 Date 造成預設值跳動
+  const [now] = useState(() => new Date());
   const [isSyncing, setIsSyncing] = useState(false);
 
   const {
@@ -47,9 +55,11 @@ export default function WorkSchedulePage() {
     changeMonth,
     getDaysInMonth,
     getShiftsForDate,
+    getTodosForDate,
     currentMonthShifts,
+    currentMonthTodos,
     handleDateClick,
-  } = useWorkCalendar(shifts);
+  } = useWorkCalendar(shifts, todos);
 
   const { days, startDay } = getDaysInMonth(currentMonth);
   const [monthDirection, setMonthDirection] = useState<'previous' | 'next'>('next');
@@ -73,6 +83,9 @@ export default function WorkSchedulePage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editorMode, setEditorMode] = useState<'add' | 'edit' | 'batch'>('add');
   const [editingShift, setEditingShift] = useState<WorkShift | null>(null);
+  // 新增時由頂端分頁切換表單；編輯既有項目則直接依項目類型開啟
+  const [entryType, setEntryType] = useState<EntryType>('work');
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
 
   // 檢查登入狀態
   if (authLoading) {
@@ -184,6 +197,8 @@ export default function WorkSchedulePage() {
         hourlyRate: getWorkRoleHourlyRate(roles[0]?.id || 'assistant', roles),
         note: '',
       } as WorkShift);
+      setEntryType('work');
+      setEditingTodo(null);
       setEditorMode('add');
       setIsEditorOpen(true);
     }
@@ -202,6 +217,8 @@ export default function WorkSchedulePage() {
       hourlyRate: getWorkRoleHourlyRate(roles[0]?.id || 'assistant', roles),
       note: '',
     } as WorkShift);
+    setEntryType('work');
+    setEditingTodo(null);
     setEditorMode('add');
     setIsEditorOpen(true);
   };
@@ -217,8 +234,38 @@ export default function WorkSchedulePage() {
       e.stopPropagation();
     }
     setEditingShift(shift);
+    setEntryType('work');
+    setEditingTodo(null);
     setEditorMode('edit');
     setIsEditorOpen(true);
+  };
+
+  // 開啟編輯指定代辦
+  const handleOpenEditTodo = (todo: Todo) => {
+    setEditingTodo(todo);
+    setEditingShift(null);
+    setEntryType('todo');
+    setEditorMode('edit');
+    setIsEditorOpen(true);
+  };
+
+  const handleSaveTodo = async (input: TodoInput, todo?: Todo): Promise<void> => {
+    const synced = await saveTodo(input, todo);
+    if (synced) toast.success('已保存代辦行程');
+    else toast.warning('代辦已保存，家庭同步失敗，可在同步狀態重試');
+  };
+
+  const handleDeleteTodo = async (todo: Todo): Promise<void> => {
+    if (!await confirm({ title: '刪除代辦行程', message: `確定刪除「${todo.title}」？`, confirmText: '刪除', danger: true })) throw new Error('已取消刪除');
+    const synced = await removeTodo(todo);
+    if (synced) toast.success('已刪除代辦行程');
+    else toast.warning('代辦已刪除，家庭月曆更新失敗，可在同步狀態重試');
+  };
+
+  const closeEditor = () => {
+    setIsEditorOpen(false);
+    setEditingShift(null);
+    setEditingTodo(null);
   };
 
   // 刪除指定班表
@@ -247,6 +294,8 @@ export default function WorkSchedulePage() {
       return;
     }
     setEditingShift(null);
+    setEditingTodo(null);
+    setEntryType('work');
     setEditorMode('batch');
     setIsEditorOpen(true);
   };
@@ -364,7 +413,7 @@ export default function WorkSchedulePage() {
 
   return (
     <div className={styles.pageContainer}>
-      <DataReadError message={[loadError, templatesError, rolesError].filter(Boolean).join('、')} />
+      <DataReadError message={[loadError, templatesError, rolesError, todosError].filter(Boolean).join('、')} />
       <div className={`glass ${styles.calendarContainer} page-section-enter`}>
         <div className={styles.calendarContent}>
           {/* 月曆標題區 */}
@@ -454,7 +503,10 @@ export default function WorkSchedulePage() {
             selectedDays={selectedDays}
             dragOverDay={dragOverDay}
             roles={roles}
+            currentMonthTodos={currentMonthTodos}
             getShiftsForDate={getShiftsForDate}
+            getTodosForDate={getTodosForDate}
+            onOpenEditTodo={handleOpenEditTodo}
             onDayClick={handleDayClick}
             onAddShift={handleAddShiftForDay}
             onDragStart={handleDragStart}
@@ -467,20 +519,35 @@ export default function WorkSchedulePage() {
         </div>
       </div>
 
-      {/* 班次編輯器 */}
+      {/* 班次編輯器：新增模式頂端可切換為代辦行程 */}
       <WorkShiftEditor
-        isOpen={isEditorOpen}
-        onClose={() => {
-          setIsEditorOpen(false);
-          setEditingShift(null);
-        }}
+        key="work-editor"
+        isOpen={isEditorOpen && entryType === 'work'}
+        onClose={closeEditor}
         onSave={handleSaveShift}
         onDelete={handleDeleteShift}
         shift={editingShift}
         mode={editorMode === 'edit' ? 'edit' : 'add'}
         existingCourses={editorMode === 'batch' ? [] : courses}
         existingShifts={editorMode === 'batch' ? [] : shifts}
+        typeSwitcher={editorMode === 'add' ? <EntryTypeTabs value="work" onChange={setEntryType} /> : undefined}
       />
+
+      {/* 代辦行程編輯器：沿用首頁 TodoEditor，同步選項由表單內勾選決定 */}
+      {isEditorOpen && entryType === 'todo' && (
+        <TodoEditor
+          key={editingTodo ? `todo-${editingTodo.id}` : `todo-new-${editingShift?.date ?? ''}`}
+          todo={editingTodo ?? undefined}
+          courses={courses}
+          now={now}
+          canSync={hasFamilyWebSyncAccess(user.email)}
+          initialDate={editingShift?.date}
+          typeSwitcher={editorMode === 'add' ? <EntryTypeTabs value="todo" onChange={setEntryType} /> : undefined}
+          onSave={handleSaveTodo}
+          onDelete={handleDeleteTodo}
+          onClose={closeEditor}
+        />
+      )}
     </div>
   );
 }

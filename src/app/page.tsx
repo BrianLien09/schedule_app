@@ -93,7 +93,7 @@ export default function Home() {
     <HomeOverview {...data} busyTaskIds={busyTaskIds} onComplete={(note) => { void handleComplete(note); }} onOpenNote={(note) => { if (note.type === 'todo') setTodoEditor(note); else setEditingNote(note); }} onAddTodo={() => setTodoEditor('new')} onEditShift={setEditingShift} />
     {editingShift && <WorkShiftEditor isOpen key={editingShift.id} onClose={() => setEditingShift(null)} onSave={handleSaveShift} onDelete={(id) => { void handleDeleteShift(id).catch(() => toast.error('刪除班表失敗，請再試一次')); }} shift={editingShift} mode="edit" existingCourses={data.courses} existingShifts={data.shifts} />}
     {todoEditor && <TodoEditor key={todoEditor === 'new' ? 'new' : todoEditor.id} todo={todoEditor === 'new' ? undefined : todoEditor}
-      courses={data.courses} shifts={data.shifts} now={data.now} canSync={hasFamilyWebSyncAccess(user.email)}
+      courses={data.courses} now={data.now} canSync={hasFamilyWebSyncAccess(user.email)}
       onSave={handleSaveTodo} onDelete={handleDeleteTodo} onClose={() => setTodoEditor(null)} />}
     {editingNote && <CourseNoteEditor key={editingNote.id} courseId={editingNote.courseId}
       courseName={editingNote.courseName || data.courses.find((course) => course.id === editingNote.courseId)?.name || '課程'}

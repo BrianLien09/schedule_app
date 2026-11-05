@@ -3,6 +3,7 @@
 import type { DragEvent, MouseEvent } from 'react';
 import { getWorkRoleHourlyRate, getWorkRoleLabel, type WorkRole } from '@/data/workRoles';
 import type { WorkShift } from '@/data/schedule';
+import type { Todo } from '@/data/todos';
 import styles from '@/app/schedule/work/page.module.css';
 
 interface WorkCalendarViewProps {
@@ -15,7 +16,10 @@ interface WorkCalendarViewProps {
   selectedDays: number[];
   dragOverDay: number | null;
   roles: WorkRole[];
+  currentMonthTodos: { date: string; todo: Todo }[];
   getShiftsForDate: (day: number) => WorkShift[];
+  getTodosForDate: (day: number) => Todo[];
+  onOpenEditTodo: (todo: Todo) => void;
   onDayClick: (day: number, event: MouseEvent<HTMLDivElement>) => void;
   onAddShift: (day: number) => void;
   onDragStart: (shift: WorkShift, event: DragEvent<HTMLDivElement>) => void;
@@ -46,7 +50,7 @@ const getShiftBadgeStyle = (title: string, role?: string) => {
   return palette[Math.abs(hash) % palette.length];
 };
 
-/** 打工月曆的日期格與本月清單，保留所有操作由頁面協調器注入。 */
+/** 行程月曆的日期格與本月清單，保留所有操作由頁面協調器注入。 */
 export default function WorkCalendarView({
   days,
   startDay,
@@ -57,7 +61,10 @@ export default function WorkCalendarView({
   selectedDays,
   dragOverDay,
   roles,
+  currentMonthTodos,
   getShiftsForDate,
+  getTodosForDate,
+  onOpenEditTodo,
   onDayClick,
   onAddShift,
   onDragStart,
@@ -89,7 +96,9 @@ export default function WorkCalendarView({
           {Array.from({ length: days }).map((_, index) => {
             const day = index + 1;
             const dayShifts = getShiftsForDate(day);
+            const dayTodos = getTodosForDate(day);
             const hasShifts = dayShifts.length > 0;
+            const hasItems = hasShifts || dayTodos.length > 0;
             const isSelected = selectedDays.includes(day);
             const isDragOver = dragOverDay === day;
 
@@ -107,7 +116,7 @@ export default function WorkCalendarView({
                   <div className={`${styles.dayNumber} ${hasShifts ? styles.dayNumberWithShift : styles.dayNumberEmpty}`}>
                     {day}
                   </div>
-                  {hasShifts && (
+                  {hasItems && (
                     <button
                       type="button"
                       className={styles.addShiftIconBtn}
@@ -115,8 +124,8 @@ export default function WorkCalendarView({
                         event.stopPropagation();
                         onAddShift(day);
                       }}
-                      title={`為 ${day} 日新增另一個排班`}
-                      aria-label={`為 ${day} 日新增排班`}
+                      title={`為 ${day} 日新增另一個行程`}
+                      aria-label={`為 ${day} 日新增行程`}
                     >
                       <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
                         <line x1="6" y1="2" x2="6" y2="10" />
@@ -145,6 +154,19 @@ export default function WorkCalendarView({
                     </div>
                   );
                 })}
+                {dayTodos.map((todo) => (
+                  <div
+                    key={todo.id}
+                    className={`${styles.todoBadge} ${todo.completed ? styles.todoBadgeDone : ''}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onOpenEditTodo(todo);
+                    }}
+                    title={`點擊編輯代辦：${todo.title}`}
+                  >
+                    {todo.title}
+                  </div>
+                ))}
                 {isSelected && <div className={styles.selectedOverlay}>✓</div>}
               </div>
             );
@@ -216,6 +238,31 @@ export default function WorkCalendarView({
               })
             )}
           </div>
+          {currentMonthTodos.length > 0 && (
+            <>
+              <h3 className={styles.todoSectionTitle}>本月代辦行程</h3>
+              <div className={styles.shiftsGrid}>
+                {currentMonthTodos.map(({ date, todo }) => (
+                  <div key={`${todo.id}-${date}`} className={styles.todoCard}>
+                    <div className={styles.cardHeader}>
+                      <div className={styles.shiftDateBadge}>{date.split('-')[2]} 日</div>
+                      {todo.syncToFamily && <span className={styles.todoMeta}>已同步家庭月曆</span>}
+                    </div>
+                    <div className={`${styles.todoTitle} ${todo.completed ? styles.todoTitleDone : ''}`}>{todo.title}</div>
+                    <div className={styles.todoMeta}>
+                      {date === todo.startDate ? `開始 ${todo.startTime || '未設定時間'}` : `結束 ${todo.endTime || '未設定時間'}`}
+                      {todo.associationLabel && ` · ${todo.associationLabel}`}
+                    </div>
+                    <div className={styles.cardFooter}>
+                      <button className={`${styles.actionBtn} ${styles.editBtn}`} onClick={() => onOpenEditTodo(todo)} title="編輯代辦">
+                        ✏️ 編輯
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </details>
     </>

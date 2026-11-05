@@ -69,7 +69,7 @@ export default function SalaryRecordForm({
           新增工作記錄
         </h3>
         
-        {/* 打工月曆同步按鈕區 */}
+        {/* 行程月曆同步按鈕區 */}
         <div style={{ display: 'flex', gap: 'var(--spacing-sm)', alignItems: 'center', flexWrap: 'wrap' }}>
           <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
             匯入月份：
@@ -109,7 +109,7 @@ export default function SalaryRecordForm({
               e.currentTarget.style.transform = 'scale(1)';
             }}
           >
-            從打工月曆匯入
+            從行程月曆匯入
           </button>
         </div>
       </div>

@@ -8,7 +8,7 @@
   <a href="https://firebase.google.com/"><img src="https://img.shields.io/badge/Firebase-Firestore_%2B_Auth-b87e6b?logo=firebase&logoColor=white" alt="Firebase Firestore 與 Authentication"></a>
 </p>
 
-DayMate 是為學生與兼職工作者設計的日常管理工具。它將學校課表、打工月曆、薪資記錄、生活費與課程筆記集中在一個 App 中，讓每天要做什麼、何時上班、這個月賺了多少，都能在同一條工作流完成。
+DayMate 是為學生與兼職工作者設計的日常管理工具。它將學校課表、行程月曆、薪資記錄、生活費與課程筆記集中在一個 App 中，讓每天要做什麼、何時上班、這個月賺了多少，都能在同一條工作流完成。
 
 ## 為什麼是 DayMate？
 
@@ -26,7 +26,7 @@ DayMate 是為學生與兼職工作者設計的日常管理工具。它將學校
 ### 規劃每天的節奏
 
 - **學校課表**：以節次網格管理課程，支援跨節次呈現。
-- **打工月曆**：按月查看、建立與編輯班別，主資料只屬於目前登入的 Google 帳號；指定帳號可同步班表摘要至 family-web。
+- **行程月曆**：按月查看、建立與編輯班別，主資料只屬於目前登入的 Google 帳號；指定帳號可同步班表摘要至 family-web。
 - **首頁儀表板**：整合今天的課程與班別、近期事件、每月班表與統計概況。
 - **課程筆記**：依課程整理筆記、作業與考試，追蹤截止日與完成狀態。
 
@@ -41,7 +41,7 @@ DayMate 是為學生與兼職工作者設計的日常管理工具。它將學校
 - **生活費記錄**：管理支出資料與類別。
 - **遊戲攻略中心**：建立、編輯並以版本與類型篩選攻略內容。
 - **PWA**：提供可安裝的 Web App 設定與 Service Worker 快取。
-- **保存與同步狀態**：顯示雲端保存、離線等待及讀取失敗；家庭月曆同步失敗可在目前頁面重試原操作（含刪除）。重新載入後，班表可透過打工月曆的按月同步重新送出。
+- **保存與同步狀態**：顯示雲端保存、離線等待及讀取失敗；家庭月曆同步失敗可在目前頁面重試原操作（含刪除）。重新載入後，班表可透過行程月曆的按月同步重新送出。
 
 ## 技術與資料流
 
@@ -105,7 +105,7 @@ NEXT_PUBLIC_FAMILY_FIREBASE_APP_ID=...
 
 首頁待辦儲存在 `/users/{uid}/todos`，啟用前需將本專案的 `firestore.rules` 發布至實際使用的 Firebase 專案。起訖日期皆可選填；選擇家庭同步時至少需要一個日期，逐日同步範圍最多一年。家庭月曆需允許同步帳號讀寫 `/schedules`；編輯日期、取消同步、完成或刪除待辦時，會清理相同 UID 與待辦 ID 的舊記錄。家庭同步失敗不撤銷個人待辦的保存，可透過頁面上的同步狀態重試。
 
-family-web 同步白名單如下：`brianlien09@gmail.com` →「百頁」／「阿弟排班」、`lovesweet95170@gmail.com` →「布丁」／「布丁排班」。新增或編輯打工班表時會自動同步；打工月曆也提供按月重新同步按鈕，可用來補上既有班表的標題前綴與標籤。
+family-web 同步白名單如下：`brianlien09@gmail.com` →「百頁」／「阿弟排班」、`lovesweet95170@gmail.com` →「布丁」／「布丁排班」。新增或編輯打工班表時會自動同步；行程月曆也提供按月重新同步按鈕，可用來補上既有班表的標題前綴與標籤。
 
 ### 4. 遷移舊版共用資料
 
@@ -123,7 +123,7 @@ node scripts/migrate-shared-data.mjs --credentials <service-account.json> --proj
 node scripts/migrate-shared-data.mjs --credentials <service-account.json> --project-id schedule-app-ed4c1 --apply
 ```
 
-若只要遷移特定集合，可加入 `--collections courses,salaryRecords,workShifts`。完成個人資料遷移後，再由 Brian 或 lovesweet 登入打工月曆，使用月份同步按鈕建立 family-web 的「百頁／布丁」班表副本。
+若只要遷移特定集合，可加入 `--collections courses,salaryRecords,workShifts`。完成個人資料遷移後，再由 Brian 或 lovesweet 登入行程月曆，使用月份同步按鈕建立 family-web 的「百頁／布丁」班表副本。
 
 ### 5. 檢查、建置或部署
 

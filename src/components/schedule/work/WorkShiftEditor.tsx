@@ -1,12 +1,13 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import { generateWorkShiftId, type Course, type WorkShift } from '../../../data/schedule';
 import { getWorkRoleHourlyRate, getWorkRoleLabel, type RoleType } from '@/data/workRoles';
 import { getShiftTemplateWorkHours } from '@/data/shiftTemplates';
 import Modal, { ModalContent } from '../../shared/Modal';
-import styles from './WorkShiftEditor.module.css';
+import { EditorField, EditorRow } from '../../shared/EditorForm';
+import styles from '../../shared/EditorForm.module.css';
 
 import { useShiftTemplates } from '@/hooks/useShiftTemplates';
 import { useWorkRoles } from '@/hooks/useWorkRoles';
@@ -21,6 +22,8 @@ interface WorkShiftEditorProps {
   mode: 'add' | 'edit';
   existingCourses?: Course[];
   existingShifts?: WorkShift[];
+  /** 月曆新增彈窗頂端的類型切換（僅新增模式使用）。 */
+  typeSwitcher?: ReactNode;
 }
 
 /**
@@ -47,6 +50,7 @@ export default function WorkShiftEditor({
   mode,
   existingCourses = [],
   existingShifts = [],
+  typeSwitcher,
 }: WorkShiftEditorProps) {
   const { toast } = useToast();
   const { confirm } = useConfirm();
@@ -260,29 +264,70 @@ export default function WorkShiftEditor({
       isOpen={isOpen}
       onClose={onClose}
       title={mode === 'add' ? '新增打工班表' : '編輯打工班表'}
+      maxWidth="560px"
     >
       <ModalContent render={(requestClose) => <form onSubmit={(e) => handleSubmit(e, requestClose)} className={styles.form}>
-        {/* 日期與職稱／職位 */}
-        <div className={styles.formRow}>
-          <div className={styles.formGroup}>
-            <label htmlFor="date">
-              日期 <span className={styles.required}>*</span>
-            </label>
+        {typeSwitcher}
+
+        {/* 班別放最前面：選擇範本會自動帶入時間、職稱與時薪，後面欄位只需微調 */}
+        <EditorField
+          label="班別名稱 / 類別"
+          htmlFor="shiftCategory"
+          hint={isCustomCategory ? undefined : '選擇班別範本會自動帶入時間、職稱與時薪'}
+        >
+          {!isCustomCategory ? (
+            <select
+              id="shiftCategory"
+              className={`${styles.control} ${styles.select}`}
+              value={formData.shiftCategory || ''}
+              onChange={(e) => handleSelectTemplate(e.target.value)}
+            >
+              <option value="">請選擇班別範本</option>
+              {templates.map((tpl) => (
+                <option key={tpl.id} value={tpl.name}>
+                  {tpl.name}　{tpl.startTime}–{tpl.endTime} · NT$ {tpl.hourlyRate}/h
+                </option>
+              ))}
+              <option value="__custom__">✍️ 自訂班別名稱…</option>
+            </select>
+          ) : (
+            <div className={styles.inlineRow}>
+              <input
+                id="shiftCategory"
+                className={styles.control}
+                type="text"
+                value={formData.shiftCategory || ''}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    shiftCategory: e.target.value,
+                    note: e.target.value,
+                  }))
+                }
+                placeholder="請輸入自訂班別名稱"
+              />
+              <button type="button" className={styles.inlineButton} onClick={() => setIsCustomCategory(false)}>
+                選取範本
+              </button>
+            </div>
+          )}
+        </EditorField>
+
+        <EditorRow>
+          <EditorField label="日期" htmlFor="date" required>
             <input
               id="date"
+              className={styles.control}
               type="date"
               value={formData.date || ''}
               onChange={(e) => setFormData((prev) => ({ ...prev, date: e.target.value }))}
               required
             />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="role">
-              職稱／職位 <span className={styles.required}>*</span>
-            </label>
+          </EditorField>
+          <EditorField label="職稱／職位" htmlFor="role" required>
             <select
               id="role"
+              className={`${styles.control} ${styles.select}`}
               value={formData.role || roles[0]?.id || 'assistant'}
               onChange={(e) => handleRoleChange(e.target.value)}
             >
@@ -299,64 +344,54 @@ export default function WorkShiftEditor({
                   )}
                   {roles.map((role) => (
                     <option key={role.id} value={role.id}>
-                      {role.name} (NT$ {role.hourlyRate}/小時)
+                      {role.name}（NT$ {role.hourlyRate}/h）
                     </option>
                   ))}
                 </>
               )}
             </select>
-          </div>
-        </div>
+          </EditorField>
+        </EditorRow>
 
-        {/* 時間 */}
-        <div className={styles.formRow}>
-          <div className={styles.formGroup}>
-            <label htmlFor="startTime">
-              開始時間 <span className={styles.required}>*</span>
-            </label>
+        <EditorRow>
+          <EditorField label="開始時間" htmlFor="startTime" required>
             <input
               id="startTime"
+              className={styles.control}
               type="time"
               value={formData.startTime || ''}
               onChange={(e) => handleTimeChange('startTime', e.target.value)}
               required
             />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="endTime">
-              結束時間 <span className={styles.required}>*</span>
-            </label>
+          </EditorField>
+          <EditorField label="結束時間" htmlFor="endTime" required>
             <input
               id="endTime"
+              className={styles.control}
               type="time"
               value={formData.endTime || ''}
               onChange={(e) => handleTimeChange('endTime', e.target.value)}
               required
             />
-          </div>
-        </div>
+          </EditorField>
+        </EditorRow>
 
-        {/* 時薪與計算工時 */}
-        <div className={styles.formRow}>
-          <div className={styles.formGroup}>
-            <label htmlFor="hourlyRate">時薪 (NT$)</label>
+        <EditorRow>
+          <EditorField label="時薪 (NT$)" htmlFor="hourlyRate">
             <input
               id="hourlyRate"
+              className={styles.control}
               type="number"
               min="0"
               step="10"
               value={formData.hourlyRate ?? 200}
               onChange={(e) => setFormData((prev) => ({ ...prev, hourlyRate: Number(e.target.value) }))}
             />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="workHours">
-              計薪工時（{selectedTemplate ? '依班別範本' : '小時'}）
-            </label>
+          </EditorField>
+          <EditorField label={`計薪工時（${selectedTemplate ? '依班別範本' : '小時'}）`} htmlFor="workHours">
             <input
               id="workHours"
+              className={styles.control}
               type="number"
               min="0"
               step="0.01"
@@ -364,69 +399,24 @@ export default function WorkShiftEditor({
               readOnly={Boolean(selectedTemplate)}
               onChange={(e) => setFormData((prev) => ({ ...prev, workHours: Number(e.target.value) }))}
             />
-          </div>
-        </div>
+          </EditorField>
+        </EditorRow>
 
-        {/* 班別名稱 / 類別（連動讀取薪資計算中的班別範本管理） */}
-        <div className={styles.formGroup}>
-          <label htmlFor="shiftCategory">班別名稱 / 類別 (薪資範本)</label>
-          {!isCustomCategory ? (
-            <select
-              id="shiftCategory"
-              value={formData.shiftCategory || ''}
-              onChange={(e) => handleSelectTemplate(e.target.value)}
-            >
-              <option value="">-- 請選擇班別範本 --</option>
-              {templates.map((tpl) => (
-                <option key={tpl.id} value={tpl.name}>
-                  {tpl.name} ({tpl.startTime}~{tpl.endTime} | NT$ {tpl.hourlyRate}/小時)
-                </option>
-              ))}
-              <option value="__custom__">✍️ 自訂輸入班別名稱...</option>
-            </select>
-          ) : (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                id="shiftCategory"
-                type="text"
-                value={formData.shiftCategory || ''}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    shiftCategory: e.target.value,
-                    note: e.target.value,
-                  }))
-                }
-                placeholder="請輸入自訂班別名稱..."
-              />
-              <button
-                type="button"
-                className="btn"
-                style={{ fontSize: '0.85rem', flexShrink: 0, padding: '0 12px' }}
-                onClick={() => setIsCustomCategory(false)}
-              >
-                選取範本
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* 按鈕組 */}
-        <div className={styles.buttonGroup}>
+        <div className={styles.actions}>
           {mode === 'edit' && onDelete && (
             <button
               type="button"
-              className={`btn ${styles.deleteButton}`}
+              className={`${styles.btn} ${styles.btnDanger}`}
               onClick={() => handleDelete(requestClose)}
               disabled={isSubmitting}
             >
               🗑️ 刪除
             </button>
           )}
-          <button type="button" className={`btn ${styles.cancelButton}`} onClick={requestClose} disabled={isSubmitting}>
+          <button type="button" className={`${styles.btn} ${styles.btnCancel}`} onClick={requestClose} disabled={isSubmitting}>
             取消
           </button>
-          <button type="submit" className={`btn ${styles.saveButton}`} disabled={isSubmitting}>
+          <button type="submit" className={`${styles.btn} ${styles.btnSave}`} disabled={isSubmitting}>
             {isSubmitting ? '儲存中...' : mode === 'add' ? '新增' : '儲存'}
           </button>
         </div>

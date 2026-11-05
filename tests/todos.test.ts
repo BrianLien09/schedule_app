@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { Todo, TodoInput } from '../src/data/todos';
-import { validateTodo, todoDates, familyTodoPayload } from '../src/utils/todos';
+import { validateTodo, todoDates, familyTodoPayload, groupTodosByDate } from '../src/utils/todos';
 import { buildAgenda, getPendingTasks, isTaskOverdue, localDateKey, getWeekDays } from '../src/utils/agenda';
 import { defaultTodoDateTimes, roundedTodoDateTime } from '../src/utils/todoDefaults';
 
@@ -94,4 +94,15 @@ test('週視圖保留時間，待辦到分鐘判斷逾期並按期限排序', ()
   assert.equal(isTaskOverdue({ ...timed, endTime: '13:00' }, now), false);
   assert.equal(isTaskOverdue({ ...todo, endDate: '2026-10-04' }, now), false);
   assert.deepEqual(getPendingTasks([{ ...timed, id: 'later', endTime: '14:00' }, timed], now, true).map((task) => task.id), ['one', 'later']);
+});
+
+test('月曆依起訖日分組代辦，同一天不重複，無日期的代辦不出現', () => {
+  const span: Todo = { ...todo, id: 'span', startDate: '2026-11-05', endDate: '2026-11-09' };
+  const single: Todo = { ...todo, id: 'single', startDate: '2026-11-05', endDate: '2026-11-05' };
+  const undated: Todo = { ...todo, id: 'undated' };
+  const grouped = groupTodosByDate([span, single, undated]);
+  assert.deepEqual(grouped.get('2026-11-05')?.map((item) => item.id), ['span', 'single']);
+  assert.deepEqual(grouped.get('2026-11-09')?.map((item) => item.id), ['span']);
+  assert.equal(grouped.get('2026-11-07'), undefined);
+  assert.equal(grouped.size, 2);
 });

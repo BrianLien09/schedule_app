@@ -14,7 +14,7 @@ export function validateTodo(input: TodoInput): string | null {
     if (!date) return '設定時間時也需要填寫日期';
   }
   if (input.startDate && input.startDate === input.endDate && input.startTime && input.endTime && input.endTime < input.startTime) return '結束時間不能早於開始時間';
-  if (input.association !== 'none' && !input.associationId) return '請選擇關聯的課程或打工';
+  if (input.association !== 'none' && !input.associationId) return '請選擇關聯的課程';
   if (input.syncToFamily && !input.startDate && !input.endDate) return '同步家庭月曆需要至少一個日期';
   return null;
 }
@@ -25,6 +25,19 @@ export function todoDates(todo: Pick<Todo, 'startDate' | 'endDate'>): string[] {
   const end = todo.endDate || todo.startDate;
   if (!start || !end || start > end) return [];
   return start === end ? [start] : [start, end];
+}
+
+/** 依日期分組代辦，月曆格與家庭月曆採同一規則（只在起訖日出現），畫面才會與同步結果一致。 */
+export function groupTodosByDate(todos: Todo[]): Map<string, Todo[]> {
+  const map = new Map<string, Todo[]>();
+  for (const todo of todos) {
+    for (const date of todoDates(todo)) {
+      const bucket = map.get(date);
+      if (bucket) bucket.push(todo);
+      else map.set(date, [todo]);
+    }
+  }
+  return map;
 }
 
 export function familyTodoPayload(todo: Todo, ownerUid: string, date: string): Record<string, string> {

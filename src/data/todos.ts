@@ -8,7 +8,7 @@ export interface Todo {
   endDate: string;
   startTime?: string;
   endTime?: string;
-  association: 'none' | 'course' | 'work';
+  association: 'none' | 'course';
   associationId: string;
   associationLabel: string;
   syncToFamily: boolean;

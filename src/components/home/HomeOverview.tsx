@@ -58,7 +58,7 @@ export default function HomeOverview({ courses, shifts, events, notes, now, load
             {current.length ? current.map((item) => <div key={item.id}><h2>{item.title}</h2><p className={styles.meta}>{item.startTime}–{item.endTime}{item.detail && ` · ${item.detail}`}</p></div>) : <><h2>目前沒有進行中的行程</h2><p className={styles.meta}>接下來的安排與期限都在下方。</p></>}
           </div>
           <div className={`${styles.focusBlock} ${styles.nextBlock}`}><p className={styles.focusLabel}><span className={styles.iconBadge} aria-hidden="true"><AgendaIcon kind="next" size={22} /></span>下一個行程</p>
-            {next ? <Link href={agendaHref(next)} className={styles.nextLink}><h2>{next.title}</h2><p className={styles.meta}>{dateLabel(next.date, now)} · {next.startTime}–{next.endTime}{next.detail && ` · ${next.detail}`}</p></Link> : <><h2>近期沒有排定行程</h2><Link className={styles.textLink} href="/schedule/work">查看打工月曆</Link></>}
+            {next ? <Link href={agendaHref(next)} className={styles.nextLink}><h2>{next.title}</h2><p className={styles.meta}>{dateLabel(next.date, now)} · {next.startTime}–{next.endTime}{next.detail && ` · ${next.detail}`}</p></Link> : <><h2>近期沒有排定行程</h2><Link className={styles.textLink} href="/schedule/work">查看行程月曆</Link></>}
           </div>
         </>}
       </section>

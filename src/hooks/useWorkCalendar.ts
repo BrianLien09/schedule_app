@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { type WorkShift } from '../data/schedule';
+import type { Todo } from '../data/todos';
+import { groupTodosByDate } from '../utils/todos';
 
 /**
- * 打工月曆 Hook
- * 負責處理月曆資料與互動邏輯
+ * 行程月曆 Hook
+ * 負責處理月曆資料（打工班表與代辦行程）與互動邏輯
  */
-export function useWorkCalendar(workShifts: WorkShift[]) {
+export function useWorkCalendar(workShifts: WorkShift[], todos: Todo[]) {
   const [currentMonth, setCurrentMonth] = useState(new Date()); // 使用當前日期而非寫死
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const scrollTargetRef = useRef<string | null>(null);
@@ -50,6 +52,23 @@ export function useWorkCalendar(workShifts: WorkShift[]) {
     return shiftsMap.get(dateStr) || [];
   };
 
+  const todosMap = useMemo(() => groupTodosByDate(todos), [todos]);
+
+  const monthPrefix = `${currentMonth.getFullYear()}-${(currentMonth.getMonth() + 1).toString().padStart(2, '0')}`;
+
+  // 取得指定日期的代辦
+  const getTodosForDate = (day: number): Todo[] =>
+    todosMap.get(`${monthPrefix}-${day.toString().padStart(2, '0')}`) || [];
+
+  // 當月出現的代辦（含日期），依日期排序供詳細列表使用
+  const currentMonthTodos = useMemo(() => {
+    const items: { date: string; todo: Todo }[] = [];
+    todosMap.forEach((bucket, date) => {
+      if (date.startsWith(monthPrefix)) bucket.forEach((todo) => items.push({ date, todo }));
+    });
+    return items.sort((a, b) => a.date.localeCompare(b.date));
+  }, [todosMap, monthPrefix]);
+
   // 取得當月所有班表 (已排序)
   const currentMonthShifts = useMemo(() => {
     return workShifts
@@ -87,7 +106,9 @@ export function useWorkCalendar(workShifts: WorkShift[]) {
     changeMonth,
     getDaysInMonth,
     getShiftsForDate,
+    getTodosForDate,
     currentMonthShifts,
+    currentMonthTodos,
     handleDateClick,
   };
 }

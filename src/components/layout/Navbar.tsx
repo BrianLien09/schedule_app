@@ -326,7 +326,7 @@ export default function Navbar() {
                 </Link>
               </li>
 
-              {/* 打工月曆 */}
+              {/* 行程月曆 */}
               <li className={styles.mobileMenuItem}>
                 <Link
                   href="/schedule/work"
@@ -335,7 +335,7 @@ export default function Navbar() {
                 >
                   <div className={styles.linkContentGroup}>
                     <BriefcaseIcon size={20} />
-                    <span>打工月曆</span>
+                    <span>行程月曆</span>
                   </div>
                 </Link>
               </li>

@@ -20,7 +20,7 @@ export default function GlassRadioNav() {
    * 根據路由計算 Glider 位置
    * 0: 總覽
    * 1: 學校課表
-   * 2: 打工月曆
+   * 2: 行程月曆
    * 3: 薪資計算
    * 4: 遊戲攻略
    */
@@ -86,7 +86,7 @@ export default function GlassRadioNav() {
         </span>
       </label>
 
-      {/* 打工月曆 */}
+      {/* 行程月曆 */}
       <input
         type="radio"
         name="nav"
@@ -100,7 +100,7 @@ export default function GlassRadioNav() {
       >
         <span>
           <BriefcaseIcon size={16} />
-          <span>打工月曆</span>
+          <span>行程月曆</span>
         </span>
       </label>
 

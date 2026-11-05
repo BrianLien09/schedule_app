@@ -124,7 +124,7 @@ export default function WorkRoleManager({
       <div className={styles.header}>
         <div>
           <h3 id="work-role-manager-title" className={styles.title}>職稱／職位與時薪管理</h3>
-          <p className={styles.description}>這裡的職稱／職位會同步套用到薪資記錄與打工月曆。</p>
+          <p className={styles.description}>這裡的職稱／職位會同步套用到薪資記錄與行程月曆。</p>
         </div>
         {loading && <span className={styles.loading}>載入中...</span>}
       </div>
