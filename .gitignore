@@ -42,3 +42,8 @@ next-env.d.ts
 
 # git worktrees
 .worktrees/
+
+# cloudflare worker
+/workers/discord-notify/node_modules
+/workers/discord-notify/.wrangler
+/workers/discord-notify/.dev.vars

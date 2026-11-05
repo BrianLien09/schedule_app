@@ -1,0 +1,10 @@
+name = "schedule-app-discord-notify"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+
+# 14:00 UTC = 台灣時間 22:00（每天）。週日改發下週總覽，邏輯在程式內判斷。
+[triggers]
+crons = ["0 14 * * *"]
+
+# 機密以 `wrangler secret put` 設定，不寫入此檔：
+#   DISCORD_WEBHOOK_URL / FIREBASE_SERVICE_ACCOUNT / USER_UIDS
