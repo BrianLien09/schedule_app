@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { buildDailyMessage, buildWeeklyMessage, shiftItems, splitMessage, todoItems, type NotifyTodo } from '../workers/discord-notify/src/message';
+import { buildDailyEmbed, buildWeeklyEmbed, parseUsers, shiftItems, todoItems, type NotifyTodo } from '../workers/discord-notify/src/message';
 import { nextWeekRange, taiwanDate } from '../workers/discord-notify/src/time';
 
 const todo: NotifyTodo = { id: 't1', title: '繳報告', startDate: '2026-11-09', endDate: '2026-11-11', startTime: '', endTime: '23:00', completed: false };
@@ -14,12 +14,16 @@ test('週日觸發時下週範圍為隔天起連續七天', () => {
   assert.deepEqual(nextWeekRange('2026-11-08'), { start: '2026-11-09', end: '2026-11-15' });
 });
 
-test('明日通知合併班表與未完成代辦並依時間排序，無資料時回傳 null', () => {
+const user = { uid: 'u1', name: 'Brianlien' };
+
+test('明日通知依打工與代辦分區塊並依時間排序，無資料時回傳 null', () => {
   const shifts = shiftItems([{ date: '2026-11-09', startTime: '09:00', endTime: '12:00', title: '早班' }], '2026-11-09', '2026-11-09');
-  const message = buildDailyMessage('2026-11-09', [...todoItems([todo], '2026-11-09', '2026-11-09'), ...shifts]);
-  assert.ok(message);
-  assert.ok(message.indexOf('早班') < message.indexOf('繳報告'));
-  assert.equal(buildDailyMessage('2026-11-10', shifts), null);
+  const embed = buildDailyEmbed('2026-11-09', user, 1, [...todoItems([todo], '2026-11-09', '2026-11-09'), ...shifts]);
+  assert.ok(embed);
+  assert.equal(embed.author.name, 'Brianlien');
+  assert.deepEqual(embed.fields?.map((field) => field.name), ['💼 打工班表', '📝 代辦行程']);
+  assert.match(embed.fields?.[0].value ?? '', /早班/);
+  assert.equal(buildDailyEmbed('2026-11-10', user, 1, shifts), null);
 });
 
 test('代辦只在起訖日出現，已完成者不通知', () => {
@@ -28,9 +32,17 @@ test('代辦只在起訖日出現，已完成者不通知', () => {
   assert.equal(todoItems([{ ...todo, completed: true }], '2026-11-09', '2026-11-15').length, 0);
 });
 
-test('下週總覽整週無安排時明確告知，過長訊息會切段', () => {
-  assert.match(buildWeeklyMessage('2026-11-09', '2026-11-15', []), /沒有安排/);
-  const chunks = splitMessage(Array.from({ length: 200 }, (_, i) => `第 ${i} 行行程內容`).join('\n'), 100);
-  assert.ok(chunks.length > 1);
-  assert.ok(chunks.every((chunk) => chunk.length <= 100));
+test('下週總覽整週無安排時明確告知，有安排時逐日列出並帶類型圖示', () => {
+  assert.match(buildWeeklyEmbed('2026-11-09', '2026-11-15', user, 1, []).description ?? '', /沒有安排/);
+  const items = shiftItems([{ date: '2026-11-10', startTime: '09:00', endTime: '12:00', title: '早班' }], '2026-11-09', '2026-11-15');
+  const description = buildWeeklyEmbed('2026-11-09', '2026-11-15', user, 1, items).description ?? '';
+  assert.match(description, /11\/10（二）/);
+  assert.match(description, /💼 .*早班/);
+});
+
+test('USER_UIDS 可用 uid=名稱 指定顯示名稱，未指定時以 uid 前六碼代替', () => {
+  assert.deepEqual(parseUsers('abc123=小明, def456abc ,,'), [
+    { uid: 'abc123', name: '小明' },
+    { uid: 'def456abc', name: 'def456' },
+  ]);
 });
