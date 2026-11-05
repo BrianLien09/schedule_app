@@ -63,10 +63,17 @@ export function useWorkCalendar(workShifts: WorkShift[], todos: Todo[]) {
   // 當月出現的代辦（含日期），依日期排序供詳細列表使用
   const currentMonthTodos = useMemo(() => {
     const items: { date: string; todo: Todo }[] = [];
-    todosMap.forEach((bucket, date) => {
-      if (date.startsWith(monthPrefix)) bucket.forEach((todo) => items.push({ date, todo }));
+    const seen = new Set<string>();
+    // 跨日代辦會出現在起訖兩天，但詳細列表已顯示完整時間範圍，只保留當月最早的一張卡片避免重複
+    [...todosMap.entries()].sort(([a], [b]) => a.localeCompare(b)).forEach(([date, bucket]) => {
+      if (!date.startsWith(monthPrefix)) return;
+      bucket.forEach((todo) => {
+        if (seen.has(todo.id)) return;
+        seen.add(todo.id);
+        items.push({ date, todo });
+      });
     });
-    return items.sort((a, b) => a.date.localeCompare(b.date));
+    return items;
   }, [todosMap, monthPrefix]);
 
   // 取得當月所有班表 (已排序)

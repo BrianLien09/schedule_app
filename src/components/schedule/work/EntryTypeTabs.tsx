@@ -14,7 +14,7 @@ const OPTIONS: { value: EntryType; label: string }[] = [
   { value: 'todo', label: '代辦行程' },
 ];
 
-/** 行程月曆新增彈窗頂端的類型切換：兩種表單共用同一個入口，使用者不必先決定從哪裡新增。 */
+/** 行程月曆新增彈窗標題列右側的類型切換：兩種表單共用同一個入口，使用者不必先決定從哪裡新增。 */
 export default function EntryTypeTabs({ value, onChange }: EntryTypeTabsProps) {
-  return <EditorSegmented value={value} options={OPTIONS} onChange={onChange} ariaLabel="新增類型" />;
+  return <EditorSegmented value={value} options={OPTIONS} onChange={onChange} ariaLabel="新增類型" size="compact" />;
 }

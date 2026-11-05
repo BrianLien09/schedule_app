@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { Todo, TodoInput } from '../src/data/todos';
-import { validateTodo, todoDates, familyTodoPayload, groupTodosByDate } from '../src/utils/todos';
+import { validateTodo, todoDates, familyTodoPayload, groupTodosByDate, formatTodoRange } from '../src/utils/todos';
 import { buildAgenda, getPendingTasks, isTaskOverdue, localDateKey, getWeekDays } from '../src/utils/agenda';
 import { defaultTodoDateTimes, roundedTodoDateTime } from '../src/utils/todoDefaults';
 
@@ -105,4 +105,10 @@ test('月曆依起訖日分組代辦，同一天不重複，無日期的代辦�
   assert.deepEqual(grouped.get('2026-11-09')?.map((item) => item.id), ['span']);
   assert.equal(grouped.get('2026-11-07'), undefined);
   assert.equal(grouped.size, 2);
+});
+
+test('代辦卡片的時間範圍：同日、跨日與未設定', () => {
+  assert.equal(formatTodoRange({ startDate: '2026-11-09', endDate: '2026-11-09', startTime: '10:00', endTime: '11:30' }), '11/09 10:00–11:30');
+  assert.equal(formatTodoRange({ startDate: '2026-11-09', endDate: '2026-11-11', startTime: '10:00', endTime: '' }), '11/09 10:00 → 11/11');
+  assert.equal(formatTodoRange({ startDate: '', endDate: '', startTime: '', endTime: '' }), '未設定時間');
 });

@@ -40,6 +40,20 @@ export function groupTodosByDate(todos: Todo[]): Map<string, Todo[]> {
   return map;
 }
 
+/** 卡片上的時間範圍文字：同日顯示「MM/DD 起–迄」，跨日顯示「MM/DD 起 → MM/DD 迄」，未設定者略過。 */
+export function formatTodoRange(todo: Pick<Todo, 'startDate' | 'endDate' | 'startTime' | 'endTime'>): string {
+  const md = (date: string): string => date.slice(5).replace('-', '/');
+  const point = (date: string | undefined, time: string | undefined): string => [date && md(date), time].filter(Boolean).join(' ');
+  if (todo.startDate && todo.startDate === todo.endDate) {
+    const times = todo.startTime && todo.endTime ? `${todo.startTime}–${todo.endTime}` : todo.startTime || todo.endTime || '';
+    return [md(todo.startDate), times].filter(Boolean).join(' ');
+  }
+  const start = point(todo.startDate, todo.startTime);
+  const end = point(todo.endDate, todo.endTime);
+  if (start && end) return `${start} → ${end}`;
+  return start || end || '未設定時間';
+}
+
 export function familyTodoPayload(todo: Todo, ownerUid: string, date: string): Record<string, string> {
   return {
     title: todo.title.trim(), date, ...todoTimesForDate(todo, date), category: '待辦',

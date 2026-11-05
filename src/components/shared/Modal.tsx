@@ -26,6 +26,8 @@ interface ModalProps {
   title: string;
   /** Modal 內容 */
   children: ReactNode;
+  /** 標題列右側（關閉鈕左邊）的額外控制項，例如類型切換 */
+  headerExtra?: ReactNode;
   /** 自訂最大寬度（預設 500px） */
   maxWidth?: string;
   /** 額外的 className 給 dialog 容器 */
@@ -44,6 +46,7 @@ export default function Modal({
   onClose,
   title,
   children,
+  headerExtra,
   maxWidth = '500px',
   className,
 }: ModalProps) {
@@ -155,15 +158,18 @@ export default function Modal({
       >
         <div className={styles.header}>
           <h2 id={titleId} className={styles.title}>{title}</h2>
-          <button
-            ref={closeButtonRef}
-            type="button"
-            className={styles.closeButton}
-            onClick={requestClose}
-            aria-label="關閉"
-          >
-            ✕
-          </button>
+          <div className={styles.headerActions}>
+            {headerExtra}
+            <button
+              ref={closeButtonRef}
+              type="button"
+              className={styles.closeButton}
+              onClick={requestClose}
+              aria-label="關閉"
+            >
+              ✕
+            </button>
+          </div>
         </div>
         <ModalCloseContext.Provider value={requestClose}>
           {children}

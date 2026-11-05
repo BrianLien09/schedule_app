@@ -17,7 +17,7 @@ interface TodoEditorProps {
   canSync: boolean;
   /** 從月曆點擊日期新增時，預填的起訖日期。 */
   initialDate?: string;
-  /** 月曆新增彈窗頂端的類型切換。 */
+  /** 月曆新增彈窗標題列的類型切換。 */
   typeSwitcher?: ReactNode;
   onSave: (input: TodoInput, todo?: Todo) => Promise<void>;
   onDelete: (todo: Todo) => Promise<void>;
@@ -50,6 +50,17 @@ export default function TodoEditor({ todo, courses, now, canSync, initialDate, t
   if (todo?.association === 'course' && associationId === todo.associationId && associationId && !options.some((option) => option.id === associationId)) {
     options.push({ id: associationId, label: todo.associationLabel });
   }
+
+  // 選擇課程後自動帶入該課程的上課與下課時間；日期欄位若是空的，時間無法單獨存在，因此一併補上今天
+  const selectCourse = (courseId: string): void => {
+    setAssociationId(courseId);
+    const course = courses.find((item) => item.id === courseId);
+    if (!course) return;
+    setStartTime(course.startTime);
+    setEndTime(course.endTime);
+    if (!startDate) setStartDate(localDateKey(now));
+    if (!endDate) setEndDate(localDateKey(now));
+  };
 
   const submit = async (event: React.FormEvent<HTMLFormElement>, closeModal: () => void): Promise<void> => {
     event.preventDefault();
@@ -129,10 +140,9 @@ export default function TodoEditor({ todo, courses, now, canSync, initialDate, t
   });
 
   return (
-    <Modal isOpen onClose={() => { if (!busy) onClose(); }} title={todo ? '編輯代辦行程' : '新增代辦行程'} maxWidth="560px">
+    <Modal isOpen onClose={() => { if (!busy) onClose(); }} title={todo ? '編輯代辦行程' : '新增代辦行程'} headerExtra={typeSwitcher} maxWidth="560px">
       <ModalContent render={(requestClose) => (
         <form className={styles.form} onSubmit={(event) => { void submit(event, requestClose); }} onChange={() => setError('')}>
-          {typeSwitcher}
           <EditorField label="標題" htmlFor="todo-title" required>
             <input
               id="todo-title"
@@ -160,7 +170,7 @@ export default function TodoEditor({ todo, courses, now, canSync, initialDate, t
               label="選擇課程"
               htmlFor="todo-course"
               required
-              hint={options.length ? undefined : '目前沒有課程可選，請先到學校課表新增。'}
+              hint={options.length ? '選擇課程會自動帶入上課與下課時間' : '目前沒有課程可選，請先到學校課表新增。'}
             >
               <select
                 id="todo-course"
@@ -168,7 +178,7 @@ export default function TodoEditor({ todo, courses, now, canSync, initialDate, t
                 required
                 value={associationId}
                 disabled={busy}
-                onChange={(event) => setAssociationId(event.target.value)}
+                onChange={(event) => selectCourse(event.target.value)}
               >
                 <option value="">請選擇課程</option>
                 {options.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}

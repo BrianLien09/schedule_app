@@ -40,12 +40,14 @@ interface EditorSegmentedProps<T extends string> {
   options: SegmentOption<T>[];
   onChange: (value: T) => void;
   ariaLabel: string;
+  /** compact 用於標題列等空間有限的位置 */
+  size?: 'default' | 'compact';
 }
 
 /** 2~3 個選項的單選分段控制；選項少時比下拉選單更快、也一眼看得出目前選擇。 */
-export function EditorSegmented<T extends string>({ value, options, onChange, ariaLabel }: EditorSegmentedProps<T>) {
+export function EditorSegmented<T extends string>({ value, options, onChange, ariaLabel, size = 'default' }: EditorSegmentedProps<T>) {
   return (
-    <div className={styles.segmented} role="group" aria-label={ariaLabel}>
+    <div className={`${styles.segmented} ${size === 'compact' ? styles.segmentedCompact : ''}`} role="group" aria-label={ariaLabel}>
       {options.map((option) => (
         <button
           key={option.value}

@@ -4,6 +4,7 @@ import type { DragEvent, MouseEvent } from 'react';
 import { getWorkRoleHourlyRate, getWorkRoleLabel, type WorkRole } from '@/data/workRoles';
 import type { WorkShift } from '@/data/schedule';
 import type { Todo } from '@/data/todos';
+import { formatTodoRange } from '@/utils/todos';
 import styles from '@/app/schedule/work/page.module.css';
 
 interface WorkCalendarViewProps {
@@ -20,6 +21,7 @@ interface WorkCalendarViewProps {
   getShiftsForDate: (day: number) => WorkShift[];
   getTodosForDate: (day: number) => Todo[];
   onOpenEditTodo: (todo: Todo) => void;
+  onDeleteTodo: (todo: Todo) => void;
   onDayClick: (day: number, event: MouseEvent<HTMLDivElement>) => void;
   onAddShift: (day: number) => void;
   onDragStart: (shift: WorkShift, event: DragEvent<HTMLDivElement>) => void;
@@ -65,6 +67,7 @@ export default function WorkCalendarView({
   getShiftsForDate,
   getTodosForDate,
   onOpenEditTodo,
+  onDeleteTodo,
   onDayClick,
   onAddShift,
   onDragStart,
@@ -250,12 +253,15 @@ export default function WorkCalendarView({
                     </div>
                     <div className={`${styles.todoTitle} ${todo.completed ? styles.todoTitleDone : ''}`}>{todo.title}</div>
                     <div className={styles.todoMeta}>
-                      {date === todo.startDate ? `開始 ${todo.startTime || '未設定時間'}` : `結束 ${todo.endTime || '未設定時間'}`}
+                      ⏰ {formatTodoRange(todo)}
                       {todo.associationLabel && ` · ${todo.associationLabel}`}
                     </div>
                     <div className={styles.cardFooter}>
                       <button className={`${styles.actionBtn} ${styles.editBtn}`} onClick={() => onOpenEditTodo(todo)} title="編輯代辦">
                         ✏️ 編輯
+                      </button>
+                      <button className={`${styles.actionBtn} ${styles.deleteBtn}`} onClick={() => onDeleteTodo(todo)} title="刪除代辦">
+                        🗑️ 刪除
                       </button>
                     </div>
                   </div>

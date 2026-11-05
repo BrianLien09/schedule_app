@@ -92,8 +92,16 @@
 
 .title {
   margin: 0;
+  min-width: 0;
   font-size: 1.35rem;
   font-weight: bold;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 .closeButton {
@@ -138,6 +146,11 @@
   .header {
     margin-bottom: 0.65rem;
     padding-bottom: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .title {
+    font-size: 1.1rem;
   }
 }
 

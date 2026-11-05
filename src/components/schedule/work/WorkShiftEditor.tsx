@@ -22,7 +22,7 @@ interface WorkShiftEditorProps {
   mode: 'add' | 'edit';
   existingCourses?: Course[];
   existingShifts?: WorkShift[];
-  /** 月曆新增彈窗頂端的類型切換（僅新增模式使用）。 */
+  /** 月曆新增彈窗標題列的類型切換（僅新增模式使用）。 */
   typeSwitcher?: ReactNode;
 }
 
@@ -264,11 +264,10 @@ export default function WorkShiftEditor({
       isOpen={isOpen}
       onClose={onClose}
       title={mode === 'add' ? '新增打工班表' : '編輯打工班表'}
+      headerExtra={typeSwitcher}
       maxWidth="560px"
     >
       <ModalContent render={(requestClose) => <form onSubmit={(e) => handleSubmit(e, requestClose)} className={styles.form}>
-        {typeSwitcher}
-
         {/* 班別放最前面：選擇範本會自動帶入時間、職稱與時薪，後面欄位只需微調 */}
         <EditorField
           label="班別名稱 / 類別"

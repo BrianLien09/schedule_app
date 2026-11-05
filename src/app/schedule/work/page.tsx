@@ -255,11 +255,29 @@ export default function WorkSchedulePage() {
     else toast.warning('代辦已保存，家庭同步失敗，可在同步狀態重試');
   };
 
-  const handleDeleteTodo = async (todo: Todo): Promise<void> => {
-    if (!await confirm({ title: '刪除代辦行程', message: `確定刪除「${todo.title}」？`, confirmText: '刪除', danger: true })) throw new Error('已取消刪除');
+  const confirmDeleteTodo = (todo: Todo): Promise<boolean> =>
+    confirm({ title: '刪除代辦行程', message: `確定刪除「${todo.title}」？`, confirmText: '刪除', danger: true });
+
+  const deleteTodo = async (todo: Todo): Promise<void> => {
     const synced = await removeTodo(todo);
     if (synced) toast.success('已刪除代辦行程');
     else toast.warning('代辦已刪除，家庭月曆更新失敗，可在同步狀態重試');
+  };
+
+  // 編輯器內的刪除：取消時拋錯，讓編輯器保持開啟並顯示訊息
+  const handleDeleteTodo = async (todo: Todo): Promise<void> => {
+    if (!await confirmDeleteTodo(todo)) throw new Error('已取消刪除');
+    await deleteTodo(todo);
+  };
+
+  // 列表上的刪除：取消即結束
+  const handleDeleteTodoFromList = async (todo: Todo): Promise<void> => {
+    if (!await confirmDeleteTodo(todo)) return;
+    try {
+      await deleteTodo(todo);
+    } catch {
+      toast.error('刪除失敗，請再試一次');
+    }
   };
 
   const closeEditor = () => {
@@ -507,6 +525,7 @@ export default function WorkSchedulePage() {
             getShiftsForDate={getShiftsForDate}
             getTodosForDate={getTodosForDate}
             onOpenEditTodo={handleOpenEditTodo}
+            onDeleteTodo={(todo) => { void handleDeleteTodoFromList(todo); }}
             onDayClick={handleDayClick}
             onAddShift={handleAddShiftForDay}
             onDragStart={handleDragStart}
