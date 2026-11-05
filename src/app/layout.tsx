@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Providers from "@/components/layout/Providers";
+import BottomNav from '@/components/layout/BottomNav';
 import Navbar from "@/components/layout/Navbar";
 import BackToTop from "@/components/layout/BackToTop";
 import PWAHandler from "@/components/layout/PWAHandler";
@@ -27,7 +28,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
   themeColor: '#e6e2d8',
 };
 
@@ -47,6 +47,7 @@ export default function RootLayout({
             <PageTransition>{children}</PageTransition>
           </main>
           <BackToTop />
+          <BottomNav />
         </Providers>
       </body>
     </html>

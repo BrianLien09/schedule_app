@@ -328,7 +328,13 @@
   margin: 0;
   box-sizing: border-box;
   flex-shrink: 0;
-  transition: all 0.15s ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
 }
 
 .addShiftIconBtn svg {
@@ -355,7 +361,13 @@
   text-overflow: ellipsis;
   font-weight: 600;
   box-shadow: 0 2px 6px rgba(184, 126, 107, 0.25);
-  transition: all 0.2s ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
 }
 
 .shiftBadge:hover {
@@ -400,7 +412,13 @@
   border: 2px dashed rgba(220, 208, 194, 0.8);
   border-radius: 14px;
   box-shadow: 0 4px 14px rgba(139, 121, 101, 0.08);
-  transition: all 200ms ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -486,7 +504,13 @@
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
 }
 
 .editBtn {
@@ -952,5 +976,64 @@
 
   .dayCellWithShift:hover {
     background-color: rgba(184, 126, 107, 0.2);
+  }
+}
+
+/* 小圖示按鈕視覺維持 20px，但用偽元素把可點範圍擴大到接近 44px 觸控標準 */
+.addShiftIconBtn {
+  position: relative;
+}
+
+.addShiftIconBtn::before {
+  content: "";
+  position: absolute;
+  inset: -10px;
+}
+
+.dayCell:focus-visible {
+  outline-offset: -3px;
+}
+
+/* ===== 今天標注：用石板藍與選取（鐵鏽紅）區隔；用 outline 避免被 hover 的 box-shadow 蓋掉 ===== */
+.dayCellToday {
+  outline: 3px solid var(--color-secondary);
+  outline-offset: -3px;
+  background-color: rgba(95, 113, 134, 0.14);
+}
+
+.dayCellToday .dayNumber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.7em;
+  height: 1.7em;
+  padding: 0 0.3em;
+  border-radius: 999px;
+  background-color: var(--color-secondary);
+  color: #f0ece1;
+}
+
+.todayTag {
+  margin-right: auto;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background-color: var(--color-secondary);
+  color: #f0ece1;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  /* 手機格子太窄放不下標籤，只保留圓形日期與外框 */
+  .todayTag {
+    display: none;
+  }
+
+  .dayCellToday {
+    outline-width: 2px;
+    outline-offset: -2px;
   }
 }

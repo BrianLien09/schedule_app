@@ -1,0 +1,68 @@
+/* 手機底部導覽：桌面版完全隱藏，由 CSS 決定，避免 SSR 閃動 */
+.bottomNav {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .bottomNav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--z-navbar);
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 2px;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    background-color: var(--glass-bg);
+    border-top: 1px solid var(--glass-border);
+    box-shadow: 0 -8px 24px rgba(92, 74, 54, 0.08);
+  }
+
+  .item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 52px;
+    border-radius: var(--radius-sm);
+    color: var(--muted);
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      color var(--dur-base) ease,
+      background-color var(--dur-base) ease,
+      transform var(--dur-fast) var(--ease-out);
+  }
+
+  .item:active {
+    transform: scale(0.94);
+  }
+
+  .icon {
+    display: flex;
+    transition: transform var(--dur-base) var(--ease-spring);
+  }
+
+  .label {
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+
+  .active {
+    color: var(--color-primary);
+    background-color: rgba(184, 126, 107, 0.12);
+  }
+
+  .active .icon {
+    transform: translateY(-2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item:active,
+  .active .icon {
+    transform: none;
+  }
+}

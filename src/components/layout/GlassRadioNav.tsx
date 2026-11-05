@@ -43,7 +43,7 @@ export default function GlassRadioNav() {
   /**
    * 處理導航點擊 - 立即更新 Glider，無需等待路由變更
    */
-  const handleNavClick = useCallback((e: React.MouseEvent<HTMLLabelElement>, href: string, position: number) => {
+  const handleNavClick = useCallback((e: React.MouseEvent<HTMLLabelElement | HTMLInputElement>, href: string, position: number) => {
     e.preventDefault();
     setPendingPosition(position);
     startTransition(() => {
@@ -60,6 +60,7 @@ export default function GlassRadioNav() {
         id="nav-overview"
         checked={pathname === '/' || pathname === '/schedule/overview'}
         readOnly
+        onClick={(e) => handleNavClick(e, '/', 0)}
       />
       <label 
         htmlFor="nav-overview"
@@ -75,6 +76,7 @@ export default function GlassRadioNav() {
         id="nav-school"
         checked={pathname.startsWith('/schedule/school')}
         readOnly
+        onClick={(e) => handleNavClick(e, '/schedule/school', 1)}
       />
       <label 
         htmlFor="nav-school"
@@ -93,6 +95,7 @@ export default function GlassRadioNav() {
         id="nav-work"
         checked={pathname.startsWith('/schedule/work')}
         readOnly
+        onClick={(e) => handleNavClick(e, '/schedule/work', 2)}
       />
       <label 
         htmlFor="nav-work"
@@ -111,6 +114,7 @@ export default function GlassRadioNav() {
         id="nav-salary"
         checked={pathname.startsWith('/tools/salary')}
         readOnly
+        onClick={(e) => handleNavClick(e, '/tools/salary', 3)}
       />
       <label 
         htmlFor="nav-salary"
@@ -129,6 +133,7 @@ export default function GlassRadioNav() {
         id="nav-games"
         checked={pathname === '/games'}
         readOnly
+        onClick={(e) => handleNavClick(e, '/games', 4)}
       />
       <label 
         htmlFor="nav-games"

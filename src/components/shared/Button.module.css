@@ -1,0 +1,87 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px; /* 觸控目標至少 44px */
+  padding: 10px 20px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    color var(--dur-base) ease,
+    opacity var(--dur-base) ease;
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
+}
+
+.button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.primary {
+  background-color: var(--color-primary);
+  color: #f0ece1;
+}
+
+.primary:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+}
+
+.secondary {
+  background-color: transparent;
+  color: var(--foreground);
+  border-color: var(--line-strong);
+}
+
+.secondary:hover:not(:disabled) {
+  background-color: rgba(220, 208, 194, 0.4);
+}
+
+.danger {
+  background-color: #b94a48;
+  color: #f0ece1;
+}
+
+.danger:hover:not(:disabled) {
+  background-color: #a23d3b;
+}
+
+.ghost {
+  background-color: transparent;
+  color: var(--muted);
+}
+
+.ghost:hover:not(:disabled) {
+  background-color: rgba(220, 208, 194, 0.4);
+  color: var(--foreground);
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: :global(spin) 0.7s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button:hover:not(:disabled),
+  .button:active:not(:disabled) {
+    transform: none;
+  }
+}

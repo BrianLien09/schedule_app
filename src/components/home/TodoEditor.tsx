@@ -22,7 +22,8 @@ interface TodoEditorProps {
   /** 為 false 時不播彈出動畫（由其他表單切換過來時使用） */
   animateIn?: boolean;
   onSave: (input: TodoInput, todo?: Todo) => Promise<void>;
-  onDelete: (todo: Todo) => Promise<void>;
+  /** 回傳 false 代表使用者取消刪除 */
+  onDelete: (todo: Todo) => Promise<boolean>;
   onClose: () => void;
 }
 
@@ -98,8 +99,7 @@ export default function TodoEditor({ todo, courses, now, canSync, initialDate, t
     setBusy(true);
     setError('');
     try {
-      await onDelete(todo);
-      closeModal();
+      if (await onDelete(todo)) closeModal();
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : '刪除失敗');
     } finally {

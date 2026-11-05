@@ -2,9 +2,6 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { useScheduleData } from '@/hooks/useScheduleData';
 import { useSalaryData, type SalaryRecord } from '@/hooks/useSalaryData';
 import { useShiftTemplates } from '@/hooks/useShiftTemplates';
@@ -13,12 +10,14 @@ import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import { generateShiftTemplateId, type ShiftTemplate } from '@/data/shiftTemplates';
 import { getWorkRoleHourlyRate, getWorkRoleLabel, type RoleType } from '@/data/workRoles';
-import { parseExcelFile, convertToExportFormat, type ImportValidation } from '@/utils/excelParser';
+import { buildMonthlyStats, calculateHours, calculatePay, calculateWorkHoursFromTimes } from '@/utils/salaryStats';
+import { exportElementToPdf, exportSalaryExcel } from '@/utils/salaryExport';
+import { parseExcelFile, type ImportValidation } from '@/utils/excelParser';
 
 import SalaryHeaderStats from './SalaryHeaderStats';
 import SalaryRecordForm from './SalaryRecordForm';
 import SalaryRecordList from './SalaryRecordList';
-import SalaryAnalytics, { type MonthStats } from './SalaryAnalytics';
+import SalaryAnalytics from './SalaryAnalytics';
 import ShiftTemplateManager from './ShiftTemplateManager';
 import WorkRoleManager from './WorkRoleManager';
 import SalaryCalculatorImportModal from './SalaryCalculatorImportModal';
@@ -157,14 +156,6 @@ export default function SalaryCalculator() {
   const [showAllImportRecords, setShowAllImportRecords] = useState(false); 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const calculateWorkHoursFromTimes = (startTime: string, endTime: string): number => {
-    const [startHour, startMin] = startTime.split(':').map(Number);
-    const [endHour, endMin] = endTime.split(':').map(Number);
-    const startMinutes = startHour * 60 + startMin;
-    const endMinutes = endHour * 60 + endMin;
-    return Math.max(0, (endMinutes - startMinutes) / 60);
-  };
-
   const updateFilterMonth = (month: string) => {
     if (batchOperationRef.current) return;
     setSelection({ month, ids: new Set() });
@@ -255,14 +246,6 @@ export default function SalaryCalculator() {
 
     return shiftCategories;
   }, [templates, shiftCategories]);
-
-  const calculateHours = (record: Omit<SalaryRecord, 'id'>): number => {
-    return record.workHours || 0;
-  };
-
-  const calculatePay = (record: Omit<SalaryRecord, 'id'>): number => {
-    return Math.round((record.workHours || 0) * record.hourlyRate);
-  };
 
   const handleAddRecord = async () => {
     if (isAddingRecord) return;
@@ -635,41 +618,7 @@ export default function SalaryCalculator() {
 
   const statsWorkDays = useMemo(() => new Set(statsRecords.map((record) => record.date)).size, [statsRecords]);
 
-  const getMonthlyStats = (): MonthStats[] => {
-    const statsMap = new Map<string, MonthStats>();
-    records.forEach(record => {
-      const month = record.date.slice(0, 7);
-      const pay = calculatePay(record);
-      const hours = calculateHours(record);
-
-      if (!statsMap.has(month)) {
-        statsMap.set(month, { month, totalPay: 0, totalHours: 0, recordCount: 0 });
-      }
-      const stats = statsMap.get(month)!;
-      stats.totalPay += pay;
-      stats.totalHours += hours;
-      stats.recordCount += 1;
-    });
-
-    const anchorMonthStr = statsFilter || monthRange.currentMonth;
-    let anchorDate = new Date();
-    if (anchorMonthStr && /^\d{4}-\d{2}$/.test(anchorMonthStr)) {
-      const [year, month] = anchorMonthStr.split('-').map(Number);
-      anchorDate = new Date(year, month - 1, 1);
-    }
-
-    const monthsList: string[] = [];
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date(anchorDate.getFullYear(), anchorDate.getMonth() - i, 1);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      monthsList.push(`${year}-${month}`);
-    }
-
-    return monthsList.map(month => statsMap.get(month) || { month, totalPay: 0, totalHours: 0, recordCount: 0 });
-  };
-
-  const monthlyStats = getMonthlyStats();
+  const monthlyStats = buildMonthlyStats(records, statsFilter || monthRange.currentMonth);
   const maxMonthlyPay = Math.max(...monthlyStats.map(s => s.totalPay), 1);
 
   const handleExportExcel = () => {
@@ -677,26 +626,7 @@ export default function SalaryCalculator() {
       toast.warning('沒有可匯出的記錄！');
       return;
     }
-
-    const exportData = filteredRecords.map(record => convertToExportFormat(record));
-    const totalWorkHours = exportData.reduce((sum, row) => sum + row['工作時長 (時)'], 0);
-    const totalPaySum = exportData.reduce((sum, row) => sum + row['應得薪資($)'], 0);
-    
-    exportData.push({
-      '打工日期': '',
-      '工作內容': '',
-      '工作時長 (時)': totalWorkHours,
-      '時薪($)': 0,
-      '應得薪資($)': totalPaySum,
-    });
-
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, '薪資明細');
-    
-    const monthStr = detailFilterMonth || '全部';
-    const fileName = `薪資表_${monthStr}_${new Date().toISOString().split('T')[0]}.xlsx`;
-    XLSX.writeFile(wb, fileName);
+    exportSalaryExcel(filteredRecords, detailFilterMonth || '全部');
     toast.success('已下載 Excel 檔案');
   };
 
@@ -777,39 +707,7 @@ export default function SalaryCalculator() {
     }
 
     try {
-      const canvas = await html2canvas(pdfContentRef.current, {
-        scale: 2,
-        backgroundColor: '#1a1a2e',
-        logging: false,
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pdfWidth - 20;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = 10;
-
-      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight - 20;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight + 10;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight - 20;
-      }
-
-      const fileName = `薪資報表_${new Date().toISOString().split('T')[0]}.pdf`;
-      pdf.save(fileName);
+      await exportElementToPdf(pdfContentRef.current);
       toast.success('已下載 PDF 報表');
     } catch (error) {
       console.error('PDF 生成失敗:', error);

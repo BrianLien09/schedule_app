@@ -108,6 +108,39 @@ export default function WorkSchedulePage() {
     return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
   };
 
+  /** 新增班表時的預設草稿，id 為空字串代表尚未儲存 */
+  const createDraftShift = (date: string): WorkShift => {
+    const roleId = roles[0]?.id || 'assistant';
+    return {
+      id: '',
+      date,
+      startTime: '09:00',
+      endTime: '18:00',
+      role: roleId,
+      roleName: getWorkRoleLabel(roleId, roles),
+      hourlyRate: getWorkRoleHourlyRate(roleId, roles),
+      note: '',
+    } as WorkShift;
+  };
+
+  /**
+   * 開啟編輯器的唯一入口
+   *
+   * 班表與待辦互斥，集中在這裡一次設定，避免各處漏清另一邊的狀態。
+   */
+  const openEditor = (target: {
+    mode: 'add' | 'edit' | 'batch';
+    type: EntryType;
+    shift?: WorkShift;
+    todo?: Todo;
+  }) => {
+    setEditorMode(target.mode);
+    setEntryType(target.type);
+    setEditingShift(target.shift ?? null);
+    setEditingTodo(target.todo ?? null);
+    setIsEditorOpen(true);
+  };
+
   const confirmShiftConflicts = async (candidates: WorkShift[]): Promise<boolean> => {
     const conflicts = candidates.flatMap((candidate) =>
       findWorkShiftConflicts(candidate, courses, [...shifts, ...candidates], candidate.id)
@@ -167,7 +200,7 @@ export default function WorkSchedulePage() {
   };
 
   // ========== 多選與日期點擊功能 ==========
-  const handleDayClick = (day: number, e: React.MouseEvent) => {
+  const handleDayClick = (day: number, e: React.MouseEvent | React.KeyboardEvent) => {
     const dayShifts = getShiftsForDate(day);
 
     // 進入多選模式後，直接點擊日期即可加入或移除選取，不需要按住 Ctrl。
@@ -185,44 +218,16 @@ export default function WorkSchedulePage() {
     // 一般點擊日期（無論有無班次）：
     // 若該天已有班次，同步標記選擇該日期，並開啟該日期的「新增打工班表」彈窗！
     else {
-      const dateStr = formatDate(day);
       if (dayShifts.length > 0) {
         handleDateClick(day);
       }
-      setEditingShift({
-        id: '',
-        date: dateStr,
-        startTime: '09:00',
-        endTime: '18:00',
-        role: roles[0]?.id || 'assistant',
-        roleName: getWorkRoleLabel(roles[0]?.id || 'assistant', roles),
-        hourlyRate: getWorkRoleHourlyRate(roles[0]?.id || 'assistant', roles),
-        note: '',
-      } as WorkShift);
-      setEntryType('work');
-      setEditingTodo(null);
-      setEditorMode('add');
-      setIsEditorOpen(true);
+      openEditor({ mode: 'add', type: 'work', shift: createDraftShift(formatDate(day)) });
     }
   };
 
   const handleAddShiftForDay = (day: number) => {
-    const dateStr = formatDate(day);
     handleDateClick(day);
-    setEditingShift({
-      id: '',
-      date: dateStr,
-      startTime: '09:00',
-      endTime: '18:00',
-      role: roles[0]?.id || 'assistant',
-      roleName: getWorkRoleLabel(roles[0]?.id || 'assistant', roles),
-      hourlyRate: getWorkRoleHourlyRate(roles[0]?.id || 'assistant', roles),
-      note: '',
-    } as WorkShift);
-    setEntryType('work');
-    setEditingTodo(null);
-    setEditorMode('add');
-    setIsEditorOpen(true);
+    openEditor({ mode: 'add', type: 'work', shift: createDraftShift(formatDate(day)) });
   };
 
   const handleStartMultiSelect = () => {
@@ -235,20 +240,12 @@ export default function WorkSchedulePage() {
     if (e) {
       e.stopPropagation();
     }
-    setEditingShift(shift);
-    setEntryType('work');
-    setEditingTodo(null);
-    setEditorMode('edit');
-    setIsEditorOpen(true);
+    openEditor({ mode: 'edit', type: 'work', shift });
   };
 
   // 開啟編輯指定代辦
   const handleOpenEditTodo = (todo: Todo) => {
-    setEditingTodo(todo);
-    setEditingShift(null);
-    setEntryType('todo');
-    setEditorMode('edit');
-    setIsEditorOpen(true);
+    openEditor({ mode: 'edit', type: 'todo', todo });
   };
 
   const handleSaveTodo = async (input: TodoInput, todo?: Todo): Promise<void> => {
@@ -266,10 +263,11 @@ export default function WorkSchedulePage() {
     else toast.warning('代辦已刪除，家庭月曆更新失敗，可在同步狀態重試');
   };
 
-  // 編輯器內的刪除：取消時拋錯，讓編輯器保持開啟並顯示訊息
-  const handleDeleteTodo = async (todo: Todo): Promise<void> => {
-    if (!await confirmDeleteTodo(todo)) throw new Error('已取消刪除');
+  // 編輯器內的刪除：取消時回傳 false，讓編輯器保持開啟且不顯示錯誤
+  const handleDeleteTodo = async (todo: Todo): Promise<boolean> => {
+    if (!await confirmDeleteTodo(todo)) return false;
     await deleteTodo(todo);
+    return true;
   };
 
   // 列表上的刪除：取消即結束
@@ -319,11 +317,7 @@ export default function WorkSchedulePage() {
       toast.info('請先點擊選取多個日期');
       return;
     }
-    setEditingShift(null);
-    setEditingTodo(null);
-    setEntryType('work');
-    setEditorMode('batch');
-    setIsEditorOpen(true);
+    openEditor({ mode: 'batch', type: 'work' });
   };
 
   // 儲存班次 (新增 / 編輯 / 批次)

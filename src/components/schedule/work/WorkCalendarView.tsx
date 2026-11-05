@@ -1,10 +1,11 @@
 'use client';
 
-import type { DragEvent, MouseEvent } from 'react';
+import type { DragEvent, KeyboardEvent, MouseEvent } from 'react';
 import { getWorkRoleHourlyRate, getWorkRoleLabel, type WorkRole } from '@/data/workRoles';
 import type { WorkShift } from '@/data/schedule';
 import type { Todo } from '@/data/todos';
 import { formatTodoRange } from '@/utils/todos';
+import { EmptyState } from '@/components/shared/Loading';
 import styles from '@/app/schedule/work/page.module.css';
 
 interface WorkCalendarViewProps {
@@ -22,7 +23,7 @@ interface WorkCalendarViewProps {
   getTodosForDate: (day: number) => Todo[];
   onOpenEditTodo: (todo: Todo) => void;
   onDeleteTodo: (todo: Todo) => void;
-  onDayClick: (day: number, event: MouseEvent<HTMLDivElement>) => void;
+  onDayClick: (day: number, event: MouseEvent<HTMLDivElement> | KeyboardEvent<HTMLDivElement>) => void;
   onAddShift: (day: number) => void;
   onDragStart: (shift: WorkShift, event: DragEvent<HTMLDivElement>) => void;
   onDragOver: (day: number, event: DragEvent<HTMLDivElement>) => void;
@@ -77,6 +78,10 @@ export default function WorkCalendarView({
   onOpenEditShift,
   onDeleteShift,
 }: WorkCalendarViewProps) {
+  // 只有正在檢視「本月」時才標注今天；monthKey 格式為 YYYY-M（月份不補零）
+  const now = new Date();
+  const todayDay = monthKey === `${now.getFullYear()}-${now.getMonth() + 1}` ? now.getDate() : null;
+
   return (
     <>
       <div
@@ -104,21 +109,36 @@ export default function WorkCalendarView({
             const hasItems = hasShifts || dayTodos.length > 0;
             const isSelected = selectedDays.includes(day);
             const isDragOver = dragOverDay === day;
+            const isToday = todayDay === day;
 
             return (
               <div
                 key={day}
                 onClick={(event) => onDayClick(day, event)}
+                // 鍵盤使用者以 Enter / 空白鍵操作日期格，行為等同點擊
+                onKeyDown={(event) => {
+                  if (event.target !== event.currentTarget) return;
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    onDayClick(day, event);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                aria-pressed={isSelected}
+                aria-current={isToday ? 'date' : undefined}
+                aria-label={`${isToday ? '今天，' : ''}${day} 日${hasItems ? `，${dayShifts.length + dayTodos.length} 個行程` : ''}`}
                 onDragOver={(event) => onDragOver(day, event)}
                 onDragLeave={onDragLeave}
                 onDrop={(event) => onDrop(day, event)}
-                className={`${styles.dayCell} ${hasShifts ? styles.dayCellWithShift : styles.dayCellEmpty} ${isSelected ? styles.dayCellSelected : ''} ${isDragOver ? styles.dayCellDragOver : ''} ${hasShifts ? 'card' : ''}`}
+                className={`${styles.dayCell} ${hasShifts ? styles.dayCellWithShift : styles.dayCellEmpty} ${isSelected ? styles.dayCellSelected : ''} ${isDragOver ? styles.dayCellDragOver : ''} ${isToday ? styles.dayCellToday : ''} ${hasShifts ? 'card' : ''}`}
                 style={{ cursor: 'pointer' }}
               >
                 <div className={styles.dayCellHeader}>
                   <div className={`${styles.dayNumber} ${hasShifts ? styles.dayNumberWithShift : styles.dayNumberEmpty}`}>
                     {day}
                   </div>
+                  {isToday && <span className={styles.todayTag}>今天</span>}
                   {hasItems && (
                     <button
                       type="button"
@@ -146,10 +166,19 @@ export default function WorkCalendarView({
                       className={styles.shiftBadge}
                       style={{ background: badgeStyle.background, color: badgeStyle.color }}
                       draggable
+                      role="button"
+                      tabIndex={0}
                       onDragStart={(event) => onDragStart(shift, event)}
                       onClick={(event) => {
                         event.stopPropagation();
                         onOpenEditShift(shift);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          onOpenEditShift(shift);
+                        }
                       }}
                       title={`點擊編輯：${title}`}
                     >
@@ -161,9 +190,18 @@ export default function WorkCalendarView({
                   <div
                     key={todo.id}
                     className={`${styles.todoBadge} ${todo.completed ? styles.todoBadgeDone : ''}`}
+                    role="button"
+                    tabIndex={0}
                     onClick={(event) => {
                       event.stopPropagation();
                       onOpenEditTodo(todo);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onOpenEditTodo(todo);
+                      }
                     }}
                     title={`點擊編輯代辦：${todo.title}`}
                   >
@@ -196,7 +234,7 @@ export default function WorkCalendarView({
         <div className={styles.detailsContent}>
           <div className={styles.shiftsGrid}>
             {currentMonthShifts.length === 0 ? (
-              <p style={{ opacity: 0.7, padding: '1rem' }}>本月尚無排定打工班表。</p>
+              <EmptyState icon="🗓️" title="本月尚無排定打工班表" />
             ) : (
               currentMonthShifts.map((shift) => {
                 const isSelected = selectedDate === shift.date;

@@ -1,3 +1,4 @@
+import Button from './Button';
 import styles from './Loading.module.css';
 import CapybaraLoader from './CapybaraLoader';
 
@@ -74,9 +75,9 @@ export function EmptyState({
       <div className={styles.emptyTitle}>{title}</div>
       {message && <div className={styles.emptyMessage}>{message}</div>}
       {actionText && onAction && (
-        <button className={styles.actionButton} onClick={onAction}>
+        <Button onClick={onAction}>
           {actionText}
-        </button>
+        </Button>
       )}
     </div>
   );

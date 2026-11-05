@@ -14,6 +14,8 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useConfirm } from '@/context/ConfirmContext';
+import { useToast } from '@/context/ToastContext';
 import { games } from '@/data/games';
 import { batchImportGameGuides } from '@/services/gameGuideRepository';
 import type { GameGuide } from '@/data/gameGuides';
@@ -21,6 +23,8 @@ import styles from './migration.module.css';
 
 export default function MigrationPage() {
   const { user } = useAuth();
+  const { confirm } = useConfirm();
+  const { toast } = useToast();
   const [status, setStatus] = useState<'idle' | 'running' | 'success' | 'error'>('idle');
   const [log, setLog] = useState<string[]>([]);
   const [stats, setStats] = useState({ total: 0, success: 0, failed: 0 });
@@ -31,13 +35,16 @@ export default function MigrationPage() {
 
   const startMigration = async () => {
     if (!user) {
-      alert('請先登入');
+      toast.warning('請先登入');
       return;
     }
 
-    if (!confirm('確定要開始遷移資料嗎？\n\n這會將 games.ts 的資料匯入 Firestore。')) {
-      return;
-    }
+    const confirmed = await confirm({
+      title: '開始遷移',
+      message: '確定要開始遷移資料嗎？這會將 games.ts 的資料匯入 Firestore。',
+      confirmText: '開始遷移',
+    });
+    if (!confirmed) return;
 
     setStatus('running');
     setLog([]);

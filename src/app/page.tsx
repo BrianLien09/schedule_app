@@ -55,11 +55,13 @@ export default function Home() {
     if (synced) toast.success('已保存待辦');
     else toast.warning('待辦已保存，家庭同步失敗，可在同步狀態重試');
   };
-  const handleDeleteTodo = async (todo: Todo): Promise<void> => {
-    if (!await confirm({ title: '刪除待辦', message: `確定刪除「${todo.title}」？`, confirmText: '刪除', danger: true })) throw new Error('已取消刪除');
+  /** 回傳 false 代表使用者取消，編輯器維持開啟且不顯示錯誤 */
+  const handleDeleteTodo = async (todo: Todo): Promise<boolean> => {
+    if (!await confirm({ title: '刪除待辦', message: `確定刪除「${todo.title}」？`, confirmText: '刪除', danger: true })) return false;
     const synced = await data.todoData.remove(todo);
     if (synced) toast.success('已刪除待辦');
     else toast.warning('待辦已刪除，家庭月曆更新失敗，可在同步狀態重試');
+    return true;
   };
 
   const handleSaveNote = async (updates: Parameters<typeof data.updateNote>[1]): Promise<void> => {

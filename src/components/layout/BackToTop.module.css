@@ -16,7 +16,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
   animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -59,5 +65,12 @@
   .backToTop {
     animation: none;
     transition: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .backToTop {
+    bottom: calc(84px + env(safe-area-inset-bottom));
+    right: 16px;
   }
 }

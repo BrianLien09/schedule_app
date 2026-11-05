@@ -20,9 +20,22 @@
   height: 52px;
 }
 
-/* ===== 隱藏原生 Radio Input ===== */
+/* ===== 視覺隱藏原生 Radio Input =====
+   不用 display: none，才能保留鍵盤焦點與螢幕閱讀器語意 */
 .glassRadioGroup input {
-  display: none;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.glassRadioGroup input:focus-visible + label {
+  outline: 3px solid rgba(184, 126, 107, 0.34);
+  outline-offset: -4px;
+  border-radius: 1rem;
 }
 
 /* ===== Label 標籤樣式 ===== */
@@ -42,7 +55,13 @@
   opacity: 0.8;
   position: relative;
   z-index: 2;
-  transition: all 0.2s ease-in-out;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
   white-space: nowrap;
 }
 
