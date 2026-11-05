@@ -246,15 +246,19 @@ export default function WorkCalendarView({
               <h3 className={styles.todoSectionTitle}>本月代辦行程</h3>
               <div className={styles.shiftsGrid}>
                 {currentMonthTodos.map(({ date, todo }) => (
-                  <div key={`${todo.id}-${date}`} className={styles.todoCard}>
+                  <div key={`${todo.id}-${date}`} className={`${styles.shiftCard} ${styles.shiftCardNormal}`}>
                     <div className={styles.cardHeader}>
                       <div className={styles.shiftDateBadge}>{date.split('-')[2]} 日</div>
-                      {todo.syncToFamily && <span className={styles.todoMeta}>已同步家庭月曆</span>}
+                      {todo.syncToFamily && <div className={`${styles.roleBadge} ${styles.todoSyncBadge}`}>已同步家庭月曆</div>}
                     </div>
-                    <div className={`${styles.todoTitle} ${todo.completed ? styles.todoTitleDone : ''}`}>{todo.title}</div>
-                    <div className={styles.todoMeta}>
-                      ⏰ {formatTodoRange(todo)}
-                      {todo.associationLabel && ` · ${todo.associationLabel}`}
+                    <div className={styles.cardBody}>
+                      <div className={`${styles.shiftNameTag} ${styles.todoNameTag} ${todo.completed ? styles.todoDone : ''}`}>
+                        {todo.title}
+                      </div>
+                      <div className={`${styles.shiftTimeText} ${styles.todoDetail}`}>⏰ {formatTodoRange(todo)}</div>
+                      {todo.associationLabel && (
+                        <div className={`${styles.shiftTimeText} ${styles.todoDetail}`}>📘 {todo.associationLabel}</div>
+                      )}
                     </div>
                     <div className={styles.cardFooter}>
                       <button className={`${styles.actionBtn} ${styles.editBtn}`} onClick={() => onOpenEditTodo(todo)} title="編輯代辦">

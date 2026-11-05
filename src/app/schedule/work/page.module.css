@@ -894,29 +894,28 @@
   text-decoration: line-through;
 }
 
-.todoCard {
-  background-color: #f0ece1;
-  border: 2px dashed rgba(95, 113, 134, 0.5);
-  border-radius: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.75rem 0.85rem;
+/* 代辦卡片沿用班表卡片（shiftCard）結構，只換成石板藍色票與粗體詳細資訊 */
+.todoNameTag {
+  background-color: #5f7186;
+  color: #f0ece1;
 }
 
-.todoTitle {
+.todoSyncBadge {
+  background-color: rgba(95, 113, 134, 0.18);
+  color: var(--color-secondary);
+  border: 1px dashed rgba(95, 113, 134, 0.4);
+  font-weight: 600;
+}
+
+.todoDetail {
   font-weight: 700;
+  color: #3d3a36;
   word-break: break-word;
 }
 
-.todoTitleDone {
+.todoDone {
   opacity: 0.6;
   text-decoration: line-through;
-}
-
-.todoMeta {
-  font-size: 0.8rem;
-  opacity: 0.8;
 }
 
 .todoSectionTitle {
