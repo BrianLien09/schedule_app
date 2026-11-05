@@ -57,7 +57,8 @@ export function formatTodoRange(todo: Pick<Todo, 'startDate' | 'endDate' | 'star
 export function familyTodoPayload(todo: Todo, ownerUid: string, date: string): Record<string, string> {
   return {
     title: todo.title.trim(), date, ...todoTimesForDate(todo, date), category: '待辦',
-    description: [todo.associationLabel, todo.startDate && `開始：${todo.startDate}${todo.startTime ? ` ${todo.startTime}` : ''}`, todo.endDate && `結束：${todo.endDate}${todo.endTime ? ` ${todo.endTime}` : ''}`].filter(Boolean).join(' · '),
+    // 日期與時間已由 date/startTime/endTime 欄位呈現，備註只放關聯課程，避免畫面重複顯示
+    description: todo.associationLabel,
     source: 'schedule-app-todo', todoId: todo.id, ownerUid, updatedAt: todo.updatedAt,
   };
 }

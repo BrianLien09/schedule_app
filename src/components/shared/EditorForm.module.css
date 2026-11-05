@@ -190,6 +190,13 @@
   border-color: var(--color-primary);
 }
 
+.toggleCompact {
+  align-items: center;
+  min-height: 54px;
+  box-sizing: border-box;
+  padding: 0 1rem;
+}
+
 .toggleChecked {
   border-color: var(--color-primary);
   background-color: rgba(184, 126, 107, 0.1);

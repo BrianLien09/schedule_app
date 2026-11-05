@@ -69,12 +69,15 @@ interface EditorToggleProps {
   onChange: (checked: boolean) => void;
   label: string;
   hint?: string;
+  /** compact 與分段控制同高，可並排在同一列 */
+  compact?: boolean;
+  title?: string;
 }
 
 /** 整張卡片可點擊的開關。 */
-export function EditorToggle({ checked, disabled, onChange, label, hint }: EditorToggleProps) {
+export function EditorToggle({ checked, disabled, onChange, label, hint, compact, title }: EditorToggleProps) {
   return (
-    <label className={`${styles.toggle} ${checked ? styles.toggleChecked : ''} ${disabled ? styles.toggleDisabled : ''}`}>
+    <label className={`${styles.toggle} ${compact ? styles.toggleCompact : ''} ${checked ? styles.toggleChecked : ''} ${disabled ? styles.toggleDisabled : ''}`} title={title}>
       <input type="checkbox" checked={checked} disabled={disabled} onChange={(event) => onChange(event.target.checked)} />
       <span className={styles.toggleText}>
         {label}

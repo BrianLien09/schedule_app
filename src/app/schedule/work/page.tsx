@@ -86,6 +86,8 @@ export default function WorkSchedulePage() {
   // 新增時由頂端分頁切換表單；編輯既有項目則直接依項目類型開啟
   const [entryType, setEntryType] = useState<EntryType>('work');
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
+  // 在兩種表單間切換時，新表單不重播彈出動畫，改由內容淡入銜接
+  const [isSwitching, setIsSwitching] = useState(false);
 
   // 檢查登入狀態
   if (authLoading) {
@@ -280,7 +282,13 @@ export default function WorkSchedulePage() {
     }
   };
 
+  const switchEntryType = (type: EntryType) => {
+    setIsSwitching(true);
+    setEntryType(type);
+  };
+
   const closeEditor = () => {
+    setIsSwitching(false);
     setIsEditorOpen(false);
     setEditingShift(null);
     setEditingTodo(null);
@@ -549,7 +557,8 @@ export default function WorkSchedulePage() {
         mode={editorMode === 'edit' ? 'edit' : 'add'}
         existingCourses={editorMode === 'batch' ? [] : courses}
         existingShifts={editorMode === 'batch' ? [] : shifts}
-        typeSwitcher={editorMode === 'add' ? <EntryTypeTabs value="work" onChange={setEntryType} /> : undefined}
+        animateIn={!isSwitching}
+        typeSwitcher={editorMode === 'add' ? <EntryTypeTabs value="work" onChange={switchEntryType} /> : undefined}
       />
 
       {/* 代辦行程編輯器：沿用首頁 TodoEditor，同步選項由表單內勾選決定 */}
@@ -561,7 +570,8 @@ export default function WorkSchedulePage() {
           now={now}
           canSync={hasFamilyWebSyncAccess(user.email)}
           initialDate={editingShift?.date}
-          typeSwitcher={editorMode === 'add' ? <EntryTypeTabs value="todo" onChange={setEntryType} /> : undefined}
+          animateIn={!isSwitching}
+          typeSwitcher={editorMode === 'add' ? <EntryTypeTabs value="todo" onChange={switchEntryType} /> : undefined}
           onSave={handleSaveTodo}
           onDelete={handleDeleteTodo}
           onClose={closeEditor}

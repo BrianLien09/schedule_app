@@ -24,6 +24,8 @@ interface WorkShiftEditorProps {
   existingShifts?: WorkShift[];
   /** 月曆新增彈窗標題列的類型切換（僅新增模式使用）。 */
   typeSwitcher?: ReactNode;
+  /** 為 false 時不播彈出動畫（由其他表單切換過來時使用） */
+  animateIn?: boolean;
 }
 
 /**
@@ -51,6 +53,7 @@ export default function WorkShiftEditor({
   existingCourses = [],
   existingShifts = [],
   typeSwitcher,
+  animateIn,
 }: WorkShiftEditorProps) {
   const { toast } = useToast();
   const { confirm } = useConfirm();
@@ -265,6 +268,7 @@ export default function WorkShiftEditor({
       onClose={onClose}
       title={mode === 'add' ? '新增打工班表' : '編輯打工班表'}
       headerExtra={typeSwitcher}
+      animateIn={animateIn}
       maxWidth="560px"
     >
       <ModalContent render={(requestClose) => <form onSubmit={(e) => handleSubmit(e, requestClose)} className={styles.form}>

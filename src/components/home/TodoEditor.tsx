@@ -19,6 +19,8 @@ interface TodoEditorProps {
   initialDate?: string;
   /** 月曆新增彈窗標題列的類型切換。 */
   typeSwitcher?: ReactNode;
+  /** 為 false 時不播彈出動畫（由其他表單切換過來時使用） */
+  animateIn?: boolean;
   onSave: (input: TodoInput, todo?: Todo) => Promise<void>;
   onDelete: (todo: Todo) => Promise<void>;
   onClose: () => void;
@@ -29,7 +31,7 @@ const ASSOCIATION_OPTIONS: { value: Todo['association']; label: string }[] = [
   { value: 'course', label: '課程' },
 ];
 
-export default function TodoEditor({ todo, courses, now, canSync, initialDate, typeSwitcher, onSave, onDelete, onClose }: TodoEditorProps) {
+export default function TodoEditor({ todo, courses, now, canSync, initialDate, typeSwitcher, animateIn, onSave, onDelete, onClose }: TodoEditorProps) {
   const [title, setTitle] = useState(todo?.title ?? '');
   const [defaults] = useState(() => defaultTodoDateTimes(now));
   const [startDate, setStartDate] = useState(todo?.startDate ?? initialDate ?? defaults.startDate);
@@ -140,7 +142,7 @@ export default function TodoEditor({ todo, courses, now, canSync, initialDate, t
   });
 
   return (
-    <Modal isOpen onClose={() => { if (!busy) onClose(); }} title={todo ? '編輯代辦行程' : '新增代辦行程'} headerExtra={typeSwitcher} maxWidth="560px">
+    <Modal isOpen onClose={() => { if (!busy) onClose(); }} title={todo ? '編輯代辦行程' : '新增代辦行程'} headerExtra={typeSwitcher} animateIn={animateIn} maxWidth="560px">
       <ModalContent render={(requestClose) => (
         <form className={styles.form} onSubmit={(event) => { void submit(event, requestClose); }} onChange={() => setError('')}>
           <EditorField label="標題" htmlFor="todo-title" required>
@@ -156,14 +158,26 @@ export default function TodoEditor({ todo, courses, now, canSync, initialDate, t
             />
           </EditorField>
 
-          <EditorField label="隸屬類型">
-            <EditorSegmented
-              value={association}
-              options={ASSOCIATION_OPTIONS}
-              ariaLabel="隸屬類型"
-              onChange={(value) => { setAssociation(value); setAssociationId(''); }}
-            />
-          </EditorField>
+          <EditorRow>
+            <EditorField label="隸屬類型">
+              <EditorSegmented
+                value={association}
+                options={ASSOCIATION_OPTIONS}
+                ariaLabel="隸屬類型"
+                onChange={(value) => { setAssociation(value); setAssociationId(''); }}
+              />
+            </EditorField>
+            <EditorField label="家庭月曆">
+              <EditorToggle
+                compact
+                checked={syncToFamily}
+                disabled={!canSync || busy}
+                onChange={setSyncToFamily}
+                label={canSync ? '同步至家庭月曆' : '尚未開放同步'}
+                title={canSync ? '同步起訖日期與時間；同一天只顯示一筆' : '此帳號尚未開放家庭同步'}
+              />
+            </EditorField>
+          </EditorRow>
 
           {association === 'course' && (
             <EditorField
@@ -187,14 +201,6 @@ export default function TodoEditor({ todo, courses, now, canSync, initialDate, t
           )}
 
           {dateTimeFields}
-
-          <EditorToggle
-            checked={syncToFamily}
-            disabled={!canSync || busy}
-            onChange={setSyncToFamily}
-            label="同步至家庭月曆"
-            hint={canSync ? '同步起訖日期與時間；同一天只顯示一筆。' : '此帳號尚未開放家庭同步。'}
-          />
 
           {error && <p role="alert" className={styles.error}>{error}</p>}
 

@@ -13,7 +13,8 @@ import {
 import { createPortal } from 'react-dom';
 import styles from './Modal.module.css';
 
-const MODAL_EXIT_DURATION = 220;
+// 必須與 Modal.module.css 的離場動畫時間一致，否則元件會在動畫播完前被移除
+const MODAL_EXIT_DURATION = 260;
 
 const ModalCloseContext = createContext<(() => void) | null>(null);
 
@@ -26,6 +27,8 @@ interface ModalProps {
   title: string;
   /** Modal 內容 */
   children: ReactNode;
+  /** 是否播放彈出動畫；在同一位置切換內容（例如切換表單類型）時設為 false，改以內容淡入過渡 */
+  animateIn?: boolean;
   /** 標題列右側（關閉鈕左邊）的額外控制項，例如類型切換 */
   headerExtra?: ReactNode;
   /** 自訂最大寬度（預設 500px） */
@@ -47,6 +50,7 @@ export default function Modal({
   title,
   children,
   headerExtra,
+  animateIn = true,
   maxWidth = '500px',
   className,
 }: ModalProps) {
@@ -144,12 +148,12 @@ export default function Modal({
 
   return createPortal(
     <div
-      className={`${styles.overlay} ${isClosing ? styles.overlayClosing : ''}`}
+      className={`${styles.overlay} ${animateIn ? '' : styles.overlayStatic} ${isClosing ? styles.overlayClosing : ''}`}
       onClick={requestClose}
     >
       <div
         ref={dialogRef}
-        className={`glass ${styles.dialog} ${isClosing ? styles.dialogClosing : ''} ${className || ''}`}
+        className={`glass ${styles.dialog} ${animateIn ? '' : styles.dialogSwap} ${isClosing ? styles.dialogClosing : ''} ${className || ''}`}
         style={{ maxWidth }}
         onClick={(e) => e.stopPropagation()}
         role="dialog"

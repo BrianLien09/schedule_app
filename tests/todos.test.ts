@@ -80,7 +80,7 @@ test('家庭同日保留任意分鐘；跨日各顯示起訖時間並保留完�
   assert.equal(start.endTime, '');
   assert.equal(end.startTime, '09:10');
   assert.equal(end.endTime, '');
-  assert.equal(end.description, '開始：2026-10-04 12:17 · 結束：2026-10-05 09:10');
+  assert.equal(end.description, '');
   assert.equal(familyTodoPayload(todo, 'uid', '2026-10-04').startTime, '');
 });
 
