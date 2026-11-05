@@ -69,7 +69,13 @@
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
   box-shadow: 0 4px 14px rgba(184, 126, 107, 0.25);
 }
 

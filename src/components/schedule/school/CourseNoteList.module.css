@@ -43,7 +43,13 @@
   color: var(--text-primary);
   font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
 }
 
 .filterButton:hover {
@@ -71,7 +77,13 @@
   border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 16px;
-  transition: all 0.3s;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
 }
 
 .noteCard:target {
@@ -159,7 +171,13 @@
   cursor: pointer;
   padding: 4px;
   opacity: 0.6;
-  transition: all 0.2s;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
 }
 
 .actionButton:hover {
@@ -269,7 +287,13 @@
   color: var(--text-muted);
   font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
 }
 
 .expandButton:hover {

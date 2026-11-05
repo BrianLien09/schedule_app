@@ -58,7 +58,13 @@
   color: var(--text-primary);
   font-size: 0.9rem;
   font-family: inherit;
-  transition: all 200ms ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
 }
 
 /* select 元素需要更高的對比度 */
@@ -71,7 +77,13 @@
   font-size: 0.9rem;
   font-weight: 600;
   font-family: inherit;
-  transition: all 200ms ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
   cursor: pointer;
 }
 
@@ -129,7 +141,13 @@
   font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 200ms ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
 }
 
 .tagButton:hover {
@@ -152,7 +170,13 @@
   font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 200ms ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
 }
 
 .tagButtonAdd:hover {
@@ -214,7 +238,13 @@
   font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 200ms ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
 }
 
 .btnSave {

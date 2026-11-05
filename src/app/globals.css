@@ -14,6 +14,22 @@
   /* ===== Typography ===== */
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto,
     "Helvetica Neue", Arial, sans-serif;
+
+  /* ===== Motion Tokens =====
+     統一時長與緩動，避免各模組各寫一套造成節奏不一致。
+     斷點慣例：手機 max-width: 767px、小手機 max-width: 480px。 */
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 360ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ===== Z-index 層級 ===== */
+  --z-dropdown: 100;
+  --z-navbar: 1000;
+  --z-modal: 2000;
+  --z-toast: 3000;
 }
 
 /* ===== Woven & Weft 織物質感大地色系 (風格 B) ===== */
@@ -74,8 +90,11 @@ body {
   padding: 0;
   padding-bottom: var(--spacing-xl);
   background-color: var(--bg-base);
-  background-image: var(--grid-paper, none);
-  transition: background 0.3s ease, color 0.3s ease;
+  background-image:
+    radial-gradient(circle at 8% -10%, rgba(184, 126, 107, 0.14), transparent 32rem),
+    radial-gradient(circle at 92% 8%, rgba(95, 113, 134, 0.11), transparent 28rem);
+  background-attachment: fixed;
+  transition: background-color var(--dur-slow) ease, color var(--dur-slow) ease;
 }
 
 a {
@@ -88,17 +107,22 @@ a {
 /* Woven & Weft Card 樣式 */
 .glass {
   background: var(--glass-bg);
-  border: 2px dashed var(--glass-border);
+  border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   position: relative;
-  transition: all 200ms ease;
+  /* 只過渡不觸發 layout 的屬性，hover 才不會卡頓 */
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) ease,
+    background-color var(--dur-base) ease;
 }
 
 .glass:hover {
   background: var(--glass-bg-hover);
   border-color: var(--glass-border-hover);
-  box-shadow: var(--glass-shadow-hover);
+  box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
 
@@ -124,10 +148,14 @@ a {
 .btn {
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: 10px;
-  border: 1px solid rgba(184, 126, 107, 0.3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-weight: 600;
-  transition: all 180ms ease;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    background-color var(--dur-base) ease;
   background: var(--color-primary); /* #b87e6b 鐵鏽紅 */
   color: #f0ece1; /* 燕麥白 - 確保高對比度 */
   box-shadow: 0 4px 12px rgba(139, 121, 101, 0.12);
@@ -136,7 +164,7 @@ a {
 .btn:hover {
   background: var(--color-primary-hover); /* #a66a58 */
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(139, 121, 101, 0.18);
+  box-shadow: var(--shadow-md);
 }
 
 .btn:active {
@@ -147,15 +175,19 @@ a {
 .card {
   padding: var(--spacing-lg);
   background: var(--glass-bg);
-  border: 2px dashed var(--glass-border);
-  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
   box-shadow: var(--glass-shadow);
-  transition: all 200ms ease;
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease;
   cursor: default;
 }
 
 .card:hover {
-  transform: scale(1.01);
+  transform: translateY(-2px);
   background: var(--glass-bg-hover);
   border-color: var(--glass-border-hover);
   box-shadow: var(--glass-shadow-hover);
@@ -166,7 +198,11 @@ a {
   font-weight: 600;
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: 8px;
-  transition: all 0.2s ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
   color: var(--foreground);
   opacity: 0.75;
   display: inline-flex;
@@ -272,12 +308,16 @@ select option {
   background: var(--glass-bg);
   min-width: 160px;
   box-shadow: var(--glass-shadow);
-  z-index: 100;
+  z-index: var(--z-dropdown);
   border-radius: 12px;
-  border: 2px dashed var(--glass-border);
+  border: 1px solid var(--glass-border);
   padding: 0.5rem;
   opacity: 0;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  /* visibility 延後切換，讓離場時仍能看到淡出 */
+  transition:
+    opacity var(--dur-base) ease,
+    transform var(--dur-slow) var(--ease-out),
+    visibility 0s linear var(--dur-base);
 }
 
 /* 右側對齊的 Dropdown */
@@ -291,6 +331,7 @@ select option {
   visibility: visible;
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+  transition-delay: 0s;
 }
 
 .dropdown:hover .dropdown-content.dropdown-content-right {
@@ -307,7 +348,7 @@ select option {
   align-items: center;
   gap: var(--spacing-sm);
   border-radius: 8px;
-  transition: background-color 0.2s;
+  transition: background-color var(--dur-base) ease, color var(--dur-base) ease;
   font-weight: 500;
 }
 
@@ -363,20 +404,112 @@ select option {
   scrollbar-color: rgba(139, 92, 246, 0.3) rgba(0, 0, 0, 0.3);
 }
 
-/* ===== Page Transition (頁面切換動畫) ===== */
-.page-transition {
-  animation: pageFadeIn 0.35s ease-out;
+/* ===== Design tokens：表面、陰影、圓角 ===== */
+:root {
+  --surface-elevated: #f4f0e7;
+  --surface-soft: #ebe6da;
+  --line-subtle: rgba(120, 104, 87, 0.16);
+  --line-strong: rgba(120, 104, 87, 0.26);
+  --shadow-sm: 0 2px 8px rgba(92, 74, 54, 0.06);
+  --shadow-md: 0 12px 28px rgba(92, 74, 54, 0.1);
+  --shadow-lg: 0 20px 48px rgba(92, 74, 54, 0.14);
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --ease-standard: var(--ease-out);
 }
 
-@keyframes pageFadeIn {
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+/* 全站統一的鍵盤焦點樣式，避免各模組各自遺漏 */
+button:focus-visible,
+a:focus-visible,
+select:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid rgba(184, 126, 107, 0.34);
+  outline-offset: 3px;
+}
+
+.site-main {
+  padding-top: 1.25rem;
+}
+
+.site-main:has(> .page-transition-compact) {
+  padding-top: var(--spacing-xs);
+}
+
+/* ===== 共用 Keyframes：各模組請引用這裡，不要重複定義 ===== */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes skeletonShimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+/* ===== Page Transition (頁面切換動畫) ===== */
+.page-transition {
+  /* 只使用透明度，避免含有 Modal 時改變 fixed 定位的參考座標 */
+  animation: fadeIn 0.45s var(--ease-out) both;
+}
+
+/* 區塊進場：用 --i 控制錯開延遲，列表項目可直接 style={{ '--i': index }} */
+.page-section-enter,
+.anim-enter {
+  animation: slideUp 420ms var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 50ms);
+}
+
+.page-section-enter-delay-1 {
+  --i: 1;
+}
+
+.page-section-enter-delay-2 {
+  --i: 2;
+}
+
+.page-section-enter-delay-3 {
+  --i: 3;
+}
+
+/* 骨架畫面：用 transform 位移的光帶，比動 background-position 順暢 */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--surface-soft);
+  border-radius: var(--radius-sm);
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  animation: skeletonShimmer 1.4s var(--ease-in-out) infinite;
 }
 
 /* ===== prefers-reduced-motion 全域處理 ===== */
@@ -390,146 +523,23 @@ select option {
     scroll-behavior: auto !important;
   }
 
+  .page-transition,
+  .page-section-enter,
+  .anim-enter {
+    animation: none;
+  }
+
+  /* 減少動態時不要位移，避免殘留的 hover 浮起造成不適 */
+  .glass:hover,
+  .card:hover,
+  .btn:hover {
+    transform: none;
+  }
+}
+
+/* 手機有底部導覽列：預留空間，避免內容被遮住 */
+@media (max-width: 767px) {
   body {
-    animation: none;
-  }
-
-  .page-transition {
-    animation: none;
-  }
-}
-
-/* ===== Mature UI refinement layer ===== */
-:root {
-  --surface-elevated: #f4f0e7;
-  --surface-soft: #ebe6da;
-  --line-subtle: rgba(120, 104, 87, 0.16);
-  --line-strong: rgba(120, 104, 87, 0.26);
-  --shadow-sm: 0 2px 8px rgba(92, 74, 54, 0.06);
-  --shadow-md: 0 12px 28px rgba(92, 74, 54, 0.1);
-  --shadow-lg: 0 20px 48px rgba(92, 74, 54, 0.14);
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 22px;
-  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-body {
-  background-image:
-    radial-gradient(circle at 8% -10%, rgba(184, 126, 107, 0.14), transparent 32rem),
-    radial-gradient(circle at 92% 8%, rgba(95, 113, 134, 0.11), transparent 28rem),
-    var(--grid-paper, none);
-  background-attachment: fixed;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
-
-button:focus-visible,
-a:focus-visible,
-select:focus-visible,
-input:focus-visible,
-textarea:focus-visible {
-  outline: 3px solid rgba(184, 126, 107, 0.34);
-  outline-offset: 3px;
-}
-
-.glass {
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  transition: transform 240ms var(--ease-standard), box-shadow 240ms var(--ease-standard), border-color 240ms ease;
-}
-
-.glass:hover {
-  border-color: var(--glass-border-hover);
-  box-shadow: var(--shadow-md);
-}
-
-.card {
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  transition: transform 240ms var(--ease-standard), box-shadow 240ms var(--ease-standard), background-color 240ms ease;
-}
-
-.card:hover {
-  transform: translateY(-2px);
-}
-
-.btn {
-  border-color: transparent;
-  border-radius: var(--radius-sm);
-  transition: transform 180ms var(--ease-standard), box-shadow 180ms var(--ease-standard), background-color 180ms ease;
-}
-
-.btn:hover {
-  box-shadow: var(--shadow-md);
-}
-
-.nav-link {
-  transition: color 180ms ease, background-color 180ms ease, transform 180ms var(--ease-standard);
-}
-
-.site-main {
-  padding-top: 1.25rem;
-}
-
-.site-main:has(> .page-transition-compact) {
-  padding-top: var(--spacing-xs);
-}
-
-.page-transition {
-  /* 只使用透明度，避免含有 Modal 時改變 fixed 定位的參考座標 */
-  animation: pageOpacityIn 0.55s var(--ease-standard) both;
-}
-
-@keyframes pageOpacityIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes softPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.24); }
-  50% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-}
-
-@keyframes pageSectionEnter {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.page-section-enter {
-  animation: pageSectionEnter 420ms var(--ease-standard) both;
-}
-
-.page-section-enter-delay-1 {
-  animation-delay: 60ms;
-}
-
-.page-section-enter-delay-2 {
-  animation-delay: 120ms;
-}
-
-.page-section-enter-delay-3 {
-  animation-delay: 180ms;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .page-transition {
-    animation: none;
-  }
-
-  .page-section-enter {
-    animation: none;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
   }
 }

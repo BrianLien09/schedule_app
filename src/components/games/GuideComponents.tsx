@@ -2,7 +2,7 @@
  * 攻略卡片視覺化元件
  */
 
-import { memo } from 'react';
+import { memo, type CSSProperties } from 'react';
 import type { GameGuide, GuideCategory } from '@/data/gameGuides';
 import { CATEGORY_COLORS, getTagColor } from '@/data/gameGuides';
 import { useToast } from '@/context/ToastContext';
@@ -80,7 +80,7 @@ export function ProgressBar({ progress, showLabel = true }: ProgressBarProps) {
 
   return (
     <div className={styles.progressBar}>
-      <div className={styles.progressFill} style={{ width: `${clampedProgress}%` }} />
+      <div className={styles.progressFill} style={{ '--progress': clampedProgress / 100 } as CSSProperties} />
       {showLabel && <span className={styles.progressText}>{Math.round(clampedProgress)}% 完成</span>}
     </div>
   );

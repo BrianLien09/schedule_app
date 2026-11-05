@@ -72,7 +72,13 @@
   background: var(--glass-bg);
   color: var(--foreground);
   font-size: 1rem;
-  transition: all 0.2s ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
 }
 
 .input:focus,
@@ -113,7 +119,13 @@
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
 }
 
 .btnPrimary {
@@ -165,7 +177,13 @@
   background: #f0ece1;
   color: var(--foreground);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
   font-size: 0.875rem;
   font-weight: 600;
 }
@@ -188,7 +206,13 @@
   background: var(--glass-bg);
   color: var(--foreground);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
   font-size: 0.875rem;
   min-width: 150px;
 }
@@ -216,7 +240,13 @@
   position: relative;
   padding: var(--spacing-lg);
   border-radius: 12px;
-  transition: all 0.3s ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
 }
 
 .recordCard:hover {
@@ -247,7 +277,13 @@
   border-radius: 8px;
   color: var(--foreground);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
   font-size: 0.875rem;
 }
 
@@ -319,7 +355,13 @@
   border-radius: 8px;
   color: var(--foreground);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
   font-size: 0.875rem;
 }
 
@@ -336,7 +378,13 @@
   border-radius: 8px;
   color: #ef4444;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
   font-size: 0.875rem;
 }
 
@@ -414,7 +462,13 @@
   color: var(--muted);
   cursor: pointer;
   border-radius: 4px;
-  transition: all 0.2s ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
 }
 
 .closeButton:hover {
@@ -529,7 +583,13 @@
   margin-bottom: var(--spacing-sm);
   /* 背景色由 JS 動態注入各自的 bgColor，不在此設定固定值 */
   backdrop-filter: blur(4px);
-  transition: all 0.3s ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
 }
 
 /* ========== 匯入金額區塊 ========== */
@@ -599,7 +659,13 @@
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   color: var(--foreground);
-  transition: all 0.3s ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
 }
 
 .expandButton:hover {
@@ -624,7 +690,13 @@
 .recordCard {
   animation: slideInUp 0.4s ease-out;
   animation-fill-mode: both;
-  transition: all 0.3s ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
 }
 
 .recordCard:hover {

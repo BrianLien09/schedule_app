@@ -240,3 +240,11 @@
   --color: rgb(204, 125, 45);
   --color2: rgb(83, 56, 28);
 }
+
+/* 減少動態偏好：停止無限循環的跑道動畫 */
+@media (prefers-reduced-motion: reduce) {
+  .loaderline,
+  .capybara * {
+    animation: none;
+  }
+}

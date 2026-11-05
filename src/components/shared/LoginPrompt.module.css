@@ -17,7 +17,13 @@
   width: 100%;
   text-align: center;
   box-shadow: 0 8px 24px rgba(139, 121, 101, 0.12);
-  transition: all 0.25s ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
 }
 
 .iconWrapper {
@@ -68,7 +74,13 @@
   justify-content: center;
   gap: 10px;
   box-shadow: 0 4px 14px rgba(184, 126, 107, 0.25);
-  transition: all 0.2s ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
 }
 
 .loginButton:hover {

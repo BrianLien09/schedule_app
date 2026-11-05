@@ -146,7 +146,13 @@
   border: 1.5px dashed rgba(220, 208, 194, 0.85) !important;
   border-radius: 12px !important;
   box-sizing: border-box !important;
-  transition: all 0.2s ease !important;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out) !important;
   text-decoration: none !important;
 }
 
@@ -289,7 +295,13 @@
   color: #3d3a36;
   background: rgba(240, 236, 225, 0.55);
   border: 1px dashed rgba(220, 208, 194, 0.6);
-  transition: all 0.18s ease;
+  transition:
+    color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out);
 }
 
 .mobileMenu :global(.dropdown-item):hover {
@@ -305,16 +317,7 @@
   background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(2px);
   z-index: 99; /* navbar 是 100，遮罩在其下 */
-  animation: overlayFadeIn 0.3s ease;
-}
-
-@keyframes overlayFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  animation: :global(fadeIn) 0.3s ease;
 }
 
 /* ===== Reduced Motion ===== */
