@@ -56,6 +56,8 @@ interface EmptyStateProps {
   message?: string;
   actionText?: string;
   onAction?: () => void;
+  /** 區塊內的提示（如列表空白）用精簡尺寸，避免整頁級的大圖示搶走周圍內容的焦點 */
+  compact?: boolean;
 }
 
 /**
@@ -68,9 +70,10 @@ export function EmptyState({
   message,
   actionText,
   onAction,
+  compact = false,
 }: EmptyStateProps) {
   return (
-    <div className={styles.emptyContainer}>
+    <div className={`${styles.emptyContainer} ${compact ? styles.emptyCompact : ''}`}>
       <div className={styles.emptyIcon}>{icon}</div>
       <div className={styles.emptyTitle}>{title}</div>
       {message && <div className={styles.emptyMessage}>{message}</div>}

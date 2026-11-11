@@ -886,20 +886,23 @@
   .dayCell,
   .shiftBadge,
   .shiftCard,
+  .todoCard,
   .actionBtn {
     transition: none;
   }
 }
 
-/* 代辦行程：與班表 badge 區隔，使用淡底 + 虛線框，已完成加刪除線 */
+/* 代辦行程：以 --todo-color（課程色）推導淡底與虛線框，和實心的班表 badge 區隔；左側實色條標示課程 */
 .todoBadge {
+  --todo-color: #5f7186;
   font-size: 0.75rem;
   margin-top: 4px;
   margin-bottom: 2px;
-  padding: 3px 8px;
+  padding: 3px 8px 3px 7px;
   border-radius: 6px;
-  border: 1px dashed rgba(95, 113, 134, 0.65);
-  background-color: rgba(95, 113, 134, 0.14);
+  border: 1px dashed color-mix(in srgb, var(--todo-color) 55%, transparent);
+  border-left: 3px solid var(--todo-color);
+  background-color: color-mix(in srgb, var(--todo-color) 16%, transparent);
   color: #3d3a36;
   font-weight: 600;
   white-space: nowrap;
@@ -910,7 +913,7 @@
 }
 
 .todoBadge:hover {
-  background-color: rgba(95, 113, 134, 0.26);
+  background-color: color-mix(in srgb, var(--todo-color) 28%, transparent);
 }
 
 .todoBadgeDone {
@@ -918,28 +921,109 @@
   text-decoration: line-through;
 }
 
-/* 代辦卡片沿用班表卡片（shiftCard）結構，只換成石板藍色票與粗體詳細資訊 */
-.todoNameTag {
-  background-color: #5f7186;
+/* 代辦卡片：標題做成課程色帶，下方兩行資訊固定存在、頁尾貼底，讓同一列卡片高度與對齊一致 */
+.todoCard {
+  --todo-color: #5f7186;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: #f0ece1;
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: transform 220ms var(--ease-standard), border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.todoCard:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--todo-color) 50%, transparent);
+  box-shadow: var(--shadow-md);
+}
+
+.todoCardDone {
+  opacity: 0.65;
+}
+
+.todoCardDone .todoCardTitle {
+  text-decoration: line-through;
+}
+
+.todoCardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.75rem 0.9rem;
+  background-color: var(--todo-color);
   color: #f0ece1;
 }
 
-.todoSyncBadge {
-  background-color: rgba(95, 113, 134, 0.18);
-  color: var(--color-secondary);
-  border: 1px dashed rgba(95, 113, 134, 0.4);
-  font-weight: 600;
+.todoCardDay {
+  flex-shrink: 0;
+  min-width: 2rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 8px;
+  background-color: rgba(240, 236, 225, 0.2);
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.4;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
-.todoDetail {
+/* 長標題最多兩行，避免單張卡片被撐高而打亂整列 */
+.todoCardTitle {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.95rem;
   font-weight: 700;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.todoCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.75rem 0.9rem 0.25rem;
+}
+
+.todoMeta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 600;
   color: #3d3a36;
   word-break: break-word;
 }
 
-.todoDone {
-  opacity: 0.6;
-  text-decoration: line-through;
+.todoMetaMuted {
+  color: #78716c;
+  font-weight: 500;
+}
+
+.todoCardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding: 0.6rem 0.9rem 0.75rem;
+}
+
+.todoSyncText {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-secondary);
+}
+
+.todoActions {
+  display: flex;
+  gap: 0.35rem;
 }
 
 .todoSectionTitle {

@@ -98,6 +98,22 @@
   margin-bottom: 0.5rem;
 }
 
+.emptyCompact {
+  padding: 1.5rem 1rem;
+}
+
+.emptyCompact .emptyIcon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.emptyCompact .emptyTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 0;
+}
+
 .emptyMessage {
   font-size: 1rem;
   color: var(--muted);

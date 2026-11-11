@@ -1,10 +1,10 @@
 'use client';
 
-import type { DragEvent, KeyboardEvent, MouseEvent } from 'react';
+import type { CSSProperties, DragEvent, KeyboardEvent, MouseEvent } from 'react';
 import { getWorkRoleHourlyRate, getWorkRoleLabel, type WorkRole } from '@/data/workRoles';
 import type { WorkShift } from '@/data/schedule';
 import type { Todo } from '@/data/todos';
-import { formatTodoRange } from '@/utils/todos';
+import { formatTodoRange, getTodoColor } from '@/utils/todos';
 import { EmptyState } from '@/components/shared/Loading';
 import styles from '@/app/schedule/work/page.module.css';
 
@@ -52,6 +52,11 @@ const getShiftBadgeStyle = (title: string, role?: string) => {
   }
   return palette[Math.abs(hash) % palette.length];
 };
+
+type TodoColorStyle = CSSProperties & Record<'--todo-color', string>;
+
+/** 以 CSS 變數傳遞課程色，讓月曆 badge 與卡片在 CSS 端各自推導淡底／邊框，不必在 TSX 拼多組顏色。 */
+const todoColorStyle = (todo: Todo): TodoColorStyle => ({ '--todo-color': getTodoColor(todo) });
 
 /** 行程月曆的日期格與本月清單，保留所有操作由頁面協調器注入。 */
 export default function WorkCalendarView({
@@ -190,6 +195,7 @@ export default function WorkCalendarView({
                   <div
                     key={todo.id}
                     className={`${styles.todoBadge} ${todo.completed ? styles.todoBadgeDone : ''}`}
+                    style={todoColorStyle(todo)}
                     role="button"
                     tabIndex={0}
                     onClick={(event) => {
@@ -232,11 +238,12 @@ export default function WorkCalendarView({
           </span>
         </summary>
         <div className={styles.detailsContent}>
-          <div className={styles.shiftsGrid}>
-            {currentMonthShifts.length === 0 ? (
-              <EmptyState icon="🗓️" title="本月尚無排定打工班表" />
-            ) : (
-              currentMonthShifts.map((shift) => {
+          {/* 空狀態放在 grid 外，否則只會佔第一欄而偏左 */}
+          {currentMonthShifts.length === 0 ? (
+            <EmptyState icon="🗓️" title="本月尚無排定打工班表" compact />
+          ) : (
+            <div className={styles.shiftsGrid}>
+              {currentMonthShifts.map((shift) => {
                 const isSelected = selectedDate === shift.date;
                 const roleLabel = getWorkRoleLabel(shift.role, roles, shift.roleName);
                 const rate = shift.hourlyRate ?? getWorkRoleHourlyRate(shift.role, roles);
@@ -276,35 +283,45 @@ export default function WorkCalendarView({
                     </div>
                   </div>
                 );
-              })
-            )}
-          </div>
+              })}
+            </div>
+          )}
           {currentMonthTodos.length > 0 && (
             <>
               <h3 className={styles.todoSectionTitle}>本月代辦行程</h3>
               <div className={styles.shiftsGrid}>
                 {currentMonthTodos.map(({ date, todo }) => (
-                  <div key={`${todo.id}-${date}`} className={`${styles.shiftCard} ${styles.shiftCardNormal}`}>
-                    <div className={styles.cardHeader}>
-                      <div className={styles.shiftDateBadge}>{date.split('-')[2]} 日</div>
-                      {todo.syncToFamily && <div className={`${styles.roleBadge} ${styles.todoSyncBadge}`}>已同步家庭月曆</div>}
+                  <div
+                    key={`${todo.id}-${date}`}
+                    className={`${styles.todoCard} ${todo.completed ? styles.todoCardDone : ''}`}
+                    style={todoColorStyle(todo)}
+                  >
+                    {/* 標題直接做成課程色帶，取代原本「日期 badge + 標題 pill」兩層，長標題也不會撐出不規則的色塊 */}
+                    <div className={styles.todoCardHeader}>
+                      <span className={styles.todoCardDay}>{Number(date.split('-')[2])}</span>
+                      <span className={styles.todoCardTitle}>{todo.title}</span>
                     </div>
-                    <div className={styles.cardBody}>
-                      <div className={`${styles.shiftNameTag} ${styles.todoNameTag} ${todo.completed ? styles.todoDone : ''}`}>
-                        {todo.title}
+                    <div className={styles.todoCardBody}>
+                      <div className={styles.todoMeta}>
+                        <span aria-hidden="true">⏰</span>
+                        <span>{formatTodoRange(todo)}</span>
                       </div>
-                      <div className={`${styles.shiftTimeText} ${styles.todoDetail}`}>⏰ {formatTodoRange(todo)}</div>
-                      {todo.associationLabel && (
-                        <div className={`${styles.shiftTimeText} ${styles.todoDetail}`}>📘 {todo.associationLabel}</div>
-                      )}
+                      <div className={styles.todoMeta}>
+                        <span aria-hidden="true">📘</span>
+                        <span className={todo.associationLabel ? '' : styles.todoMetaMuted}>{todo.associationLabel || '未關聯課程'}</span>
+                      </div>
                     </div>
-                    <div className={styles.cardFooter}>
-                      <button className={`${styles.actionBtn} ${styles.editBtn}`} onClick={() => onOpenEditTodo(todo)} title="編輯代辦">
-                        ✏️ 編輯
-                      </button>
-                      <button className={`${styles.actionBtn} ${styles.deleteBtn}`} onClick={() => onDeleteTodo(todo)} title="刪除代辦">
-                        🗑️ 刪除
-                      </button>
+                    <div className={styles.todoCardFooter}>
+                      {/* 同步狀態降為頁尾小字，不再和標題搶視覺焦點 */}
+                      <span className={styles.todoSyncText}>{todo.syncToFamily ? '✓ 已同步家庭月曆' : ''}</span>
+                      <div className={styles.todoActions}>
+                        <button className={`${styles.actionBtn} ${styles.editBtn}`} onClick={() => onOpenEditTodo(todo)} title="編輯代辦">
+                          編輯
+                        </button>
+                        <button className={`${styles.actionBtn} ${styles.deleteBtn}`} onClick={() => onDeleteTodo(todo)} title="刪除代辦">
+                          刪除
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}

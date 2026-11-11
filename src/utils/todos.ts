@@ -68,3 +68,27 @@ export function todoTimesForDate(todo: Pick<Todo, 'startDate' | 'endDate' | 'sta
   if (date === todo.startDate && date === todo.endDate) return { startTime: todo.startTime || todo.endTime || '', endTime: todo.startTime ? todo.endTime || '' : '' };
   return { startTime: (date === todo.startDate ? todo.startTime : date === todo.endDate ? todo.endTime : '') || '', endTime: '' };
 }
+
+/** 未關聯課程的代辦統一使用石板藍，與課程色票刻意錯開，一眼就能分辨「有沒有掛課程」。 */
+export const TODO_DEFAULT_COLOR = '#5f7186';
+
+/**
+ * 課程代辦的大地色票：全部壓在中低亮度，確保搭配燕麥白文字（#f0ece1）仍有足夠對比。
+ * 不直接沿用課表的 course.color，因為那組是高亮度粉彩色，配淺色字會看不清楚。
+ */
+const TODO_COURSE_PALETTE = ['#a8664f', '#5b7d68', '#7a5c78', '#9a6a32', '#3f6f75', '#8c5a48', '#6b6b3e', '#5a5f8a'];
+
+/**
+ * 依關聯課程自動分配代辦顏色。
+ * 以課程名稱（而非 associationId）做雜湊：同一門課跨學期重建後 id 會變，但名稱相同時顏色仍維持一致，
+ * 且不需額外訂閱課程資料。
+ */
+export function getTodoColor(todo: Pick<Todo, 'association' | 'associationLabel'>): string {
+  const key = todo.association === 'course' ? todo.associationLabel.trim() : '';
+  if (!key) return TODO_DEFAULT_COLOR;
+  let hash = 0;
+  for (let i = 0; i < key.length; i += 1) {
+    hash = (hash * 31 + key.charCodeAt(i)) | 0;
+  }
+  return TODO_COURSE_PALETTE[Math.abs(hash) % TODO_COURSE_PALETTE.length];
+}
