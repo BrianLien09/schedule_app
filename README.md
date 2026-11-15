@@ -42,6 +42,22 @@ DayMate 是為學生與兼職工作者設計的日常管理工具。它將學校
 - **遊戲攻略中心**：建立、編輯並以版本與類型篩選攻略內容。
 - **PWA**：提供可安裝的 Web App 設定與 Service Worker 快取。
 - **保存與同步狀態**：顯示雲端保存、離線等待及讀取失敗；家庭月曆同步失敗可在目前頁面重試原操作（含刪除）。重新載入後，班表可透過行程月曆的按月同步重新送出。
+- **Discord 提醒**：每晚把隔日的打工班表與待辦推到 Discord，詳見下方「Discord 提醒」。
+
+### Discord 提醒
+
+Discord 提醒不在這個儲存庫裡。它是個人通知中樞 **notify-hub**（Cloudflare Worker，位於 `02_Tools/notify-hub`）的 `schedule-discord` 任務，和其他專案的通知共用同一個 Cron。
+
+- **時間**：每天台灣時間 22:00。週一至週六提醒隔日安排，週日改發下週總覽。
+- **內容**：每位使用者各發一則訊息（以顏色與名稱區分），讀取 `/users/{uid}/salaryRecords` 的班表，以及 `/users/{uid}/todos` 中起日或迄日落在範圍內的未完成待辦。該使用者沒有任何安排時就不發。
+- **憑證**：存放於 notify-hub 的 Cloudflare Secrets，名稱都加上 `SCHEDULE_` 前綴（`SCHEDULE_FIREBASE_SERVICE_ACCOUNT`、`SCHEDULE_DISCORD_WEBHOOK_URL`、`SCHEDULE_USER_UIDS`，格式為 `uid=名稱,uid=名稱`），不放在儲存庫。
+- **注意**：修改 `salaryRecords` 或 `todos` 的欄位結構時，要同步更新 notify-hub 的 `src/jobs/schedule-discord/`，否則提醒會讀不到資料。
+
+手動測試（會立即發送）：
+
+```bash
+curl -X POST -H "Authorization: Bearer <TRIGGER_SECRET>" "https://notify-hub.<子網域>.workers.dev/run?mode=daily&job=schedule-discord"
+```
 
 ## 技術與資料流
 
