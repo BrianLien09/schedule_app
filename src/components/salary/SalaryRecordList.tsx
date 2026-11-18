@@ -5,6 +5,7 @@ import type { SalaryRecord } from '@/hooks/useSalaryData';
 import { type RoleType, type WorkRole } from '@/data/workRoles';
 import SalaryRecordDialogs from './SalaryRecordDialogs';
 import SalaryRecordTable from './SalaryRecordTable';
+import MonthStepper from '@/components/shared/pickers/MonthStepper';
 
 interface SalaryRecordListProps {
   records: SalaryRecord[];
@@ -346,24 +347,8 @@ export default function SalaryRecordList({
             ))}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-              自訂月份：
-            </label>
-            <input 
-              type="month"
-              value={filterMonth || ''}
-              onChange={(e) => updateFilterMonth(e.target.value)}
-              style={{
-                padding: '0.5rem',
-                borderRadius: '6px',
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(255,255,255,0.05)',
-                color: 'var(--text-primary)',
-                fontSize: '0.9rem',
-              }}
-            />
-          </div>
+          {/* 月份切換改用箭頭：Safari、Firefox 桌面版不支援原生 month input，會退化成純文字框 */}
+          <MonthStepper value={filterMonth || ''} onChange={updateFilterMonth} ariaLabel="明細月份" />
 
           <div style={{ 
             marginLeft: 'auto',

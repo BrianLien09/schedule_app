@@ -18,3 +18,35 @@
     animation: none;
   }
 }
+
+.pageHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.pageTitle {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: var(--color-primary);
+  background-image: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* 列印時漸層文字會變成空白，改回純黑 */
+.pageTitlePrint {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #000000;
+}
+
+.pageSubtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}

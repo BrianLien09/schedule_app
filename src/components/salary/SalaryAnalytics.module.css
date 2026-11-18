@@ -174,3 +174,76 @@
     transition: none;
   }
 }
+
+.filterChip {
+  min-height: 36px;
+  padding: 0.35rem 0.9rem;
+  border: 1px dashed rgba(220, 208, 194, 1);
+  border-radius: 999px;
+  background-color: rgba(220, 208, 194, 0.3);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+
+.filterChip:hover:not(.filterChipActive) {
+  background-color: rgba(220, 208, 194, 0.55);
+}
+
+.filterChipActive {
+  border-style: solid;
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: #f0ece1;
+}
+
+.toggleButton {
+  min-height: 36px;
+  padding: 0.35rem 1rem;
+  border: 0;
+  border-radius: 999px;
+  background-color: rgba(95, 113, 134, 0.12);
+  color: var(--color-secondary);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) ease;
+}
+
+.toggleButton:hover {
+  background-color: rgba(95, 113, 134, 0.22);
+}
+
+/* 實際到帳卡：與頁首薪資單同樣以實心鐵鏽紅強調，兩處看到的是同一種數字 */
+.statCardHero {
+  padding: 1rem;
+  border-radius: 12px;
+  background-color: var(--color-primary);
+  color: #f0ece1;
+  box-shadow: 0 8px 20px rgba(184, 126, 107, 0.25);
+}
+
+.statLabel {
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+.statValue {
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.statFoot {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}

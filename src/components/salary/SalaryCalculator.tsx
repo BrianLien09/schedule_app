@@ -6,15 +6,16 @@ import { useScheduleData } from '@/hooks/useScheduleData';
 import { useSalaryData, type SalaryRecord } from '@/hooks/useSalaryData';
 import { useShiftTemplates } from '@/hooks/useShiftTemplates';
 import { useWorkRoles } from '@/hooks/useWorkRoles';
+import { useSalarySettings } from '@/hooks/useSalarySettings';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import { generateShiftTemplateId, type ShiftTemplate } from '@/data/shiftTemplates';
 import { getWorkRoleHourlyRate, getWorkRoleLabel, type RoleType } from '@/data/workRoles';
-import { buildMonthlyStats, calculateHours, calculatePay, calculateWorkHoursFromTimes } from '@/utils/salaryStats';
+import { buildMonthlyStats, calculateHours, calculatePay, calculateRangeTakeHome, calculateWorkHoursFromTimes } from '@/utils/salaryStats';
 import { exportElementToPdf, exportSalaryExcel } from '@/utils/salaryExport';
 import { parseExcelFile, type ImportValidation } from '@/utils/excelParser';
 
-import SalaryHeaderStats from './SalaryHeaderStats';
+import SalaryPayslip from './SalaryPayslip';
 import SalaryRecordForm from './SalaryRecordForm';
 import SalaryRecordList from './SalaryRecordList';
 import SalaryAnalytics from './SalaryAnalytics';
@@ -55,6 +56,12 @@ export default function SalaryCalculator() {
     updateRole,
     deleteRole,
   } = useWorkRoles();
+  const {
+    settings: salarySettings,
+    loadError: settingsError,
+    canEdit: canEditSettings,
+    saveSettings,
+  } = useSalarySettings();
   const { toast } = useToast();
   const { confirm } = useConfirm();
   
@@ -100,6 +107,9 @@ export default function SalaryCalculator() {
     const month = String(today.getMonth() + 1).padStart(2, '0');
     return `${year}-${month}`;
   });
+
+  // 薪資單月份：null 代表跟著明細月份走（本月沒資料時自動看上月），使用者切換後才固定
+  const [payslipMonthOverride, setPayslipMonthOverride] = useState<string | null>(null);
 
   // 薪資統計篩選狀態；統計卡片與明細列表維持獨立資料範圍，預設統計全部資料。
   const [statsFilter, setStatsFilter] = useState<string>('');
@@ -618,6 +628,12 @@ export default function SalaryCalculator() {
 
   const statsWorkDays = useMemo(() => new Set(statsRecords.map((record) => record.date)).size, [statsRecords]);
 
+  // 統計範圍內逐月扣除勞保，「全部」時才不會只扣一個月
+  const statsTakeHome = useMemo(
+    () => calculateRangeTakeHome(statsRecords, salarySettings.laborInsuranceEmployee),
+    [statsRecords, salarySettings.laborInsuranceEmployee]
+  );
+
   const monthlyStats = buildMonthlyStats(records, statsFilter || monthRange.currentMonth);
   const maxMonthlyPay = Math.max(...monthlyStats.map(s => s.totalPay), 1);
 
@@ -770,29 +786,23 @@ export default function SalaryCalculator() {
       `}</style>
 
       <div style={{ maxWidth: '1000px', margin: '0 auto' }} className={isPrintMode ? 'print-friendly' : ''} ref={pdfContentRef}>
-        {!isPrintMode && <DataReadError message={[loadError, templatesError, rolesError].filter(Boolean).join('、')} />}
+        {!isPrintMode && <DataReadError message={[loadError, templatesError, rolesError, settingsError].filter(Boolean).join('、')} />}
         
-        {/* 標題與速覽卡片列 */}
-        <div className={!isPrintMode ? 'page-section-enter' : undefined} style={{ marginBottom: 'var(--spacing-lg)' }}>
-          <h2 style={{ 
-            fontSize: '1.5rem', 
-            fontWeight: 'bold', 
-            marginBottom: 'var(--spacing-md)',
-            background: isPrintMode ? 'none' : 'linear-gradient(to right, var(--color-primary), var(--color-secondary))',
-            WebkitBackgroundClip: isPrintMode ? 'unset' : 'text',
-            WebkitTextFillColor: isPrintMode ? 'black' : 'transparent',
-            color: isPrintMode ? 'black' : 'inherit',
-          }}>
-            薪資計算助手
-          </h2>
+        {/* 標題與月薪資單 */}
+        <div className={!isPrintMode ? 'page-section-enter' : undefined}>
+          <div className={styles.pageHeader}>
+            <h2 className={isPrintMode ? styles.pageTitlePrint : styles.pageTitle}>薪資計算助手</h2>
+            {!isPrintMode && <p className={styles.pageSubtitle}>記錄每一班的工時，月底直接看到扣完勞保後的實際到帳。</p>}
+          </div>
 
-          {/* 四大核心 KPI 速覽 */}
           {!isPrintMode && !(loadError && records.length === 0) && (
-            <SalaryHeaderStats
-              totalPay={statsTotalPay}
-              totalHours={statsTotalHours}
-              avgHourlyRate={statsAvgHourlyRate}
-              workDays={statsWorkDays}
+            <SalaryPayslip
+              month={payslipMonthOverride ?? (detailFilterMonth || monthRange.currentMonth)}
+              onMonthChange={setPayslipMonthOverride}
+              records={records}
+              laborInsuranceEmployee={salarySettings.laborInsuranceEmployee}
+              canEditSettings={canEditSettings}
+              onSaveLaborInsurance={(amount) => saveSettings({ laborInsuranceEmployee: amount })}
             />
           )}
         </div>
@@ -883,6 +893,7 @@ export default function SalaryCalculator() {
             statsTotalHours={statsTotalHours}
             statsAvgHourlyRate={statsAvgHourlyRate}
             statsWorkDays={statsWorkDays}
+            statsTakeHome={statsTakeHome}
             monthlyStats={monthlyStats}
             maxMonthlyPay={maxMonthlyPay}
           />

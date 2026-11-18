@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 // Icon 元件 - Lucide Icons 風格的 SVG (細線條)
 // stroke-width: 1.5 更符合 Glassmorphism 質感
 
@@ -179,4 +181,97 @@ export const ExternalLinkIcon = ({ className = "", size = 24 }: IconProps) => (
     <polyline points="15 3 21 3 21 9" />
     <line x1="10" y1="14" x2="21" y2="3" />
   </svg>
+);
+
+/**
+ * 表單選擇器用的小圖示。
+ * 這組圖示都在 20px 以下顯示，筆畫改為 2 才不會在手機上糊成一團；共用同一個外框避免每個圖示重複一長串 svg 屬性。
+ */
+const StrokeIcon = ({ className = "", size = 18, children }: IconProps & { children: ReactNode }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    aria-hidden="true"
+  >
+    {children}
+  </svg>
+);
+
+export const ClockIcon = (props: IconProps) => (
+  <StrokeIcon {...props}>
+    <circle cx="12" cy="12" r="9" />
+    <polyline points="12 7 12 12 15.5 14" />
+  </StrokeIcon>
+);
+
+export const ChevronDownIcon = (props: IconProps) => (
+  <StrokeIcon {...props}>
+    <path d="m6 9 6 6 6-6" />
+  </StrokeIcon>
+);
+
+export const ChevronLeftIcon = (props: IconProps) => (
+  <StrokeIcon {...props}>
+    <path d="m15 18-6-6 6-6" />
+  </StrokeIcon>
+);
+
+export const ChevronRightIcon = (props: IconProps) => (
+  <StrokeIcon {...props}>
+    <path d="m9 18 6-6-6-6" />
+  </StrokeIcon>
+);
+
+export const CheckIcon = (props: IconProps) => (
+  <StrokeIcon {...props}>
+    <path d="M20 6 9 17l-5-5" />
+  </StrokeIcon>
+);
+
+export const CloseIcon = (props: IconProps) => (
+  <StrokeIcon {...props}>
+    <path d="M18 6 6 18" />
+    <path d="m6 6 12 12" />
+  </StrokeIcon>
+);
+
+export const PlusIcon = (props: IconProps) => (
+  <StrokeIcon {...props}>
+    <path d="M12 5v14" />
+    <path d="M5 12h14" />
+  </StrokeIcon>
+);
+
+export const PencilIcon = (props: IconProps) => (
+  <StrokeIcon {...props}>
+    <path d="M17 3a2.85 2.85 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+  </StrokeIcon>
+);
+
+export const ShieldIcon = (props: IconProps) => (
+  <StrokeIcon {...props}>
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+  </StrokeIcon>
+);
+
+export const BookIcon = (props: IconProps) => (
+  <StrokeIcon {...props}>
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5Z" />
+    <path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5" />
+  </StrokeIcon>
+);
+
+export const TagIcon = (props: IconProps) => (
+  <StrokeIcon {...props}>
+    <path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4Z" />
+    <circle cx="7.5" cy="7.5" r="1.5" />
+  </StrokeIcon>
 );

@@ -85,6 +85,15 @@ const TODO_COURSE_PALETTE = ['#a8664f', '#5b7d68', '#7a5c78', '#9a6a32', '#3f6f7
  */
 export function getTodoColor(todo: Pick<Todo, 'association' | 'associationLabel'>): string {
   const key = todo.association === 'course' ? todo.associationLabel.trim() : '';
+  return key ? getAccentColorByName(key) : TODO_DEFAULT_COLOR;
+}
+
+/**
+ * 依名稱雜湊取大地色。新增代辦時的課程卡片、班別範本卡片也用同一套，
+ * 選擇時看到的顏色就是存檔後月曆上的顏色。
+ */
+export function getAccentColorByName(name: string): string {
+  const key = name.trim();
   if (!key) return TODO_DEFAULT_COLOR;
   let hash = 0;
   for (let i = 0; i < key.length; i += 1) {

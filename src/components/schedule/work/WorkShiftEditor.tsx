@@ -7,11 +7,29 @@ import { getWorkRoleHourlyRate, getWorkRoleLabel, type RoleType } from '@/data/w
 import { getShiftTemplateWorkHours } from '@/data/shiftTemplates';
 import Modal, { ModalContent } from '../../shared/Modal';
 import { EditorField, EditorRow } from '../../shared/EditorForm';
+import { BriefcaseIcon, PlusIcon } from '../../shared/Icons';
+import DatePicker from '../../shared/pickers/DatePicker';
+import TimeRangePicker, { type DurationPreset, type TimeField } from '../../shared/pickers/TimeRangePicker';
+import { OptionAddCard, OptionCardGroup, PillGroup } from '../../shared/pickers/OptionPicker';
 import styles from '../../shared/EditorForm.module.css';
 
 import { useShiftTemplates } from '@/hooks/useShiftTemplates';
 import { useWorkRoles } from '@/hooks/useWorkRoles';
 import { findWorkShiftConflicts, formatConflictMessage } from '@/utils/scheduleConflicts';
+import { getAccentColorByName } from '@/utils/todos';
+
+// 打工常見的班長：半天、整天；比一般行程的 30 分～2 小時更實用
+const SHIFT_DURATIONS: DurationPreset[] = [
+  { label: '2 小時', minutes: 120 },
+  { label: '3 小時', minutes: 180 },
+  { label: '4 小時', minutes: 240 },
+  { label: '8 小時', minutes: 480 },
+];
+
+// 「自訂班別」選項的內部值；集中成常數，避免與使用者取的班別名稱撞名時難以追查
+const CUSTOM_CATEGORY = '__custom__';
+
+type ActivePicker = 'date' | TimeField | null;
 
 interface WorkShiftEditorProps {
   isOpen: boolean;
@@ -61,6 +79,8 @@ export default function WorkShiftEditor({
   const { roles } = useWorkRoles();
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // 同一時間只展開一個選擇器面板，避免日期與時間面板同時撐開整張卡片
+  const [activePicker, setActivePicker] = useState<ActivePicker>(null);
   const [formData, setFormData] = useState<Partial<WorkShift>>({
     date: new Date().toISOString().split('T')[0],
     startTime: '09:00',
@@ -119,7 +139,7 @@ export default function WorkShiftEditor({
    * 當使用者選擇下拉選單範本時，自動將該範本的欄位（時間、職稱／職位、工時、時薪）帶入表單
    */
   const handleSelectTemplate = (selectedName: string) => {
-    if (selectedName === '__custom__') {
+    if (selectedName === CUSTOM_CATEGORY) {
       setIsCustomCategory(true);
       setFormData((prev) => ({
         ...prev,
@@ -262,6 +282,8 @@ export default function WorkShiftEditor({
     ? templates.find((template) => template.name === formData.shiftCategory)
     : undefined;
 
+  const estimatedPay = Math.round((formData.workHours ?? 0) * (formData.hourlyRate ?? 0));
+
   return (
     <Modal
       isOpen={isOpen}
@@ -274,31 +296,16 @@ export default function WorkShiftEditor({
       <ModalContent render={(requestClose) => <form onSubmit={(e) => handleSubmit(e, requestClose)} className={styles.form}>
         {/* 班別放最前面：選擇範本會自動帶入時間、職稱與時薪，後面欄位只需微調 */}
         <EditorField
-          label="班別名稱 / 類別"
-          htmlFor="shiftCategory"
-          hint={isCustomCategory ? undefined : '選擇班別範本會自動帶入時間、職稱與時薪'}
+          label="班別"
+          hint={isCustomCategory ? '自訂班別不套用範本，工時依起訖時間計算' : templates.length ? '選擇班別範本會自動帶入時間、職稱與時薪' : '尚未建立班別範本，可到薪資計算的「班別範本管理」新增'}
         >
-          {!isCustomCategory ? (
-            <select
-              id="shiftCategory"
-              className={`${styles.control} ${styles.select}`}
-              value={formData.shiftCategory || ''}
-              onChange={(e) => handleSelectTemplate(e.target.value)}
-            >
-              <option value="">請選擇班別範本</option>
-              {templates.map((tpl) => (
-                <option key={tpl.id} value={tpl.name}>
-                  {tpl.name}　{tpl.startTime}–{tpl.endTime} · NT$ {tpl.hourlyRate}/h
-                </option>
-              ))}
-              <option value="__custom__">✍️ 自訂班別名稱…</option>
-            </select>
-          ) : (
+          {isCustomCategory ? (
             <div className={styles.inlineRow}>
               <input
                 id="shiftCategory"
                 className={styles.control}
                 type="text"
+                autoFocus
                 value={formData.shiftCategory || ''}
                 onChange={(e) =>
                   setFormData((prev) => ({
@@ -307,77 +314,71 @@ export default function WorkShiftEditor({
                     note: e.target.value,
                   }))
                 }
-                placeholder="請輸入自訂班別名稱"
+                placeholder="輸入自訂班別名稱"
+                aria-label="自訂班別名稱"
               />
-              <button type="button" className={styles.inlineButton} onClick={() => setIsCustomCategory(false)}>
-                選取範本
-              </button>
+              {templates.length > 0 && (
+                <button type="button" className={styles.inlineButton} onClick={() => handleSelectTemplate('')}>
+                  改選範本
+                </button>
+              )}
             </div>
+          ) : (
+            <OptionCardGroup
+              ariaLabel="班別範本"
+              value={formData.shiftCategory || ''}
+              onChange={handleSelectTemplate}
+              options={templates.map((tpl) => ({
+                value: tpl.name,
+                title: tpl.name,
+                meta: `${tpl.startTime}–${tpl.endTime} · $${tpl.hourlyRate}/h`,
+                accent: getAccentColorByName(tpl.name),
+                icon: <BriefcaseIcon size={16} />,
+              }))}
+              trailing={<OptionAddCard label="自訂班別" icon={<PlusIcon size={16} />} onClick={() => handleSelectTemplate(CUSTOM_CATEGORY)} />}
+            />
           )}
         </EditorField>
 
-        <EditorRow>
-          <EditorField label="日期" htmlFor="date" required>
-            <input
-              id="date"
-              className={styles.control}
-              type="date"
-              value={formData.date || ''}
-              onChange={(e) => setFormData((prev) => ({ ...prev, date: e.target.value }))}
-              required
-            />
-          </EditorField>
-          <EditorField label="職稱／職位" htmlFor="role" required>
-            <select
-              id="role"
-              className={`${styles.control} ${styles.select}`}
-              value={formData.role || roles[0]?.id || 'assistant'}
-              onChange={(e) => handleRoleChange(e.target.value)}
-            >
-              {roles.length === 0 ? (
-                <option value={formData.role || 'assistant'}>
-                  {getWorkRoleLabel(formData.role, roles, formData.roleName)}
-                </option>
-              ) : (
-                <>
-                  {formData.role && !roles.some((role) => role.id === formData.role) && (
-                    <option value={formData.role}>
-                      {getWorkRoleLabel(formData.role, roles, formData.roleName)}（已移除）
-                    </option>
-                  )}
-                  {roles.map((role) => (
-                    <option key={role.id} value={role.id}>
-                      {role.name}（NT$ {role.hourlyRate}/h）
-                    </option>
-                  ))}
-                </>
-              )}
-            </select>
-          </EditorField>
-        </EditorRow>
+        <EditorField label="日期" required>
+          <DatePicker
+            label="上班日期"
+            value={formData.date || ''}
+            onChange={(date) => setFormData((prev) => ({ ...prev, date }))}
+            isOpen={activePicker === 'date'}
+            onOpenChange={(open) => setActivePicker(open ? 'date' : null)}
+          />
+        </EditorField>
 
-        <EditorRow>
-          <EditorField label="開始時間" htmlFor="startTime" required>
-            <input
-              id="startTime"
-              className={styles.control}
-              type="time"
-              value={formData.startTime || ''}
-              onChange={(e) => handleTimeChange('startTime', e.target.value)}
-              required
-            />
-          </EditorField>
-          <EditorField label="結束時間" htmlFor="endTime" required>
-            <input
-              id="endTime"
-              className={styles.control}
-              type="time"
-              value={formData.endTime || ''}
-              onChange={(e) => handleTimeChange('endTime', e.target.value)}
-              required
-            />
-          </EditorField>
-        </EditorRow>
+        <EditorField label="上班時間" required>
+          <TimeRangePicker
+            ariaLabel="上班時間"
+            startTime={formData.startTime || ''}
+            endTime={formData.endTime || ''}
+            onStartChange={(value) => handleTimeChange('startTime', value)}
+            onEndChange={(value) => handleTimeChange('endTime', value)}
+            activeField={activePicker === 'date' ? null : activePicker}
+            onActiveFieldChange={setActivePicker}
+            startLabel="上班"
+            endLabel="下班"
+            durations={SHIFT_DURATIONS}
+          />
+        </EditorField>
+
+        <EditorField label="職稱／職位" required>
+          <PillGroup
+            ariaLabel="職稱／職位"
+            value={formData.role || roles[0]?.id || 'assistant'}
+            onChange={handleRoleChange}
+            options={[
+              // 原本的職稱若已被刪除仍保留選項，避免編輯舊班表時被無聲換成別的職稱
+              ...(formData.role && !roles.some((role) => role.id === formData.role)
+                ? [{ value: formData.role, label: `${getWorkRoleLabel(formData.role, roles, formData.roleName)}（已移除）` }]
+                : []),
+              ...roles.map((role) => ({ value: role.id, label: role.name, meta: `$${role.hourlyRate}` })),
+            ]}
+          />
+        </EditorField>
 
         <EditorRow>
           <EditorField label="時薪 (NT$)" htmlFor="hourlyRate">
@@ -385,17 +386,19 @@ export default function WorkShiftEditor({
               id="hourlyRate"
               className={styles.control}
               type="number"
+              inputMode="numeric"
               min="0"
               step="10"
               value={formData.hourlyRate ?? 200}
               onChange={(e) => setFormData((prev) => ({ ...prev, hourlyRate: Number(e.target.value) }))}
             />
           </EditorField>
-          <EditorField label={`計薪工時（${selectedTemplate ? '依班別範本' : '小時'}）`} htmlFor="workHours">
+          <EditorField label={selectedTemplate ? '計薪工時（依範本）' : '計薪工時（小時）'} htmlFor="workHours">
             <input
               id="workHours"
               className={styles.control}
               type="number"
+              inputMode="decimal"
               min="0"
               step="0.01"
               value={formData.workHours ?? 0}
@@ -404,6 +407,12 @@ export default function WorkShiftEditor({
             />
           </EditorField>
         </EditorRow>
+
+        {/* 送出前先看到這班能賺多少，時薪或工時填錯時能立刻察覺 */}
+        <div className={styles.summary} aria-live="polite">
+          <span>{formData.workHours ?? 0} 小時 × ${formData.hourlyRate ?? 0}</span>
+          <strong>預估 NT$ {estimatedPay.toLocaleString()}</strong>
+        </div>
 
         <div className={styles.actions}>
           {mode === 'edit' && onDelete && (

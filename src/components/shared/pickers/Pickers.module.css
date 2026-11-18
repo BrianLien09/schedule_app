@@ -1,0 +1,735 @@
+/*
+ * 自製日期／時間／分類選擇器共用樣式（Woven & Weft 大地色系）
+ * 為什麼集中一份：觸發按鈕、展開面板、快捷膠囊在班表、代辦、薪資三處共用，
+ * 拆成多份 CSS 很快就會出現高度、圓角不一致的情況。
+ */
+
+/* ===== 觸發按鈕 ===== */
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 58px;
+  padding: 0.5rem 0.75rem;
+  border: 2px dashed var(--glass-border);
+  border-radius: 14px;
+  background-color: rgba(220, 208, 194, 0.3);
+  color: var(--foreground);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) ease,
+    background-color var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease;
+}
+
+.trigger:hover:not(:disabled) {
+  background-color: rgba(220, 208, 194, 0.45);
+}
+
+.trigger:focus-visible {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(184, 126, 107, 0.2);
+}
+
+.trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.triggerOpen {
+  border-color: var(--color-primary);
+  border-style: solid;
+  background-color: var(--glass-bg);
+  box-shadow: 0 0 0 3px rgba(184, 126, 107, 0.16);
+}
+
+.triggerIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background-color: rgba(95, 113, 134, 0.12);
+  color: var(--color-secondary);
+  transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+
+.triggerOpen .triggerIcon {
+  background-color: var(--color-primary);
+  color: #f0ece1;
+}
+
+.triggerText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.triggerLabel {
+  overflow: hidden;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.triggerValue {
+  overflow: hidden;
+  font-size: 1rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.triggerPlaceholder {
+  font-weight: 600;
+  color: rgba(120, 113, 108, 0.75);
+}
+
+.triggerPeriod {
+  margin-left: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.triggerChevron {
+  flex-shrink: 0;
+  color: var(--muted);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.triggerOpen .triggerChevron {
+  transform: rotate(180deg);
+}
+
+.badge {
+  flex-shrink: 0;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background-color: var(--color-secondary);
+  color: #f0ece1;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+/* ===== 展開面板 ===== */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-top: 0.6rem;
+  padding: 0.9rem;
+  border: 2px dashed rgba(220, 208, 194, 0.9);
+  border-radius: 18px;
+  background-color: var(--glass-bg);
+  box-shadow: 0 8px 20px rgba(139, 121, 101, 0.1);
+  /* 只做進場動畫：收合時直接卸載，原生必填驗證才不會檢查到看不見的欄位 */
+  animation: pickerPanelEnter var(--dur-base) var(--ease-out) both;
+  transform-origin: top center;
+}
+
+@keyframes pickerPanelEnter {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.panelFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed rgba(220, 208, 194, 0.9);
+}
+
+/* ===== 快捷膠囊 ===== */
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.chipRowLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.chipRowNote {
+  margin-left: auto;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+}
+
+.chip {
+  min-height: 34px;
+  padding: 0.3rem 0.8rem;
+  border: 1px dashed rgba(220, 208, 194, 1);
+  border-radius: 999px;
+  background-color: rgba(220, 208, 194, 0.3);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) ease, border-color var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+
+.chip:hover {
+  background-color: rgba(220, 208, 194, 0.55);
+}
+
+.chipActive,
+.chipActive:hover {
+  border-style: solid;
+  border-color: var(--color-secondary);
+  background-color: var(--color-secondary);
+  color: #f0ece1;
+}
+
+/* ===== 文字按鈕 ===== */
+.ghostButton,
+.dangerButton,
+.doneButton,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  min-height: 42px;
+  padding: 0 0.9rem;
+  border: 0;
+  border-radius: 12px;
+  background-color: transparent;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) ease, transform var(--dur-fast) ease;
+}
+
+.ghostButton {
+  color: var(--color-secondary);
+}
+
+.ghostButton:hover {
+  background-color: rgba(95, 113, 134, 0.1);
+}
+
+.dangerButton {
+  color: #9b4436;
+}
+
+.dangerButton:hover {
+  background-color: rgba(155, 68, 54, 0.1);
+}
+
+.doneButton {
+  padding: 0 1.4rem;
+  background-color: var(--color-primary);
+  color: #f0ece1;
+}
+
+.doneButton:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.secondaryButton {
+  background-color: var(--color-secondary);
+  color: #f0ece1;
+}
+
+.secondaryButton:hover {
+  background-color: #4d5d70;
+}
+
+.doneButton:active,
+.secondaryButton:active {
+  transform: scale(0.97);
+}
+
+/* ===== 月曆 ===== */
+.calendarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.calendarTitle {
+  font-size: 1rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 12px;
+  background-color: rgba(220, 208, 194, 0.35);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) ease;
+}
+
+.iconButton:hover {
+  background-color: rgba(220, 208, 194, 0.65);
+}
+
+.weekRow,
+.dayGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.weekRow span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: center;
+}
+
+.weekRow span:nth-child(6),
+.weekRow span:nth-child(7) {
+  color: var(--color-primary);
+}
+
+/* 翻月時新月份從翻動方向滑入，提示「往前／往後」而不只是數字瞬間替換 */
+.dayGridNext {
+  animation: monthSlideNext var(--dur-base) var(--ease-out) both;
+}
+
+.dayGridPrev {
+  animation: monthSlidePrev var(--dur-base) var(--ease-out) both;
+}
+
+@keyframes monthSlideNext {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes monthSlidePrev {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.day {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  border: 0;
+  border-radius: 12px;
+  background-color: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+
+.day:hover:not(:disabled) {
+  background-color: rgba(220, 208, 194, 0.5);
+}
+
+.day:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.dayOutside {
+  opacity: 0.4;
+}
+
+.dayToday {
+  font-weight: 800;
+  color: var(--color-secondary);
+  box-shadow: inset 0 0 0 2px rgba(95, 113, 134, 0.45);
+}
+
+.dayToday::after {
+  content: '';
+  position: absolute;
+  bottom: 6px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+/* 起訖區間內的日子用淡色底串起來，跨日代辦一眼看出涵蓋範圍 */
+.dayInRange {
+  border-radius: 8px;
+  background-color: rgba(184, 126, 107, 0.12);
+}
+
+.daySelected,
+.daySelected:hover:not(:disabled) {
+  opacity: 1;
+  font-weight: 800;
+  background-color: var(--color-primary);
+  color: #f0ece1;
+  box-shadow: 0 4px 12px rgba(184, 126, 107, 0.3);
+}
+
+/* ===== 時間滾輪 ===== */
+.wheelGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 17rem;
+  margin: 0 auto;
+}
+
+.wheelColon {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.wheelColumn {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.wheelList {
+  position: relative;
+  z-index: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  border-radius: 12px;
+  outline: none;
+  /* 上下漸層遮罩，讓遠離中心的數字淡出，視覺上像真的滾筒 */
+  mask-image: linear-gradient(to bottom, transparent, #000 30%, #000 70%, transparent);
+}
+
+.wheelList::-webkit-scrollbar {
+  display: none;
+}
+
+.wheelList:focus-visible {
+  box-shadow: 0 0 0 2px rgba(184, 126, 107, 0.45);
+}
+
+.wheelItem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border: 0;
+  background-color: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  scroll-snap-align: center;
+  cursor: pointer;
+  transition: color var(--dur-fast) ease, font-size var(--dur-fast) ease;
+}
+
+.wheelItemActive {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--foreground);
+}
+
+.wheelBand {
+  position: absolute;
+  right: 4px;
+  left: 4px;
+  border: 2px solid rgba(184, 126, 107, 0.4);
+  border-radius: 12px;
+  background-color: rgba(184, 126, 107, 0.1);
+  pointer-events: none;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ===== 版面 ===== */
+.pairGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.sectionLabel {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+/* ===== 選項卡片（班別範本、職稱、課程） ===== */
+.optionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr));
+  gap: 0.55rem;
+}
+
+.optionCard {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  min-width: 0;
+  min-height: 58px;
+  padding: 0.6rem 0.75rem;
+  border: 2px dashed rgba(220, 208, 194, 0.9);
+  border-radius: 14px;
+  background-color: var(--glass-bg);
+  color: var(--foreground);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) ease,
+    background-color var(--dur-fast) ease,
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) ease;
+}
+
+.optionCard:hover:not(:disabled) {
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
+}
+
+.optionCard:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.optionCard:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.optionCardActive,
+.optionCardActive:hover:not(:disabled) {
+  border-style: solid;
+  border-color: var(--option-accent, var(--color-primary));
+  background-color: var(--option-tint, rgba(184, 126, 107, 0.12));
+  box-shadow: 0 6px 16px rgba(139, 121, 101, 0.12);
+}
+
+.optionDot {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background-color: var(--option-accent, var(--color-secondary));
+  color: #f0ece1;
+}
+
+.optionText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.optionTitle {
+  overflow: hidden;
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+}
+
+.optionMeta {
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.optionCheck {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: var(--option-accent, var(--color-primary));
+  color: #f0ece1;
+  box-shadow: 0 2px 6px rgba(61, 58, 54, 0.2);
+  animation: checkPop var(--dur-base) var(--ease-spring) both;
+}
+
+@keyframes checkPop {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.optionAdd {
+  align-items: center;
+  justify-content: center;
+  border-color: rgba(95, 113, 134, 0.35);
+  background-color: transparent;
+  color: var(--color-secondary);
+  font-weight: 800;
+}
+
+.pillGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 42px;
+  padding: 0.35rem 0.9rem;
+  border: 2px dashed rgba(220, 208, 194, 0.9);
+  border-radius: 999px;
+  background-color: var(--glass-bg);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) ease, border-color var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+
+.pill:hover:not(:disabled) {
+  border-color: var(--glass-border-hover);
+}
+
+.pillActive,
+.pillActive:hover:not(:disabled) {
+  border-style: solid;
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: #f0ece1;
+}
+
+.pillMeta {
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+@media (max-width: 480px) {
+  .trigger {
+    gap: 0.5rem;
+    padding: 0.45rem 0.55rem;
+  }
+
+  .triggerIcon {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+  }
+
+  .triggerValue {
+    font-size: 0.92rem;
+  }
+
+  .triggerChevron {
+    display: none;
+  }
+
+  .panel {
+    padding: 0.75rem;
+  }
+
+  .day {
+    height: 40px;
+  }
+
+  .pairGrid {
+    gap: 0.5rem;
+  }
+
+  /* 兩欄並排時每欄只剩約 170px，圖示與「今天」標籤會把日期擠成「1…」，窄螢幕只留文字 */
+  .pairGrid .triggerIcon,
+  .pairGrid .badge {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel,
+  .dayGridNext,
+  .dayGridPrev,
+  .optionCheck {
+    animation: none;
+  }
+}
+
+.durationRow {
+  margin-top: 0.6rem;
+}
+
+/* 日期文字（11月18日 週三）比時間（13:00 下午）長，日期欄分到較多寬度 */
+.dateTimeGrid {
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+}

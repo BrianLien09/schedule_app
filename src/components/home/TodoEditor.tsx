@@ -4,9 +4,13 @@ import { useState, type ReactNode } from 'react';
 import type { Todo, TodoInput } from '@/data/todos';
 import type { Course } from '@/data/schedule';
 import Modal, { ModalContent } from '@/components/shared/Modal';
-import { EditorField, EditorRow, EditorSegmented, EditorToggle } from '@/components/shared/EditorForm';
+import { EditorField, EditorSegmented, EditorToggle } from '@/components/shared/EditorForm';
+import { BookIcon } from '@/components/shared/Icons';
+import DateTimePicker, { type DateTimePart } from '@/components/shared/pickers/DateTimePicker';
+import { OptionCardGroup, type OptionCardItem } from '@/components/shared/pickers/OptionPicker';
 import { localDateKey } from '@/utils/agenda';
-import { validateTodo } from '@/utils/todos';
+import { durationLabel, minutesToTime, parseDateKey, timeToMinutes } from '@/utils/pickerDateTime';
+import { getAccentColorByName, validateTodo } from '@/utils/todos';
 import { defaultTodoDateTimes } from '@/utils/todoDefaults';
 import styles from '@/components/shared/EditorForm.module.css';
 
@@ -27,6 +31,12 @@ interface TodoEditorProps {
   onClose: () => void;
 }
 
+// Course.day 為 1～7（週一～週日），與 Date.getDay() 不同，因此另建對照表
+const COURSE_DAY_LABELS: Record<number, string> = { 1: '週一', 2: '週二', 3: '週三', 4: '週四', 5: '週五', 6: '週六', 7: '週日' };
+
+type Endpoint = 'start' | 'end';
+type ActivePicker = { endpoint: Endpoint; part: DateTimePart } | null;
+
 const ASSOCIATION_OPTIONS: { value: Todo['association']; label: string }[] = [
   { value: 'none', label: '其他' },
   { value: 'course', label: '課程' },
@@ -45,6 +55,8 @@ export default function TodoEditor({ todo, courses, now, canSync, initialDate, t
   const [associationId, setAssociationId] = useState(todo?.association === 'course' ? todo.associationId : '');
   const [syncToFamily, setSyncToFamily] = useState(todo?.syncToFamily ?? false);
   const [busy, setBusy] = useState(false);
+  // 四個選擇器（起訖日期與時間）同時只展開一個，避免整張卡片被撐得很長
+  const [activePicker, setActivePicker] = useState<ActivePicker>(null);
   const [draftId] = useState(() => crypto.randomUUID());
   const [error, setError] = useState('');
 
@@ -56,6 +68,7 @@ export default function TodoEditor({ todo, courses, now, canSync, initialDate, t
 
   // 選擇課程後自動帶入該課程的上課與下課時間；日期欄位若是空的，時間無法單獨存在，因此一併補上今天
   const selectCourse = (courseId: string): void => {
+    setError('');
     setAssociationId(courseId);
     const course = courses.find((item) => item.id === courseId);
     if (!course) return;
@@ -107,39 +120,57 @@ export default function TodoEditor({ todo, courses, now, canSync, initialDate, t
     }
   };
 
-  const dateTimeFields = (['start', 'end'] as const).map((endpoint) => {
-    const isStart = endpoint === 'start';
-    const date = isStart ? startDate : endDate;
-    const time = isStart ? startTime : endTime;
-    const setDate = isStart ? setStartDate : setEndDate;
-    const setTime = isStart ? setStartTime : setEndTime;
-    const label = isStart ? '開始' : '結束';
-    return (
-      <EditorRow key={endpoint}>
-        <EditorField label={`${label}日期`} htmlFor={`todo-${endpoint}-date`}>
-          <input
-            id={`todo-${endpoint}-date`}
-            className={styles.control}
-            type="date"
-            min={isStart ? undefined : startDate || undefined}
-            value={date}
-            onChange={(event) => { setDate(event.target.value); if (!event.target.value) setTime(''); }}
-          />
-        </EditorField>
-        <EditorField label={`${label}時間`} htmlFor={`todo-${endpoint}-time`}>
-          <input
-            id={`todo-${endpoint}-time`}
-            className={styles.control}
-            type="time"
-            step={60}
-            min={!isStart && startDate === endDate ? startTime || undefined : undefined}
-            value={time}
-            onChange={(event) => { setTime(event.target.value); if (event.target.value && !date) setDate(localDateKey(new Date())); }}
-          />
-        </EditorField>
-      </EditorRow>
-    );
-  });
+  const pickerPart = (endpoint: Endpoint): DateTimePart | null =>
+    activePicker?.endpoint === endpoint ? activePicker.part : null;
+  const setPickerPart = (endpoint: Endpoint, part: DateTimePart | null): void =>
+    setActivePicker(part ? { endpoint, part } : null);
+
+  // 開始日期往後挪到結束日之後時，結束日跟著移動，而不是等送出才跳錯誤要使用者回頭改
+  const changeStartDate = (value: string): void => {
+    setError('');
+    setStartDate(value);
+    if (!value) setStartTime('');
+    if (value && endDate && endDate < value) setEndDate(value);
+  };
+  const changeEndDate = (value: string): void => {
+    setError('');
+    setEndDate(value);
+    if (!value) setEndTime('');
+  };
+  // 時間不能脫離日期單獨存在，先選時間時自動補上今天
+  const changeStartTime = (value: string): void => {
+    setError('');
+    setStartTime(value);
+    if (value && !startDate) setStartDate(localDateKey(new Date()));
+  };
+  const changeEndTime = (value: string): void => {
+    setError('');
+    setEndTime(value);
+    if (value && !endDate) setEndDate(startDate || localDateKey(new Date()));
+  };
+
+  const rangeNote = (() => {
+    if (!startDate || !endDate) return null;
+    if (startDate === endDate) return startTime && endTime ? durationLabel(startTime, endTime, false) : '同一天';
+    const from = parseDateKey(startDate);
+    const to = parseDateKey(endDate);
+    if (!from || !to) return null;
+    return `橫跨 ${Math.round((to.getTime() - from.getTime()) / 86_400_000) + 1} 天`;
+  })();
+
+  const courseOptions: OptionCardItem<string>[] = [
+    ...courses.map((course) => ({
+      value: course.id,
+      title: course.name,
+      meta: `${COURSE_DAY_LABELS[course.day] ?? ''} ${course.startTime}–${course.endTime}`.trim(),
+      accent: getAccentColorByName(course.name),
+      icon: <BookIcon size={15} />,
+    })),
+    // 原本關聯的課程若已被刪除，仍保留選項，避免編輯時關聯被無聲清掉
+    ...options
+      .filter((option) => !courses.some((course) => course.id === option.id))
+      .map((option) => ({ value: option.id, title: option.label, meta: '已移除的課程', accent: getAccentColorByName(option.label), icon: <BookIcon size={15} /> })),
+  ];
 
   return (
     <Modal isOpen onClose={() => { if (!busy) onClose(); }} title={todo ? '編輯代辦行程' : '新增代辦行程'} headerExtra={typeSwitcher} animateIn={animateIn} maxWidth="560px">
@@ -158,49 +189,70 @@ export default function TodoEditor({ todo, courses, now, canSync, initialDate, t
             />
           </EditorField>
 
-          <EditorRow>
-            <EditorField label="隸屬類型">
-              <EditorSegmented
-                value={association}
-                options={ASSOCIATION_OPTIONS}
-                ariaLabel="隸屬類型"
-                onChange={(value) => { setAssociation(value); setAssociationId(''); }}
-              />
-            </EditorField>
-            <EditorField label="家庭月曆">
-              <EditorToggle
-                compact
-                checked={syncToFamily}
-                disabled={!canSync || busy}
-                onChange={setSyncToFamily}
-                label={canSync ? '同步至家庭月曆' : '尚未開放同步'}
-                title={canSync ? '同步起訖日期與時間；同一天只顯示一筆' : '此帳號尚未開放家庭同步'}
-              />
-            </EditorField>
-          </EditorRow>
+          <EditorField label="隸屬類型">
+            <EditorSegmented
+              value={association}
+              options={ASSOCIATION_OPTIONS}
+              ariaLabel="隸屬類型"
+              onChange={(value) => { setAssociation(value); setAssociationId(''); }}
+            />
+          </EditorField>
 
           {association === 'course' && (
             <EditorField
               label="選擇課程"
-              htmlFor="todo-course"
               required
-              hint={options.length ? '選擇課程會自動帶入上課與下課時間' : '目前沒有課程可選，請先到學校課表新增。'}
+              hint={courseOptions.length ? '選擇課程會自動帶入上課與下課時間，顏色與月曆上的代辦一致' : '目前沒有課程可選，請先到學校課表新增。'}
             >
-              <select
-                id="todo-course"
-                className={`${styles.control} ${styles.select}`}
-                required
+              <OptionCardGroup
+                ariaLabel="選擇課程"
                 value={associationId}
                 disabled={busy}
-                onChange={(event) => selectCourse(event.target.value)}
-              >
-                <option value="">請選擇課程</option>
-                {options.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
-              </select>
+                onChange={selectCourse}
+                options={courseOptions}
+              />
             </EditorField>
           )}
 
-          {dateTimeFields}
+          <section className={styles.sectionCard} aria-label="代辦時間">
+            <div className={styles.sectionHeader}>
+              <span>時間（皆可不填）</span>
+              {rangeNote && <span className={styles.sectionNote}>{rangeNote}</span>}
+            </div>
+            <DateTimePicker
+              label="開始"
+              date={startDate}
+              time={startTime}
+              onDateChange={changeStartDate}
+              onTimeChange={changeStartTime}
+              activePart={pickerPart('start')}
+              onActivePartChange={(part) => setPickerPart('start', part)}
+              defaultTime={defaults.startTime ?? '09:00'}
+              rangeEdge={endDate}
+              disabled={busy}
+            />
+            <DateTimePicker
+              label="結束"
+              date={endDate}
+              time={endTime}
+              onDateChange={changeEndDate}
+              onTimeChange={changeEndTime}
+              activePart={pickerPart('end')}
+              onActivePartChange={(part) => setPickerPart('end', part)}
+              defaultTime={startTime ? minutesToTime((timeToMinutes(startTime) ?? 0) + 60) : defaults.endTime ?? '10:00'}
+              minDate={startDate || undefined}
+              rangeEdge={startDate}
+              disabled={busy}
+            />
+          </section>
+
+          <EditorToggle
+            checked={syncToFamily}
+            disabled={!canSync || busy}
+            onChange={setSyncToFamily}
+            label={canSync ? '同步至家庭月曆' : '尚未開放同步'}
+            hint={canSync ? '同步起訖日期與時間；同一天只顯示一筆' : '此帳號尚未開放家庭同步'}
+          />
 
           {error && <p role="alert" className={styles.error}>{error}</p>}
 

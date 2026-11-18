@@ -13,12 +13,14 @@ interface EditorFieldProps {
 
 /** 標籤 + 控制項 + 說明文字的標準欄位，讓所有新增卡片的欄位節奏一致。 */
 export function EditorField({ label, htmlFor, required, hint, children }: EditorFieldProps) {
+  const LabelTag = htmlFor ? 'label' : 'span';
   return (
     <div className={styles.field}>
-      <label className={styles.label} htmlFor={htmlFor}>
+      {/* 自製選擇器是一組按鈕而非單一輸入框，沒有 htmlFor 時改用 span，避免 label 點擊落空 */}
+      <LabelTag className={styles.label} htmlFor={htmlFor}>
         {label}
         {required && <span className={styles.required}>*</span>}
-      </label>
+      </LabelTag>
       {children}
       {hint && <p className={styles.hint}>{hint}</p>}
     </div>

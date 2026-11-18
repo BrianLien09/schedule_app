@@ -16,6 +16,7 @@ import {
   type WorkRole,
   type WorkRoleInput,
 } from '@/data/workRoles';
+import { SALARY_SETTINGS_ID } from '@/data/salarySettings';
 
 interface StoredWorkRole {
   id: string;
@@ -32,6 +33,8 @@ function normalizeWorkRoles(data: StoredWorkRole[]): WorkRole[] {
     .filter(
       (item) =>
         item.id !== WORK_ROLES_CONFIG_ID &&
+        // 薪資設定文件與職稱共用集合，明確排除，避免日後設定新增 name 欄位時被誤當成職稱
+        item.id !== SALARY_SETTINGS_ID &&
         typeof item.name === 'string' &&
         item.name.trim().length > 0 &&
         typeof item.hourlyRate === 'number' &&
@@ -150,7 +153,7 @@ export function useWorkRoles() {
   };
 
   const deleteRole = async (id: string): Promise<void> => {
-    if (!user || !hasWriteAccess(user.email) || id === WORK_ROLES_CONFIG_ID) {
+    if (!user || !hasWriteAccess(user.email) || id === WORK_ROLES_CONFIG_ID || id === SALARY_SETTINGS_ID) {
       console.warn('目前沒有刪除職稱／職位的權限');
       return;
     }

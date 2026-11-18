@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import type { PayBreakdown } from '@/utils/salaryStats';
 import styles from './SalaryAnalytics.module.css';
 
 export interface MonthStats {
@@ -20,6 +20,8 @@ interface SalaryAnalyticsProps {
   statsTotalHours: number;
   statsAvgHourlyRate: number;
   statsWorkDays: number;
+  /** 統計範圍內逐月扣除勞保後的金額 */
+  statsTakeHome: PayBreakdown;
   monthlyStats: MonthStats[];
   maxMonthlyPay: number;
 }
@@ -39,6 +41,7 @@ export default function SalaryAnalytics({
   statsTotalHours,
   statsAvgHourlyRate,
   statsWorkDays,
+  statsTakeHome,
   monthlyStats,
   maxMonthlyPay,
 }: SalaryAnalyticsProps) {
@@ -62,23 +65,8 @@ export default function SalaryAnalytics({
                 key={filter.value}
                 type="button"
                 onClick={() => setStatsFilter(filter.value)}
-                style={{
-                  padding: '0.4rem 0.9rem',
-                  borderRadius: '8px',
-                  border: statsFilter === filter.value
-                    ? '2px solid var(--color-primary)'
-                    : '1px solid rgba(255,255,255,0.2)',
-                  background: statsFilter === filter.value
-                    ? 'rgba(184, 126, 107, 0.25)'
-                    : 'rgba(255,255,255,0.05)',
-                  color: statsFilter === filter.value
-                    ? 'var(--color-primary)'
-                    : 'var(--text-secondary)',
-                  fontWeight: statsFilter === filter.value ? '600' : '400',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  fontSize: '0.85rem',
-                }}
+                aria-pressed={statsFilter === filter.value}
+                className={`${styles.filterChip} ${statsFilter === filter.value ? styles.filterChipActive : ''}`}
                 title={filter.description}
               >
                 {filter.label}
@@ -88,17 +76,8 @@ export default function SalaryAnalytics({
           <button
             type="button"
             onClick={() => setShowStats(!showStats)}
-            style={{
-              padding: '0.5rem 1rem',
-              borderRadius: '8px',
-              border: 'none',
-              background: 'rgba(139, 92, 246, 0.2)',
-              color: '#a855f7',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s ease, color 0.2s ease',
-              fontSize: '0.9rem',
-            }}
+            className={styles.toggleButton}
+            aria-expanded={showStats}
           >
             {showStats ? '隱藏圖表' : '顯示圖表'}
           </button>
@@ -114,17 +93,12 @@ export default function SalaryAnalytics({
             gap: 'var(--spacing-md)',
             marginBottom: 'var(--spacing-lg)'
           }}>
-            <div className={styles.statCard} style={{
-              padding: '1rem',
-              borderRadius: '12px',
-              background: 'rgba(184, 126, 107, 0.12)',
-              border: '1px dashed rgba(184, 126, 107, 0.3)',
-            }}>
-              <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '0.5rem', fontWeight: 600 }}>
-                總收入
-              </div>
-              <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-primary)' }}>
-                ${statsTotalPay.toLocaleString()}
+            <div className={`${styles.statCard} ${styles.statCardHero}`}>
+              <div className={styles.statLabel}>實際到帳</div>
+              <div className={styles.statValue}>${statsTakeHome.netPay.toLocaleString()}</div>
+              <div className={styles.statFoot}>
+                應發 ${statsTotalPay.toLocaleString()}
+                {statsTakeHome.laborInsurance > 0 && <> − 勞保 ${statsTakeHome.laborInsurance.toLocaleString()}</>}
               </div>
             </div>
 
