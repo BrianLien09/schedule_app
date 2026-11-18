@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { ChevronRightIcon, CloseIcon } from '@/components/shared/Icons';
 import { minutesToTime, timeToMinutes } from '@/utils/pickerDateTime';
 import TimeWheel from './TimeWheel';
@@ -26,6 +27,12 @@ interface TimePanelProps {
   /** 「設定結束 →」這類下一步，省去收合後再點另一個欄位 */
   nextAction?: { label: string; onClick: () => void };
   onDone: () => void;
+  /** 精簡模式：滾輪格子變矮、微調只留 ±30 分，浮動面板才不會比整張表單還高 */
+  compact?: boolean;
+  /** 放在微調列上方的額外快捷，例如精簡模式下收進面板的時長膠囊 */
+  extra?: ReactNode;
+  /** 微調列右側的補充文字，例如總時長 */
+  note?: string | null;
 }
 
 function nowString(): string {
@@ -34,16 +41,18 @@ function nowString(): string {
 }
 
 /** 時間面板內容：快捷微調＋滾輪＋完成列。開始／結束、班表／代辦都共用這一份。 */
-export default function TimePanel({ ariaLabel, value, onChange, defaultValue, showNow, onClear, nextAction, onDone }: TimePanelProps) {
+export default function TimePanel({ ariaLabel, value, onChange, defaultValue, showNow, onClear, nextAction, onDone, compact, extra, note }: TimePanelProps) {
   const minutes = timeToMinutes(value);
+  const nudges = compact ? NUDGES.filter((nudge) => Math.abs(nudge.minutes) === 30) : NUDGES;
 
   return (
     <>
+      {extra}
       <div className={styles.chipRow}>
         {showNow && (
           <button type="button" className={styles.chip} onClick={() => onChange(nowString())}>現在</button>
         )}
-        {minutes !== null && NUDGES.map((nudge) => (
+        {minutes !== null && nudges.map((nudge) => (
           <button
             key={nudge.label}
             type="button"
@@ -54,11 +63,12 @@ export default function TimePanel({ ariaLabel, value, onChange, defaultValue, sh
             {nudge.label}
           </button>
         ))}
+        {note && <span className={styles.chipRowNote}>{note}</span>}
       </div>
 
       {/* key 綁定是否有值：從空值切到有值時重建滾輪，直接定位到預設時間而不是從 00:00 捲過去 */}
       {minutes !== null ? (
-        <TimeWheel key="wheel" ariaLabel={ariaLabel} value={value} onChange={onChange} />
+        <TimeWheel key="wheel" ariaLabel={ariaLabel} value={value} onChange={onChange} compact={compact} />
       ) : (
         <div key="empty" className={styles.emptyState}>
           <span>尚未設定{ariaLabel}</span>

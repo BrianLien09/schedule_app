@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import styles from './Pickers.module.css';
 
 const ITEM_HEIGHT = 44;
+// 精簡模式的格高：仍高於 32px 的最小觸控尺寸，五格合計 180px，比預設少 40px
+const COMPACT_ITEM_HEIGHT = 36;
 // 上下各露出兩格，使用者看得到前後的值，知道還能繼續滾
 const VISIBLE_PADDING = 2;
 // 捲動停下後才提交：避免滑動途中每經過一格就更新一次，造成整張表單連續重繪
@@ -17,6 +19,7 @@ interface WheelColumnProps {
   count: number;
   value: number;
   unit: string;
+  itemHeight: number;
   onChange: (value: number) => void;
 }
 
@@ -25,7 +28,7 @@ interface WheelColumnProps {
  * 為什麼用原生捲動＋scroll-snap 而不是自己算拖曳：手機慣性滑動、桌面滑鼠滾輪、觸控板都交給瀏覽器處理，
  * 手感與系統一致；我們只在捲動停下後讀取對齊的格子。
  */
-function WheelColumn({ ariaLabel, count, value, unit, onChange }: WheelColumnProps) {
+function WheelColumn({ ariaLabel, count, value, unit, itemHeight, onChange }: WheelColumnProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const settleTimer = useRef<number | null>(null);
   const hasMounted = useRef(false);
@@ -35,13 +38,13 @@ function WheelColumn({ ariaLabel, count, value, unit, onChange }: WheelColumnPro
   useEffect(() => {
     const list = listRef.current;
     if (!list) return;
-    const target = value * ITEM_HEIGHT;
+    const target = value * itemHeight;
     if (Math.abs(list.scrollTop - target) >= 1) {
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       list.scrollTo({ top: target, behavior: hasMounted.current && !reduceMotion ? 'smooth' : 'auto' });
     }
     hasMounted.current = true;
-  }, [value]);
+  }, [value, itemHeight]);
 
   useEffect(() => () => {
     if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
@@ -50,7 +53,7 @@ function WheelColumn({ ariaLabel, count, value, unit, onChange }: WheelColumnPro
   const handleScroll = (): void => {
     const list = listRef.current;
     if (!list) return;
-    const index = Math.min(count - 1, Math.max(0, Math.round(list.scrollTop / ITEM_HEIGHT)));
+    const index = Math.min(count - 1, Math.max(0, Math.round(list.scrollTop / itemHeight)));
     setCenterIndex(index);
     if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
     settleTimer.current = window.setTimeout(() => {
@@ -80,9 +83,9 @@ function WheelColumn({ ariaLabel, count, value, unit, onChange }: WheelColumnPro
         aria-valuetext={`${value} ${unit}`}
         className={styles.wheelList}
         style={{
-          height: ITEM_HEIGHT * (VISIBLE_PADDING * 2 + 1),
-          paddingTop: ITEM_HEIGHT * VISIBLE_PADDING,
-          paddingBottom: ITEM_HEIGHT * VISIBLE_PADDING,
+          height: itemHeight * (VISIBLE_PADDING * 2 + 1),
+          paddingTop: itemHeight * VISIBLE_PADDING,
+          paddingBottom: itemHeight * VISIBLE_PADDING,
         }}
         onScroll={handleScroll}
         onKeyDown={handleKeyDown}
@@ -94,7 +97,7 @@ function WheelColumn({ ariaLabel, count, value, unit, onChange }: WheelColumnPro
             tabIndex={-1}
             aria-hidden="true"
             className={`${styles.wheelItem} ${index === centerIndex ? styles.wheelItemActive : ''}`}
-            style={{ height: ITEM_HEIGHT }}
+            style={{ height: itemHeight }}
             onClick={() => onChange(index)}
           >
             {pad(index)}
@@ -102,7 +105,7 @@ function WheelColumn({ ariaLabel, count, value, unit, onChange }: WheelColumnPro
         ))}
       </div>
       {/* 中央選取帶：數字捲過時像被框住，一眼知道目前選的是哪一格 */}
-      <div aria-hidden="true" className={styles.wheelBand} style={{ top: ITEM_HEIGHT * VISIBLE_PADDING, height: ITEM_HEIGHT }} />
+      <div aria-hidden="true" className={styles.wheelBand} style={{ top: itemHeight * VISIBLE_PADDING, height: itemHeight }} />
     </div>
   );
 }
@@ -112,19 +115,21 @@ interface TimeWheelProps {
   value: string;
   ariaLabel: string;
   onChange: (value: string) => void;
+  compact?: boolean;
 }
 
 /** 時、分兩欄滾輪：0～59 任何分鐘都能直接滑到，不必先點時、再點分、再按確認。 */
-export default function TimeWheel({ value, ariaLabel, onChange }: TimeWheelProps) {
+export default function TimeWheel({ value, ariaLabel, onChange, compact }: TimeWheelProps) {
+  const itemHeight = compact ? COMPACT_ITEM_HEIGHT : ITEM_HEIGHT;
   const [hourText, minuteText] = value.split(':');
   const hour = Number(hourText) || 0;
   const minute = Number(minuteText) || 0;
 
   return (
-    <div role="group" aria-label={ariaLabel} className={styles.wheelGroup}>
-      <WheelColumn ariaLabel="時" unit="點" count={24} value={hour} onChange={(next) => onChange(`${pad(next)}:${pad(minute)}`)} />
+    <div role="group" aria-label={ariaLabel} className={`${styles.wheelGroup} ${compact ? styles.wheelGroupCompact : ''}`}>
+      <WheelColumn ariaLabel="時" unit="點" count={24} itemHeight={itemHeight} value={hour} onChange={(next) => onChange(`${pad(next)}:${pad(minute)}`)} />
       <span aria-hidden="true" className={styles.wheelColon}>:</span>
-      <WheelColumn ariaLabel="分" unit="分" count={60} value={minute} onChange={(next) => onChange(`${pad(hour)}:${pad(next)}`)} />
+      <WheelColumn ariaLabel="分" unit="分" count={60} itemHeight={itemHeight} value={minute} onChange={(next) => onChange(`${pad(hour)}:${pad(next)}`)} />
     </div>
   );
 }

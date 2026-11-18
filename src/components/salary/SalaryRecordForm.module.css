@@ -1,5 +1,8 @@
 .cardContainer {
-  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem 1.4rem;
   margin-bottom: var(--spacing-lg);
   border-radius: 20px;
 }
@@ -14,22 +17,13 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
-  padding-bottom: var(--spacing-md);
-  border-bottom: 2px dashed rgba(220, 208, 194, 0.8);
+  gap: 0.75rem;
 }
 
 .title {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 800;
-}
-
-.subtitle {
-  margin: 0.2rem 0 0;
-  font-size: 0.85rem;
-  color: var(--muted);
 }
 
 .importGroup {
@@ -40,14 +34,14 @@
 }
 
 .importButton {
-  min-height: 44px;
-  padding: 0 1.1rem;
+  min-height: 40px;
+  padding: 0 1rem;
   border: 0;
   border-radius: 999px;
   background-color: var(--color-secondary);
   color: #f0ece1;
   font: inherit;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   font-weight: 800;
   cursor: pointer;
   transition: background-color var(--dur-fast) ease, transform var(--dur-fast) ease;
@@ -61,54 +55,116 @@
   transform: scale(0.97);
 }
 
-.fields {
+/* 範本列：淡底托盤把「一鍵帶入」和下方手動欄位分開，標籤與膠囊同一行，不再獨佔一個區塊 */
+.templates {
   display: flex;
-  flex-direction: column;
-  gap: 1.1rem;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: 14px;
+  background-color: rgba(95, 113, 134, 0.06);
 }
 
-/* 日期與時間在桌面並排，各自的展開面板只撐開自己那一欄 */
-.pickerRow {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
-  gap: var(--spacing-md);
-  align-items: start;
+.templatesLabel {
+  flex-shrink: 0;
+  padding-top: 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--color-secondary);
 }
 
-.numberRow {
+/* 桌面兩列四欄：第一列是「什麼時候」，第二列是「怎麼算錢」，每格都是 46px 高的同一條基準線 */
+.grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--spacing-md);
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.9fr);
+  grid-template-areas:
+    'date time time hours'
+    'role role rate category';
+  gap: 0.85rem 0.75rem;
+}
+
+.areaDate {
+  grid-area: date;
+  min-width: 0;
+}
+
+.areaTime {
+  grid-area: time;
+  min-width: 0;
+}
+
+.areaHours {
+  grid-area: hours;
+  min-width: 0;
+}
+
+.areaRole {
+  grid-area: role;
+  min-width: 0;
+}
+
+.areaRate {
+  grid-area: rate;
+  min-width: 0;
+}
+
+.areaCategory {
+  grid-area: category;
+  min-width: 0;
 }
 
 .footer {
   display: flex;
-  flex-wrap: wrap;
   align-items: stretch;
   gap: 0.75rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--field-line);
 }
 
-.footer > div {
-  flex: 1 1 16rem;
+/* 預估金額放在送出按鈕旁邊，按下去之前最後確認一次數字 */
+.estimate {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
+  min-width: 0;
+  padding: 0 1rem;
+  border-radius: 12px;
+  background-color: rgba(184, 126, 107, 0.08);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.estimate strong {
+  font-size: 1.05rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-primary);
 }
 
 .addButton {
-  flex: 0 1 12rem;
+  flex: 0 0 11rem;
+  min-height: 48px;
 }
 
 @media (max-width: 900px) {
-  .pickerRow {
-    grid-template-columns: 1fr;
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      'date date'
+      'time time'
+      'hours rate'
+      'role role'
+      'category category';
   }
 }
 
 @media (max-width: 767px) {
   .cardContainer {
+    gap: 0.85rem;
     padding: 1rem;
-    margin-bottom: 1rem;
-  }
-
-  .header {
     margin-bottom: 1rem;
   }
 
@@ -117,16 +173,64 @@
     justify-content: space-between;
   }
 
-  .numberRow {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.6rem;
+  .importGroup {
+    flex-wrap: nowrap;
   }
 
-  .numberRow > :last-child {
-    grid-column: 1 / -1;
+  .importButton {
+    flex: 1;
+    white-space: nowrap;
+  }
+
+  .importLong {
+    display: none;
+  }
+
+  .templates {
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+
+  .templatesLabel {
+    padding-top: 0;
+  }
+
+  /* 手機範本改成單列左右滑：五個範本直排會佔掉半個螢幕，橫滑只要一列高 */
+  .templates [role='group'] {
+    flex-wrap: nowrap;
+    max-width: 100%;
+    padding: 0.15rem 0;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .templates [role='group']::-webkit-scrollbar {
+    display: none;
+  }
+
+  .templates [role='group'] > button {
+    flex-shrink: 0;
+    scroll-snap-align: start;
+  }
+
+  .grid {
+    gap: 0.75rem 0.6rem;
+  }
+}
+
+/* 手機把按鈕放到預估金額下方，拇指最容易按到的位置 */
+@media (max-width: 480px) {
+  .footer {
+    flex-direction: column;
+  }
+
+  .estimate {
+    min-height: 44px;
   }
 
   .addButton {
-    flex: 1 1 100%;
+    flex-basis: auto;
   }
 }

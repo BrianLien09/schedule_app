@@ -2,6 +2,7 @@
 
 import { useId, useRef } from 'react';
 import { ClockIcon } from '@/components/shared/Icons';
+import { useDismissOnOutside } from '@/hooks/useDismissOnOutside';
 import { useRevealOnOpen } from '@/hooks/useRevealOnOpen';
 import { durationLabel, minutesToTime, periodLabel, timeToMinutes } from '@/utils/pickerDateTime';
 import PickerTrigger from './PickerTrigger';
@@ -38,6 +39,11 @@ interface TimeRangePickerProps {
   /** 打工班表不允許跨夜；代辦這類行程才需要 */
   allowOvernight?: boolean;
   disabled?: boolean;
+  /**
+   * 精簡模式：觸發按鈕單行顯示、面板在桌面浮在欄位下方，時長快捷收進面板裡，
+   * 欄位密集的表單（薪資記錄）才不會因為一排時長膠囊多佔一列。
+   */
+  compact?: boolean;
 }
 
 /** 時間數字後面接時段文字，而不是另佔一欄，手機並排兩個觸發按鈕時才放得下 */
@@ -64,65 +70,79 @@ export default function TimeRangePicker({
   durations = DEFAULT_DURATIONS,
   allowOvernight = false,
   disabled,
+  compact,
 }: TimeRangePickerProps) {
   const panelId = useId();
+  const anchorRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   useRevealOnOpen(panelRef, activeField !== null);
+  useDismissOnOutside(anchorRef, Boolean(compact) && activeField !== null, () => onActiveFieldChange(null));
   const startMinutes = timeToMinutes(startTime);
   const isEditingEnd = activeField === 'end';
   const duration = durationLabel(startTime, endTime, allowOvernight);
   const toggle = (field: TimeField): void => onActiveFieldChange(activeField === field ? null : field);
 
+  const durationChips = startMinutes !== null && (
+    <div className={`${styles.chipRow} ${compact ? '' : styles.durationRow}`} role="group" aria-label="快速設定時長">
+      <span className={styles.chipRowLabel}>時長</span>
+      {durations.map((preset) => {
+        const value = minutesToTime(startMinutes + preset.minutes);
+        // 不允許跨夜時，會超過午夜的時長直接不提供，避免一鍵就產生無效班表
+        if (!allowOvernight && startMinutes + preset.minutes >= 1440) return null;
+        return (
+          <button
+            key={preset.label}
+            type="button"
+            disabled={disabled}
+            aria-pressed={endTime === value}
+            aria-label={`結束時間設為開始後 ${preset.label}`}
+            className={`${styles.chip} ${endTime === value ? styles.chipActive : ''}`}
+            onClick={() => onEndChange(value)}
+          >
+            {preset.label}
+          </button>
+        );
+      })}
+      {/* 精簡面板寬度有限，「共 8 小時 30 分」放這裡會被擠到第二行，改由面板放在微調列右側 */}
+      {!compact && duration && <span className={styles.chipRowNote}>{duration}</span>}
+    </div>
+  );
+
   return (
-    <div role="group" aria-label={ariaLabel}>
+    <div ref={anchorRef} role="group" aria-label={ariaLabel} className={compact ? styles.floatAnchor : undefined}>
       <div className={styles.pairGrid}>
         <PickerTrigger
           label={startLabel}
-          icon={<ClockIcon size={18} />}
+          icon={<ClockIcon size={compact ? 16 : 18} />}
           value={renderTimeValue(startTime)}
           isOpen={activeField === 'start'}
           panelId={panelId}
           disabled={disabled}
+          compact={compact}
+          inlineLabel
           onClick={() => toggle('start')}
         />
         <PickerTrigger
           label={endLabel}
-          icon={<ClockIcon size={18} />}
+          icon={<ClockIcon size={compact ? 16 : 18} />}
           value={renderTimeValue(endTime)}
           isOpen={isEditingEnd}
           panelId={panelId}
           disabled={disabled}
+          compact={compact}
+          inlineLabel
           onClick={() => toggle('end')}
         />
       </div>
 
-      {startMinutes !== null && (
-        <div className={`${styles.chipRow} ${styles.durationRow}`} role="group" aria-label="快速設定時長">
-          <span className={styles.chipRowLabel}>時長</span>
-          {durations.map((preset) => {
-            const value = minutesToTime(startMinutes + preset.minutes);
-            // 不允許跨夜時，會超過午夜的時長直接不提供，避免一鍵就產生無效班表
-            if (!allowOvernight && startMinutes + preset.minutes >= 1440) return null;
-            return (
-              <button
-                key={preset.label}
-                type="button"
-                disabled={disabled}
-                aria-pressed={endTime === value}
-                aria-label={`結束時間設為開始後 ${preset.label}`}
-                className={`${styles.chip} ${endTime === value ? styles.chipActive : ''}`}
-                onClick={() => onEndChange(value)}
-              >
-                {preset.label}
-              </button>
-            );
-          })}
-          {duration && <span className={styles.chipRowNote}>{duration}</span>}
-        </div>
-      )}
+      {!compact && durationChips}
 
       {activeField && (
-        <div id={panelId} ref={panelRef} className={styles.panel}>
+        <div
+          id={panelId}
+          ref={panelRef}
+          className={`${styles.panel} ${compact ? styles.panelFloating : ''} ${compact && isEditingEnd ? styles.panelAlignEnd : ''}`}
+        >
           {/* key 綁欄位：切換開始／結束時重建滾輪，直接定位到新欄位的值 */}
           <TimePanel
             key={activeField}
@@ -133,6 +153,9 @@ export default function TimeRangePicker({
             showNow={!isEditingEnd}
             nextAction={isEditingEnd ? undefined : { label: '設定結束', onClick: () => onActiveFieldChange('end') }}
             onDone={() => onActiveFieldChange(null)}
+            compact={compact}
+            extra={compact ? durationChips : undefined}
+            note={compact ? duration : undefined}
           />
         </div>
       )}

@@ -13,9 +13,9 @@
   min-width: 0;
   min-height: 58px;
   padding: 0.5rem 0.75rem;
-  border: 2px dashed var(--glass-border);
+  border: 1.5px solid var(--field-line);
   border-radius: 14px;
-  background-color: rgba(220, 208, 194, 0.3);
+  background-color: var(--field-bg);
   color: var(--foreground);
   text-align: left;
   font: inherit;
@@ -27,7 +27,8 @@
 }
 
 .trigger:hover:not(:disabled) {
-  background-color: rgba(220, 208, 194, 0.45);
+  border-color: var(--field-line-strong);
+  background-color: var(--field-bg-hover);
 }
 
 .trigger:focus-visible {
@@ -43,8 +44,7 @@
 
 .triggerOpen {
   border-color: var(--color-primary);
-  border-style: solid;
-  background-color: var(--glass-bg);
+  background-color: var(--field-bg-hover);
   box-shadow: 0 0 0 3px rgba(184, 126, 107, 0.16);
 }
 
@@ -131,10 +131,10 @@
   gap: 0.85rem;
   margin-top: 0.6rem;
   padding: 0.9rem;
-  border: 2px dashed rgba(220, 208, 194, 0.9);
+  border: 1.5px solid var(--field-line);
   border-radius: 18px;
-  background-color: var(--glass-bg);
-  box-shadow: 0 8px 20px rgba(139, 121, 101, 0.1);
+  background-color: var(--panel-bg);
+  box-shadow: 0 10px 24px rgba(139, 121, 101, 0.1);
   /* 只做進場動畫：收合時直接卸載，原生必填驗證才不會檢查到看不見的欄位 */
   animation: pickerPanelEnter var(--dur-base) var(--ease-out) both;
   transform-origin: top center;
@@ -157,7 +157,7 @@
   justify-content: space-between;
   gap: 0.5rem;
   padding-top: 0.75rem;
-  border-top: 1px dashed rgba(220, 208, 194, 0.9);
+  border-top: 1px solid var(--field-line);
 }
 
 /* ===== 快捷膠囊 ===== */
@@ -184,9 +184,9 @@
 .chip {
   min-height: 34px;
   padding: 0.3rem 0.8rem;
-  border: 1px dashed rgba(220, 208, 194, 1);
+  border: 1px solid var(--field-line);
   border-radius: 999px;
-  background-color: rgba(220, 208, 194, 0.3);
+  background-color: var(--field-bg);
   color: var(--foreground);
   font: inherit;
   font-size: 0.8rem;
@@ -196,12 +196,12 @@
 }
 
 .chip:hover {
-  background-color: rgba(220, 208, 194, 0.55);
+  border-color: var(--field-line-strong);
+  background-color: var(--field-bg-hover);
 }
 
 .chipActive,
 .chipActive:hover {
-  border-style: solid;
   border-color: var(--color-secondary);
   background-color: var(--color-secondary);
   color: #f0ece1;
@@ -290,14 +290,14 @@
   height: 40px;
   border: 0;
   border-radius: 12px;
-  background-color: rgba(220, 208, 194, 0.35);
+  background-color: #f4efe7;
   color: var(--foreground);
   cursor: pointer;
   transition: background-color var(--dur-fast) ease;
 }
 
 .iconButton:hover {
-  background-color: rgba(220, 208, 194, 0.65);
+  background-color: #ebe3d7;
 }
 
 .weekRow,
@@ -368,7 +368,7 @@
 }
 
 .day:hover:not(:disabled) {
-  background-color: rgba(220, 208, 194, 0.5);
+  background-color: #f1ebe2;
 }
 
 .day:disabled {
@@ -516,7 +516,7 @@
 /* ===== 選項卡片（班別範本、職稱、課程） ===== */
 .optionGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 11.5rem), 1fr));
   gap: 0.55rem;
 }
 
@@ -528,9 +528,9 @@
   min-width: 0;
   min-height: 58px;
   padding: 0.6rem 0.75rem;
-  border: 2px dashed rgba(220, 208, 194, 0.9);
+  border: 1.5px solid var(--field-line);
   border-radius: 14px;
-  background-color: var(--glass-bg);
+  background-color: var(--field-bg);
   color: var(--foreground);
   text-align: left;
   font: inherit;
@@ -543,7 +543,8 @@
 }
 
 .optionCard:hover:not(:disabled) {
-  border-color: var(--glass-border-hover);
+  border-color: var(--field-line-strong);
+  background-color: var(--field-bg-hover);
   transform: translateY(-1px);
 }
 
@@ -558,9 +559,8 @@
 
 .optionCardActive,
 .optionCardActive:hover:not(:disabled) {
-  border-style: solid;
   border-color: var(--option-accent, var(--color-primary));
-  background-color: var(--option-tint, rgba(184, 126, 107, 0.12));
+  background-color: var(--option-tint, rgba(184, 126, 107, 0.1));
   box-shadow: 0 6px 16px rgba(139, 121, 101, 0.12);
 }
 
@@ -572,8 +572,13 @@
   width: 30px;
   height: 30px;
   border-radius: 10px;
-  background-color: var(--option-accent, var(--color-secondary));
-  color: #f0ece1;
+  background-color: var(--option-tint, rgba(95, 113, 134, 0.12));
+  color: var(--option-accent, var(--color-secondary));
+}
+
+.optionCardActive .optionDot {
+  background-color: var(--option-accent, var(--color-primary));
+  color: #ffffff;
 }
 
 .optionText {
@@ -630,7 +635,7 @@
 .optionAdd {
   align-items: center;
   justify-content: center;
-  border-color: rgba(95, 113, 134, 0.35);
+  border: 1.5px dashed rgba(95, 113, 134, 0.4);
   background-color: transparent;
   color: var(--color-secondary);
   font-weight: 800;
@@ -648,9 +653,9 @@
   gap: 0.4rem;
   min-height: 42px;
   padding: 0.35rem 0.9rem;
-  border: 2px dashed rgba(220, 208, 194, 0.9);
+  border: 1.5px solid var(--field-line);
   border-radius: 999px;
-  background-color: var(--glass-bg);
+  background-color: var(--field-bg);
   color: var(--foreground);
   font: inherit;
   font-size: 0.88rem;
@@ -660,15 +665,15 @@
 }
 
 .pill:hover:not(:disabled) {
-  border-color: var(--glass-border-hover);
+  border-color: var(--field-line-strong);
+  background-color: var(--field-bg-hover);
 }
 
 .pillActive,
 .pillActive:hover:not(:disabled) {
-  border-style: solid;
   border-color: var(--color-primary);
   background-color: var(--color-primary);
-  color: #f0ece1;
+  color: #ffffff;
 }
 
 .pillMeta {
@@ -709,11 +714,6 @@
     gap: 0.5rem;
   }
 
-  /* 兩欄並排時每欄只剩約 170px，圖示與「今天」標籤會把日期擠成「1…」，窄螢幕只留文字 */
-  .pairGrid .triggerIcon,
-  .pairGrid .badge {
-    display: none;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -732,4 +732,266 @@
 /* 日期文字（11月18日 週三）比時間（13:00 下午）長，日期欄分到較多寬度 */
 .dateTimeGrid {
   grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+}
+
+/* 兩欄並排時每欄寬度有限，「今天」標籤與箭頭會把日期擠成「11月18日…」；平板以下先拿掉這兩個，手機再拿掉圖示 */
+@media (max-width: 640px) {
+  .pairGrid .badge,
+  .pairGrid .triggerChevron {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .pairGrid .triggerIcon {
+    display: none;
+  }
+}
+
+/* ===== 精簡模式（欄位密集的頁面表單） ===== */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* 和 .control 一樣 46px 高，與旁邊的數字輸入框對齊成同一條線 */
+.triggerCompact {
+  gap: 0.5rem;
+  min-height: 46px;
+  padding: 0.3rem 0.65rem;
+  border-radius: 10px;
+}
+
+.triggerCompact .triggerIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+
+.triggerCompact .triggerText {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+
+.triggerCompact .triggerValue {
+  font-size: 0.95rem;
+}
+
+.triggerLabelInline {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.triggerCompact .badge {
+  padding: 0.1rem 0.45rem;
+  font-size: 0.68rem;
+}
+
+.floatAnchor {
+  position: relative;
+}
+
+/* 浮動面板：蓋在下方欄位上，而不是把整張表單往下推 */
+.panelFloating {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  /* 至少 19rem 放得下月曆；上下班兩欄合起來很寬時最多 23rem，不必撐滿整個欄位 */
+  width: max(min(100%, 23rem), 19rem);
+  gap: 0.65rem;
+  margin-top: 0;
+  padding: 0.75rem;
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(61, 58, 54, 0.16), 0 2px 6px rgba(61, 58, 54, 0.06);
+}
+
+.panelAlignEnd {
+  right: 0;
+  left: auto;
+}
+
+.panelFloating .panelFooter {
+  padding-top: 0.6rem;
+}
+
+/* 精簡面板的膠囊列一律單行：放不下時左右滑，不換行把面板撐高 */
+.panelFloating .chipRow {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.panelFloating .chipRow::-webkit-scrollbar {
+  display: none;
+}
+
+.panelFloating .chip,
+.panelFloating .chipRowLabel,
+.panelFloating .chipRowNote {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.panelFloating .chip {
+  min-height: 30px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.76rem;
+}
+
+.panelFloating .ghostButton,
+.panelFloating .doneButton {
+  min-height: 36px;
+  font-size: 0.82rem;
+}
+
+.panelFloating .iconButton {
+  width: 34px;
+  height: 34px;
+}
+
+.panelFloating .day {
+  height: 34px;
+  border-radius: 9px;
+  font-size: 0.85rem;
+}
+
+.panelFloating .dayToday::after {
+  bottom: 4px;
+}
+
+.wheelGroupCompact {
+  max-width: 13rem;
+}
+
+.wheelGroupCompact .wheelItem {
+  font-size: 1rem;
+}
+
+.wheelGroupCompact .wheelItemActive {
+  font-size: 1.25rem;
+}
+
+/* 精簡膠囊：班別範本一列排開，名稱與時間同一行 */
+.optionChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.optionCardCompact {
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 40px;
+  padding: 0.3rem 0.75rem 0.3rem 0.35rem;
+  border-radius: 999px;
+}
+
+.optionCardCompact .optionDot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+}
+
+.optionCardCompact .optionText {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+
+.optionCardCompact .optionTitle {
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+
+.optionCardCompact .optionMeta {
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.optionClear {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-left: 0.15rem;
+  border-radius: 50%;
+  background-color: var(--option-accent, var(--color-primary));
+  color: #ffffff;
+  animation: checkPop var(--dur-base) var(--ease-spring) both;
+}
+
+/* 手機寬度不夠浮在欄位上，回到行內展開：面板跟著欄位往下推，不會超出螢幕 */
+@media (max-width: 640px) {
+  .panelFloating {
+    position: static;
+    width: auto;
+    margin-top: 0.5rem;
+    box-shadow: 0 10px 24px rgba(139, 121, 101, 0.1);
+  }
+
+  /* 手機寬度只夠四個時長膠囊，「時長」兩字拿掉，膠囊本身就寫了「小時」 */
+  .panelFloating .chipRowLabel {
+    display: none;
+  }
+
+  .panelFloating .chipRow {
+    gap: 0.35rem;
+  }
+
+  .panelFloating .chip {
+    padding: 0.2rem 0.55rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .optionClear {
+    animation: none;
+  }
+}
+
+/* 職稱膠囊放進格線時：外框做成一條 46px 的分段軌道，選項在軌道內橫向排列，超出時可左右滑 */
+.pillGroupCompact {
+  flex-wrap: nowrap;
+  gap: 0.25rem;
+  min-height: 46px;
+  padding: 0.25rem;
+  overflow-x: auto;
+  border: 1.5px solid var(--field-line);
+  border-radius: 10px;
+  background-color: var(--field-bg);
+  scrollbar-width: none;
+}
+
+.pillGroupCompact::-webkit-scrollbar {
+  display: none;
+}
+
+.pillGroupCompact .pill {
+  flex-shrink: 0;
+  min-height: 34px;
+  padding: 0.2rem 0.75rem;
+  border: 0;
+  border-radius: 8px;
+  background-color: transparent;
+  font-size: 0.85rem;
+}
+
+.pillGroupCompact .pill:hover:not(:disabled) {
+  background-color: rgba(95, 113, 134, 0.08);
+}
+
+.pillGroupCompact .pillActive,
+.pillGroupCompact .pillActive:hover:not(:disabled) {
+  background-color: var(--color-primary);
+  color: #ffffff;
 }

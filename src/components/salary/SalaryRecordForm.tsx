@@ -86,47 +86,58 @@ export default function SalaryRecordForm({
     }));
   };
 
+  // 取消範本只清掉班別名稱，日期時間保留；工時改回依起訖時間自動計算，避免留著範本扣過休息的數字
+  const clearTemplate = (): void => {
+    setCurrentRecord((prev) => ({ ...prev, shiftCategory: '' }));
+    if (currentRecord.startTime && currentRecord.endTime) {
+      setWorkHours(String(Number(calculateWorkHoursFromTimes(currentRecord.startTime, currentRecord.endTime).toFixed(2))));
+    }
+  };
+
   return (
     <div id="add-record-form" className={`glass no-print ${styles.cardContainer}`}>
       <div className={styles.header}>
-        <div>
-          <h3 className={styles.title}>新增工作記錄</h3>
-          <p className={styles.subtitle}>選班別範本一鍵帶入，或手動填寫日期與時間</p>
-        </div>
+        <h3 className={styles.title}>新增工作記錄</h3>
 
         {/* 行程月曆同步：先選月份再匯入，避免一次把所有月份的班表都灌進來 */}
         <div className={styles.importGroup}>
           <MonthStepper value={importMonth} onChange={setImportMonth} ariaLabel="匯入月份" />
-          <button type="button" className={styles.importButton} onClick={onImportFromWorkShifts}>
-            從行程月曆匯入
+          <button type="button" className={styles.importButton} onClick={onImportFromWorkShifts} aria-label="從行程月曆匯入">
+            {/* 手機只留「匯入」，和月份切換器排在同一列；完整名稱留給螢幕閱讀器 */}
+            <span className={styles.importLong}>從行程月曆</span>匯入
           </button>
         </div>
       </div>
 
-      <div className={styles.fields}>
-        {templates.length > 0 && (
-          <EditorField label="快速套用班別範本">
-            <OptionCardGroup
-              ariaLabel="班別範本"
-              value={isTemplateApplied ? currentRecord.shiftCategory ?? '' : ''}
-              onChange={(name) => {
-                const template = templates.find((item) => item.name === name);
-                if (template) onApplyTemplate(template);
-              }}
-              options={templates.map((template) => ({
-                value: template.name,
-                title: template.name,
-                meta: `${template.startTime}–${template.endTime} · $${template.hourlyRate}/h`,
-                accent: getAccentColorByName(template.name),
-                icon: <BriefcaseIcon size={16} />,
-              }))}
-            />
-          </EditorField>
-        )}
+      {templates.length > 0 && (
+        <div className={styles.templates}>
+          <span className={styles.templatesLabel}>快速套用</span>
+          <OptionCardGroup
+            compact
+            ariaLabel="班別範本"
+            value={isTemplateApplied ? currentRecord.shiftCategory ?? '' : ''}
+            onChange={(name) => {
+              const template = templates.find((item) => item.name === name);
+              if (template) onApplyTemplate(template);
+            }}
+            onDeselect={clearTemplate}
+            options={templates.map((template) => ({
+              value: template.name,
+              title: template.name,
+              meta: `${template.startTime}–${template.endTime}`,
+              accent: getAccentColorByName(template.name),
+              icon: <BriefcaseIcon size={14} />,
+            }))}
+          />
+        </div>
+      )}
 
-        <div className={styles.pickerRow}>
+      {/* 固定格線：桌面兩列四欄，一眼看完整筆記錄；平板與手機改兩欄，最常改的日期與時間排在最前面 */}
+      <div className={styles.grid}>
+        <div className={styles.areaDate}>
           <EditorField label="日期" required>
             <DatePicker
+              compact
               label="工作日期"
               value={currentRecord.date}
               onChange={(date) => setCurrentRecord((prev) => ({ ...prev, date }))}
@@ -134,9 +145,13 @@ export default function SalaryRecordForm({
               onOpenChange={(open) => setActivePicker(open ? 'date' : null)}
             />
           </EditorField>
-          <EditorField label="上班時間" required>
+        </div>
+
+        <div className={styles.areaTime}>
+          <EditorField label="上下班時間" required>
             <TimeRangePicker
-              ariaLabel="上班時間"
+              compact
+              ariaLabel="上下班時間"
               startTime={currentRecord.startTime}
               endTime={currentRecord.endTime}
               onStartChange={(value) => changeTime('startTime', value)}
@@ -150,22 +165,8 @@ export default function SalaryRecordForm({
           </EditorField>
         </div>
 
-        <EditorField label="職稱／職位">
-          <PillGroup
-            ariaLabel="職稱／職位"
-            value={currentRecord.role}
-            onChange={changeRole}
-            options={[
-              ...(!roles.some((role) => role.id === currentRecord.role)
-                ? [{ value: currentRecord.role, label: `${getWorkRoleLabel(currentRecord.role, roles, currentRecord.roleName)}${roles.length ? '（已移除）' : ''}` }]
-                : []),
-              ...roles.map((role) => ({ value: role.id, label: role.name, meta: `$${role.hourlyRate}` })),
-            ]}
-          />
-        </EditorField>
-
-        <div className={styles.numberRow}>
-          <EditorField label={isTemplateApplied ? '計薪工時（依範本）' : '計薪工時（小時）'} htmlFor="salary-work-hours">
+        <div className={styles.areaHours}>
+          <EditorField label={isTemplateApplied ? '計薪工時（依範本）' : '計薪工時'} htmlFor="salary-work-hours">
             <input
               id="salary-work-hours"
               className={editorStyles.control}
@@ -178,6 +179,26 @@ export default function SalaryRecordForm({
               placeholder="例：8"
             />
           </EditorField>
+        </div>
+
+        <div className={styles.areaRole}>
+          <EditorField label="職稱／職位">
+            <PillGroup
+              compact
+              ariaLabel="職稱／職位"
+              value={currentRecord.role}
+              onChange={changeRole}
+              options={[
+                ...(!roles.some((role) => role.id === currentRecord.role)
+                  ? [{ value: currentRecord.role, label: `${getWorkRoleLabel(currentRecord.role, roles, currentRecord.roleName)}${roles.length ? '（已移除）' : ''}` }]
+                  : []),
+                ...roles.map((role) => ({ value: role.id, label: role.name, meta: `$${role.hourlyRate}` })),
+              ]}
+            />
+          </EditorField>
+        </div>
+
+        <div className={styles.areaRate}>
           <EditorField label="時薪 (NT$)" htmlFor="salary-hourly-rate">
             <input
               id="salary-hourly-rate"
@@ -189,6 +210,9 @@ export default function SalaryRecordForm({
               onChange={(e) => setCurrentRecord((prev) => ({ ...prev, hourlyRate: Number(e.target.value) }))}
             />
           </EditorField>
+        </div>
+
+        <div className={styles.areaCategory}>
           <EditorField label="班別（選填）" htmlFor="salary-shift-category">
             <select
               id="salary-shift-category"
@@ -206,21 +230,21 @@ export default function SalaryRecordForm({
             </select>
           </EditorField>
         </div>
+      </div>
 
-        <div className={styles.footer}>
-          <div className={editorStyles.summary} aria-live="polite">
-            <span>{parseFloat(workHours) || 0} 小時 × ${currentRecord.hourlyRate || 0}</span>
-            <strong>預估 NT$ {estimatedPay.toLocaleString()}</strong>
-          </div>
-          <button
-            type="button"
-            className={`${editorStyles.btn} ${editorStyles.btnSave} ${styles.addButton}`}
-            onClick={() => { void onAddRecord(); }}
-            disabled={isAddingRecord}
-          >
-            {isAddingRecord ? '新增中…' : '新增記錄'}
-          </button>
+      <div className={styles.footer}>
+        <div className={styles.estimate} aria-live="polite">
+          <span>{parseFloat(workHours) || 0} 小時 × ${currentRecord.hourlyRate || 0}</span>
+          <strong>預估 NT$ {estimatedPay.toLocaleString()}</strong>
         </div>
+        <button
+          type="button"
+          className={`${editorStyles.btn} ${editorStyles.btnSave} ${styles.addButton}`}
+          onClick={() => { void onAddRecord(); }}
+          disabled={isAddingRecord}
+        >
+          {isAddingRecord ? '新增中…' : '新增記錄'}
+        </button>
       </div>
     </div>
   );

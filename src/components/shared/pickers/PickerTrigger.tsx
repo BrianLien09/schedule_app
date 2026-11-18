@@ -15,6 +15,12 @@ interface PickerTriggerProps {
   isOpen: boolean;
   panelId: string;
   disabled?: boolean;
+  /**
+   * 精簡尺寸：單行、46px 高，和一般輸入框等高，用在欄位密集的表單（薪資記錄）。
+   * 精簡時標籤預設只給螢幕閱讀器，外層欄位標籤已經寫了；inlineLabel 用於「上班／下班」這類需要看得到的短標籤。
+   */
+  compact?: boolean;
+  inlineLabel?: boolean;
   onClick: () => void;
 }
 
@@ -32,14 +38,17 @@ export default function PickerTrigger({
   isOpen,
   panelId,
   disabled,
+  compact,
+  inlineLabel,
   onClick,
 }: PickerTriggerProps) {
   const isEmpty = value === '' || value === null || value === undefined;
+  const labelClass = compact ? (inlineLabel ? styles.triggerLabelInline : styles.srOnly) : styles.triggerLabel;
 
   return (
     <button
       type="button"
-      className={`${styles.trigger} ${isOpen ? styles.triggerOpen : ''}`}
+      className={`${styles.trigger} ${compact ? styles.triggerCompact : ''} ${isOpen ? styles.triggerOpen : ''}`}
       aria-expanded={isOpen}
       aria-controls={panelId}
       disabled={disabled}
@@ -47,13 +56,13 @@ export default function PickerTrigger({
     >
       <span className={styles.triggerIcon} aria-hidden="true">{icon}</span>
       <span className={styles.triggerText}>
-        <span className={styles.triggerLabel}>{label}</span>
+        <span className={labelClass}>{label}</span>
         <span className={`${styles.triggerValue} ${isEmpty ? styles.triggerPlaceholder : ''}`}>
           {isEmpty ? placeholder : value}
         </span>
       </span>
       {badge && <span className={styles.badge}>{badge}</span>}
-      <ChevronDownIcon size={18} className={styles.triggerChevron} />
+      <ChevronDownIcon size={compact ? 16 : 18} className={styles.triggerChevron} />
     </button>
   );
 }
