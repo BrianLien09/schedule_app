@@ -53,16 +53,17 @@
   min-height: 46px;
   box-sizing: border-box;
   padding: 0.7rem 0.9rem;
-  border: 2px dashed var(--glass-border);
+  border: 1.5px solid var(--field-line);
   border-radius: 10px;
-  background-color: rgba(220, 208, 194, 0.25);
+  background-color: var(--field-bg);
   color: var(--foreground);
   font-size: 1rem;
   transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .control:hover:not(:disabled) {
-  background-color: rgba(220, 208, 194, 0.4);
+  border-color: var(--field-line-strong);
+  background-color: var(--field-bg-hover);
 }
 
 .control:focus,
@@ -92,7 +93,7 @@
 }
 
 .select option {
-  background-color: #f0ece1;
+  background-color: #ffffff;
   color: #3d3a36;
 }
 
@@ -110,9 +111,9 @@
   flex-shrink: 0;
   min-height: 46px;
   padding: 0 1rem;
-  border: 2px dashed var(--glass-border);
+  border: 1.5px solid var(--field-line);
   border-radius: 10px;
-  background-color: #f0ece1;
+  background-color: var(--field-bg);
   color: var(--foreground);
   font-weight: 600;
   cursor: pointer;
@@ -131,9 +132,9 @@
   grid-auto-columns: 1fr;
   gap: 6px;
   padding: 5px;
-  border: 2px dashed var(--glass-border);
+  border: 1.5px solid var(--field-line);
   border-radius: 12px;
-  background-color: rgba(220, 208, 194, 0.25);
+  background-color: #f4efe7;
 }
 
 .segment {
@@ -164,7 +165,7 @@
 }
 
 .segment:hover:not(.segmentActive) {
-  background-color: rgba(220, 208, 194, 0.5);
+  background-color: var(--field-bg-hover);
 }
 
 .segmentActive {
@@ -179,9 +180,9 @@
   align-items: flex-start;
   gap: 0.75rem;
   padding: 0.85rem 1rem;
-  border: 2px dashed var(--glass-border);
+  border: 1.5px solid var(--field-line);
   border-radius: 12px;
-  background-color: rgba(240, 236, 225, 0.6);
+  background-color: var(--field-bg);
   cursor: pointer;
   transition: border-color 0.2s ease, background-color 0.2s ease;
 }
@@ -234,9 +235,9 @@
   justify-content: space-between;
   gap: 0.35rem 0.75rem;
   padding: 0.75rem 1rem;
-  border: 1px dashed rgba(184, 126, 107, 0.35);
+  border: 1px solid rgba(184, 126, 107, 0.22);
   border-radius: 12px;
-  background-color: rgba(184, 126, 107, 0.08);
+  background-color: #fcf5f1;
   font-size: 0.85rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -255,9 +256,9 @@
   flex-direction: column;
   gap: 0.75rem;
   padding: 0.9rem;
-  border: 2px dashed rgba(220, 208, 194, 0.7);
+  border: 1.5px solid var(--field-line);
   border-radius: 16px;
-  background-color: rgba(220, 208, 194, 0.12);
+  background-color: rgba(255, 255, 255, 0.45);
 }
 
 .sectionHeader {
@@ -299,8 +300,8 @@
 }
 
 .btnCancel {
-  border: 2px dashed var(--glass-border);
-  background-color: #f0ece1;
+  border: 1.5px solid var(--field-line);
+  background-color: var(--field-bg);
   color: var(--foreground);
 }
 

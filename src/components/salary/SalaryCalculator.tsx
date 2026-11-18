@@ -788,12 +788,10 @@ export default function SalaryCalculator() {
       <div style={{ maxWidth: '1000px', margin: '0 auto' }} className={isPrintMode ? 'print-friendly' : ''} ref={pdfContentRef}>
         {!isPrintMode && <DataReadError message={[loadError, templatesError, rolesError, settingsError].filter(Boolean).join('、')} />}
         
-        {/* 標題與月薪資單 */}
+        {/* 月薪資單 */}
         <div className={!isPrintMode ? 'page-section-enter' : undefined}>
-          <div className={styles.pageHeader}>
-            <h2 className={isPrintMode ? styles.pageTitlePrint : styles.pageTitle}>薪資計算助手</h2>
-            {!isPrintMode && <p className={styles.pageSubtitle}>記錄每一班的工時，月底直接看到扣完勞保後的實際到帳。</p>}
-          </div>
+          {/* 標題只在列印／匯出 PDF 時出現：畫面上有導覽列標示頁面，薪資單本身就是頁首 */}
+          {isPrintMode && <h2 className={styles.pageTitlePrint}>薪資計算助手</h2>}
 
           {!isPrintMode && !(loadError && records.length === 0) && (
             <SalaryPayslip

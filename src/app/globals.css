@@ -59,6 +59,14 @@
   --glass-shadow: 0 8px 20px rgba(139, 121, 101, 0.08);
   --glass-shadow-hover: 0 12px 28px rgba(139, 121, 101, 0.14);
   --glass-highlight: rgba(255, 255, 255, 0.5);
+
+  /* 表單表面：控制項放在燕麥白卡片上時，用更亮的暖白＋實線細框，
+     取代半透明沙褐底＋虛線，避免米色疊米色顯得髒 */
+  --field-bg: #fbf9f5;
+  --field-bg-hover: #ffffff;
+  --field-line: #e6ddd1;
+  --field-line-strong: #d6c8b8;
+  --panel-bg: #fdfcf9;
   --glass-blur: none;
 
   /* Background (溫暖灰米色) */
