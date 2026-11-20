@@ -10,11 +10,12 @@ import { EditorField, EditorRow } from '../../shared/EditorForm';
 import { BriefcaseIcon, PlusIcon } from '../../shared/Icons';
 import DatePicker from '../../shared/pickers/DatePicker';
 import TimeRangePicker, { type DurationPreset, type TimeField } from '../../shared/pickers/TimeRangePicker';
-import { OptionAddCard, OptionCardGroup, PillGroup } from '../../shared/pickers/OptionPicker';
+import { OptionAddCard, OptionCardGroup, OptionSelect, PillGroup } from '../../shared/pickers/OptionPicker';
 import styles from '../../shared/EditorForm.module.css';
 
 import { useShiftTemplates } from '@/hooks/useShiftTemplates';
 import { useWorkRoles } from '@/hooks/useWorkRoles';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { findWorkShiftConflicts, formatConflictMessage } from '@/utils/scheduleConflicts';
 import { getAccentColorByName } from '@/utils/todos';
 
@@ -29,7 +30,7 @@ const SHIFT_DURATIONS: DurationPreset[] = [
 // 「自訂班別」選項的內部值；集中成常數，避免與使用者取的班別名稱撞名時難以追查
 const CUSTOM_CATEGORY = '__custom__';
 
-type ActivePicker = 'date' | TimeField | null;
+type ActivePicker = 'category' | 'date' | TimeField | null;
 
 interface WorkShiftEditorProps {
   isOpen: boolean;
@@ -81,6 +82,8 @@ export default function WorkShiftEditor({
   const [isSubmitting, setIsSubmitting] = useState(false);
   // 同一時間只展開一個選擇器面板，避免日期與時間面板同時撐開整張卡片
   const [activePicker, setActivePicker] = useState<ActivePicker>(null);
+  // 與 Pickers.module.css 的 640px 斷點一致：兩欄並排的觸發按鈕在這以下開始精簡
+  const isMobile = useIsMobile(641);
   const [formData, setFormData] = useState<Partial<WorkShift>>({
     date: new Date().toISOString().split('T')[0],
     startTime: '09:00',
@@ -282,7 +285,16 @@ export default function WorkShiftEditor({
     ? templates.find((template) => template.name === formData.shiftCategory)
     : undefined;
 
-  const estimatedPay = Math.round((formData.workHours ?? 0) * (formData.hourlyRate ?? 0));
+  // 手機下拉與桌面卡片共用同一份選項，兩邊顯示的時間、時薪才不會不同步
+  const templateOptions = templates.map((tpl) => ({
+    value: tpl.name,
+    title: tpl.name,
+    meta: `${tpl.startTime}–${tpl.endTime} · $${tpl.hourlyRate}/h`,
+    accent: getAccentColorByName(tpl.name),
+    icon: <BriefcaseIcon size={16} />,
+  }));
+
+  const estimatedPay =Math.round((formData.workHours ?? 0) * (formData.hourlyRate ?? 0));
 
   return (
     <Modal
@@ -323,18 +335,25 @@ export default function WorkShiftEditor({
                 </button>
               )}
             </div>
+          ) : isMobile ? (
+            // 手機一張卡片佔一整列，範本一多就把日期與時間擠到下面；收成下拉選單只佔一列
+            <OptionSelect
+              ariaLabel="班別範本"
+              placeholder="選擇班別範本"
+              icon={<BriefcaseIcon size={18} />}
+              value={formData.shiftCategory || ''}
+              onChange={handleSelectTemplate}
+              options={templateOptions}
+              isOpen={activePicker === 'category'}
+              onOpenChange={(open) => setActivePicker(open ? 'category' : null)}
+              trailingAction={{ label: '自訂班別', icon: <PlusIcon size={16} />, onClick: () => handleSelectTemplate(CUSTOM_CATEGORY) }}
+            />
           ) : (
             <OptionCardGroup
               ariaLabel="班別範本"
               value={formData.shiftCategory || ''}
               onChange={handleSelectTemplate}
-              options={templates.map((tpl) => ({
-                value: tpl.name,
-                title: tpl.name,
-                meta: `${tpl.startTime}–${tpl.endTime} · $${tpl.hourlyRate}/h`,
-                accent: getAccentColorByName(tpl.name),
-                icon: <BriefcaseIcon size={16} />,
-              }))}
+              options={templateOptions}
               trailing={<OptionAddCard label="自訂班別" icon={<PlusIcon size={16} />} onClick={() => handleSelectTemplate(CUSTOM_CATEGORY)} />}
             />
           )}
@@ -357,7 +376,7 @@ export default function WorkShiftEditor({
             endTime={formData.endTime || ''}
             onStartChange={(value) => handleTimeChange('startTime', value)}
             onEndChange={(value) => handleTimeChange('endTime', value)}
-            activeField={activePicker === 'date' ? null : activePicker}
+            activeField={activePicker === 'start' || activePicker === 'end' ? activePicker : null}
             onActiveFieldChange={setActivePicker}
             startLabel="上班"
             endLabel="下班"

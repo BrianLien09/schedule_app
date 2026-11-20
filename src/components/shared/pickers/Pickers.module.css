@@ -682,10 +682,94 @@
   opacity: 0.8;
 }
 
+/* ===== 下拉式單選（手機版班別範本） ===== */
+/* 已選範本時圖示改用該班別的主題色，和月曆上的班次顏色對得起來 */
+.selectTriggerIconSelected {
+  background-color: var(--option-tint, rgba(95, 113, 134, 0.12));
+  color: var(--option-accent, var(--color-secondary));
+}
+
+.triggerOpen .selectTriggerIconSelected {
+  background-color: var(--option-accent, var(--color-primary));
+  color: #ffffff;
+}
+
+.selectTriggerMeta {
+  overflow: hidden;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.selectPanel {
+  gap: 0.25rem;
+  padding: 0.4rem;
+}
+
+.selectRow {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  min-height: 52px;
+  padding: 0.5rem 0.65rem;
+  border: 0;
+  border-radius: 12px;
+  background-color: transparent;
+  color: var(--foreground);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) ease;
+}
+
+.selectRow:hover {
+  background-color: var(--field-bg-hover);
+}
+
+.selectRow:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px rgba(184, 126, 107, 0.45);
+}
+
+.selectRowActive,
+.selectRowActive:hover {
+  background-color: var(--option-tint, rgba(184, 126, 107, 0.1));
+}
+
+.selectRowActive .optionDot {
+  background-color: var(--option-accent, var(--color-primary));
+  color: #ffffff;
+}
+
+.selectRowCheck {
+  flex-shrink: 0;
+  color: var(--option-accent, var(--color-primary));
+}
+
+/* 「自訂班別」與範本之間用虛線分隔，表示它是另一種操作而不是第六個範本 */
+.selectRowAdd {
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.15rem;
+  border-top: 1px dashed var(--field-line-strong);
+  border-radius: 0 0 12px 12px;
+  color: var(--color-secondary);
+  font-weight: 800;
+}
+
 @media (max-width: 480px) {
   .trigger {
     gap: 0.5rem;
     padding: 0.45rem 0.55rem;
+  }
+
+  /* 一般選擇器在手機上藏箭頭省寬度；下拉選單保留，否則看不出能展開 */
+  .trigger .selectChevron {
+    display: block;
   }
 
   .triggerIcon {
