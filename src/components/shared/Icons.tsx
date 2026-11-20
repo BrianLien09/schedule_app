@@ -256,6 +256,14 @@ export const PencilIcon = (props: IconProps) => (
   </StrokeIcon>
 );
 
+export const TrashIcon = (props: IconProps) => (
+  <StrokeIcon {...props}>
+    <path d="M3 6h18" />
+    <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
+    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+  </StrokeIcon>
+);
+
 export const ShieldIcon = (props: IconProps) => (
   <StrokeIcon {...props}>
     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />

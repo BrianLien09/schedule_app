@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import Button from './Button';
 import styles from './Loading.module.css';
 import CapybaraLoader from './CapybaraLoader';
@@ -51,7 +52,8 @@ export function ErrorState({
 }
 
 interface EmptyStateProps {
-  icon?: string;
+  /** 建議傳 SVG 圖示元件；字串仍可用，保留給舊呼叫端 */
+  icon?: ReactNode;
   title: string;
   message?: string;
   actionText?: string;

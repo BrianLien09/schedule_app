@@ -7,6 +7,7 @@ import type { Todo } from '@/data/todos';
 import { formatTodoRange, getTodoColor } from '@/utils/todos';
 import { getShiftColor } from '@/utils/shiftColors';
 import { EmptyState } from '@/components/shared/Loading';
+import { BookIcon, CalendarIcon, CheckIcon, ClockIcon, PencilIcon, TrashIcon } from '@/components/shared/Icons';
 import WorkCalendarMobile from './WorkCalendarMobile';
 import styles from '@/app/schedule/work/page.module.css';
 
@@ -255,7 +256,7 @@ export default function WorkCalendarView({
         <div className={styles.detailsContent}>
           {/* 空狀態放在 grid 外，否則只會佔第一欄而偏左 */}
           {currentMonthShifts.length === 0 ? (
-            <EmptyState icon="🗓️" title="本月尚無排定打工班表" compact />
+            <EmptyState icon={<CalendarIcon size={32} />} title="本月尚無排定打工班表" compact />
           ) : (
             <div className={styles.shiftsGrid}>
               {currentMonthShifts.map((shift) => {
@@ -285,15 +286,18 @@ export default function WorkCalendarView({
                         {title}
                       </div>
                       <div className={styles.shiftTimeText}>
-                        ⏰ {shift.startTime} - {shift.endTime} ({shift.workHours ?? '-'}小時)
+                        <ClockIcon size={14} />
+                        {shift.startTime} - {shift.endTime} ({shift.workHours ?? '-'}小時)
                       </div>
                     </div>
                     <div className={styles.cardFooter}>
                       <button className={`${styles.actionBtn} ${styles.editBtn}`} onClick={() => onOpenEditShift(shift)} title="編輯班表">
-                        ✏️ 編輯
+                        <PencilIcon size={13} />
+                        編輯
                       </button>
                       <button className={`${styles.actionBtn} ${styles.deleteBtn}`} onClick={() => onDeleteShift(shift.id)} title="刪除班表">
-                        🗑️ 刪除
+                        <TrashIcon size={13} />
+                        刪除
                       </button>
                     </div>
                   </div>
@@ -318,17 +322,22 @@ export default function WorkCalendarView({
                     </div>
                     <div className={styles.todoCardBody}>
                       <div className={styles.todoMeta}>
-                        <span aria-hidden="true">⏰</span>
+                        <ClockIcon size={14} className={styles.todoMetaIcon} />
                         <span>{formatTodoRange(todo)}</span>
                       </div>
                       <div className={styles.todoMeta}>
-                        <span aria-hidden="true">📘</span>
+                        <BookIcon size={14} className={styles.todoMetaIcon} />
                         <span className={todo.associationLabel ? '' : styles.todoMetaMuted}>{todo.associationLabel || '未關聯課程'}</span>
                       </div>
                     </div>
                     <div className={styles.todoCardFooter}>
                       {/* 同步狀態降為頁尾小字，不再和標題搶視覺焦點 */}
-                      <span className={styles.todoSyncText}>{todo.syncToFamily ? '✓ 已同步家庭月曆' : ''}</span>
+                      <span className={styles.todoSyncText}>{todo.syncToFamily && (
+                          <>
+                            <CheckIcon size={12} />
+                            已同步家庭月曆
+                          </>
+                        )}</span>
                       <div className={styles.todoActions}>
                         <button className={`${styles.actionBtn} ${styles.editBtn}`} onClick={() => onOpenEditTodo(todo)} title="編輯代辦">
                           編輯

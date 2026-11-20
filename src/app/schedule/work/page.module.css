@@ -1137,6 +1137,29 @@
   }
 }
 
+/* ===== 清單圖示：emoji 換成 SVG 後，用 inline-flex 讓圖示與文字垂直置中、間距一致 ===== */
+.actionBtn,
+.shiftTimeText,
+.todoSyncText {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.shiftTimeText svg {
+  flex-shrink: 0;
+  color: var(--color-secondary);
+}
+
+.todoMeta {
+  align-items: center;
+}
+
+.todoMetaIcon {
+  flex-shrink: 0;
+  color: var(--todo-color);
+}
+
 /* 手機沒有拖曳，日期格也不再直接開編輯；「點擊班次編輯／拖曳複製」提示只會誤導，改由當日行程卡片自己說明 */
 @media (max-width: 768px) {
   .detailsHints {
