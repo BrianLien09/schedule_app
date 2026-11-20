@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { generateWorkShiftId, type WorkShift } from '../../../data/schedule';
 import { useWorkCalendar } from '../../../hooks/useWorkCalendar';
 import { useScheduleData } from '../../../hooks/useScheduleData';
@@ -20,7 +20,8 @@ import type { ShiftTemplate } from '@/data/shiftTemplates';
 import { getWorkRoleHourlyRate, getWorkRoleLabel } from '@/data/workRoles';
 import WorkCalendarView from '@/components/schedule/work/WorkCalendarView';
 import DataReadError from '@/components/shared/DataReadError';
-import { ChevronLeftIcon, ChevronRightIcon } from '@/components/shared/Icons';
+import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, PlusIcon } from '@/components/shared/Icons';
+import { getAccentColorByName } from '@/utils/todos';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import {
   findWorkShiftConflicts,
@@ -495,34 +496,50 @@ export default function WorkSchedulePage() {
 
           {/* 多選提示與操作區 */}
           {isMultiSelectMode && (
-            <div className={styles.multiSelectBar}>
+            // data-empty 只用來淡化班別膠囊，提示要先選日期；點擊行為仍交給原本的處理函式
+            <div className={styles.multiSelectBar} data-empty={selectedDays.length === 0}>
               <div className={styles.multiSelectInfo}>
-                <span className={styles.multiSelectLabel}>批次套用班表</span>
-                <strong>已選擇 {selectedDays.length} 個日期</strong>
-                <span className={styles.multiSelectHint}>直接點擊日期即可加入或取消</span>
+                <span className={styles.selectedCount} key={selectedDays.length}>
+                  {selectedDays.length}
+                </span>
+                <div className={styles.multiSelectText}>
+                  <span className={styles.multiSelectLabel}>批次套用班表</span>
+                  <strong>個日期已選取</strong>
+                  <span className={styles.multiSelectHint}>點日期即可加入或取消</span>
+                </div>
               </div>
+
               <div className={styles.multiSelectActions}>
-                <button className={`btn ${styles.templateButton}`} onClick={handleBatchAdd}>
-                  自訂班表
-                </button>
-                {templatesLoading ? (
-                  <span className={styles.templateLoading}>班表範本載入中...</span>
-                ) : templates.length > 0 ? (
-                  templates.map((template) => (
-                    <button
-                      key={template.id}
-                      className={`btn ${styles.templateButton}`}
-                      onClick={() => handleApplyTemplate(template)}
-                    >
-                      {template.name}
-                    </button>
-                  ))
-                ) : (
-                  <span className={styles.templateLoading}>尚未建立班表範本，請先到薪資計算設定</span>
-                )}
+                <div className={styles.templateList}>
+                  {templatesLoading ? (
+                    <span className={styles.templateLoading}>班表範本載入中...</span>
+                  ) : templates.length > 0 ? (
+                    templates.map((template) => (
+                      <button
+                        key={template.id}
+                        type="button"
+                        className={styles.templateButton}
+                        // 色點與新增班表下拉選單同一套雜湊色，同一個班別在各處顏色一致
+                        style={{ '--chip-accent': getAccentColorByName(template.name) } as CSSProperties}
+                        onClick={() => handleApplyTemplate(template)}
+                      >
+                        <span className={styles.templateDot} aria-hidden="true" />
+                        <span className={styles.templateName}>{template.name}</span>
+                      </button>
+                    ))
+                  ) : (
+                    <span className={styles.templateLoading}>尚未建立班表範本，請先到薪資計算設定</span>
+                  )}
+                  <button type="button" className={`${styles.templateButton} ${styles.customTemplateButton}`} onClick={handleBatchAdd}>
+                    <PlusIcon size={15} />
+                    <span className={styles.templateName}>自訂班表</span>
+                  </button>
+                </div>
               </div>
-              <button className={`btn ${styles.cancelButton}`} onClick={handleCancelMultiSelect}>
-                取消選取
+
+              {/* 只留 × 圖示，把橫向空間讓給班別，讓班別與自訂班表能排在同一排 */}
+              <button type="button" className={styles.cancelButton} onClick={handleCancelMultiSelect} aria-label="取消選取" title="取消選取">
+                <CloseIcon size={18} />
               </button>
             </div>
           )}
