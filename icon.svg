@@ -1,19 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
-  <title id="title">DayMate 圓角矩形圖標</title>
-  <desc id="desc">暖棕色圓角矩形裡的筆記本與時鐘圖案</desc>
-  <rect width="512" height="512" fill="none"/>
-  <rect x="24" y="24" width="464" height="464" rx="80" fill="#b87e6b" stroke="#f0ece1" stroke-width="14"/>
+  <title id="title">DayMate</title>
+  <desc id="desc">鐵鏽紅底上的燕麥白日曆頁，頁面中央升起一顆琥珀色太陽，代表「一天」的開始</desc>
 
-  <g transform="translate(5 -19)" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M130 132h242c25 0 44 20 44 44v198c0 25-19 44-44 44H130c-25 0-44-19-44-44V176c0-24 19-44 44-44Z" fill="#f0ece1" stroke="#dcd0c2" stroke-width="10"/>
-    <path d="M130 132c-25 0-44 20-44 44v198c0 25 19 44 44 44h35V132Z" fill="#e6e2d8" stroke="#dcd0c2" stroke-width="10"/>
-    <path d="M165 132v286" fill="none" stroke="#dcd0c2" stroke-width="10"/>
-    <path d="M108 180h-19M108 232h-19M108 284h-19M108 336h-19" fill="none" stroke="#5f7186" stroke-width="12"/>
+  <!-- 底色：圓角方塊，角落透明；全幅版本（maskable、apple-touch）由產生腳本把圓角拿掉 -->
+  <rect id="bg" width="512" height="512" rx="112" fill="#b87e6b"/>
 
-    <circle cx="274" cy="274" r="86" fill="#e6e2d8" stroke="#5f7186" stroke-width="12"/>
-    <path d="M274 274 317 231M274 274l-42-30" fill="none" stroke="#b87e6b" stroke-width="14"/>
-    <circle cx="274" cy="274" r="12" fill="#b87e6b" stroke="none"/>
-    <path d="M274 197v12M274 339v12M197 274h12M339 274h12" fill="none" stroke="#5f7186" stroke-width="8"/>
-    <circle cx="274" cy="274" r="4" fill="#5f7186" stroke="none"/>
+  <!-- 主體放大 1.25 倍，16px 分頁圖示才看得出日曆；最遠點仍在中心半徑約 195px 內，maskable 安全區（半徑 205px）裁切後也完整 -->
+  <g stroke-linecap="round" stroke-linejoin="round" transform="translate(256 255) scale(1.25) translate(-256 -255)">
+    <!-- 日曆頁：底部陰影讓頁面浮起來，小尺寸時仍分得出層次 -->
+    <rect x="140" y="166" width="232" height="218" rx="38" fill="#9a6656"/>
+    <rect x="140" y="152" width="232" height="218" rx="38" fill="#f0ece1"/>
+
+    <!-- 石板藍頁首：只保留上方圓角，下緣切平 -->
+    <path d="M178 152h156a38 38 0 0 1 38 38v26H140v-26a38 38 0 0 1 38-38Z" fill="#5f7186"/>
+
+    <!-- 裝訂環 -->
+    <rect x="186" y="126" width="22" height="56" rx="11" fill="#3d3a36"/>
+    <rect x="304" y="126" width="22" height="56" rx="11" fill="#3d3a36"/>
+
+    <!-- 日出：半圓太陽＋三道光芒＋地平線 -->
+    <path d="M206 322a50 50 0 0 1 100 0Z" fill="#c88d55"/>
+    <path d="M256 246v18M206 262l11 12M306 262l-11 12" fill="none" stroke="#c88d55" stroke-width="12"/>
+    <path d="M176 322h160" fill="none" stroke="#b87e6b" stroke-width="12"/>
   </g>
 </svg>
