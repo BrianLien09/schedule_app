@@ -5,7 +5,9 @@ import { getWorkRoleHourlyRate, getWorkRoleLabel, type WorkRole } from '@/data/w
 import type { WorkShift } from '@/data/schedule';
 import type { Todo } from '@/data/todos';
 import { formatTodoRange, getTodoColor } from '@/utils/todos';
+import { getShiftColor } from '@/utils/shiftColors';
 import { EmptyState } from '@/components/shared/Loading';
+import WorkCalendarMobile from './WorkCalendarMobile';
 import styles from '@/app/schedule/work/page.module.css';
 
 interface WorkCalendarViewProps {
@@ -23,7 +25,12 @@ interface WorkCalendarViewProps {
   getTodosForDate: (day: number) => Todo[];
   onOpenEditTodo: (todo: Todo) => void;
   onDeleteTodo: (todo: Todo) => void;
-  onDayClick: (day: number, event: MouseEvent<HTMLDivElement> | KeyboardEvent<HTMLDivElement>) => void;
+  onDayClick: (day: number, event: MouseEvent | KeyboardEvent) => void;
+  /** 手機版改用色條月曆＋當日行程卡片 */
+  isMobile: boolean;
+  isMultiSelectMode: boolean;
+  /** 手機「當日行程」顯示的日子；null 時本月看今天、其他月看 1 日 */
+  agendaDay: number | null;
   onAddShift: (day: number) => void;
   onDragStart: (shift: WorkShift, event: DragEvent<HTMLDivElement>) => void;
   onDragOver: (day: number, event: DragEvent<HTMLDivElement>) => void;
@@ -32,26 +39,6 @@ interface WorkCalendarViewProps {
   onOpenEditShift: (shift: WorkShift) => void;
   onDeleteShift: (shiftId: string) => void;
 }
-
-const getShiftBadgeStyle = (title: string, role?: string) => {
-  const isInstructor = role === 'instructor' || title.includes('講師');
-  const isAssistant = role === 'assistant' || title.includes('助教');
-  if (isInstructor) return { background: '#c88d55', color: '#f0ece1' };
-  if (isAssistant) return { background: '#5f7186', color: '#f0ece1' };
-
-  const palette = [
-    { background: '#b87e6b', color: '#f0ece1' },
-    { background: '#6b8e78', color: '#f0ece1' },
-    { background: '#886b86', color: '#f0ece1' },
-    { background: '#78716c', color: '#f0ece1' },
-    { background: '#9e6d5b', color: '#f0ece1' },
-  ];
-  let hash = 0;
-  for (let i = 0; i < title.length; i += 1) {
-    hash = title.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return palette[Math.abs(hash) % palette.length];
-};
 
 type TodoColorStyle = CSSProperties & Record<'--todo-color', string>;
 
@@ -82,13 +69,39 @@ export default function WorkCalendarView({
   onDrop,
   onOpenEditShift,
   onDeleteShift,
+  isMobile,
+  isMultiSelectMode,
+  agendaDay,
 }: WorkCalendarViewProps) {
   // 只有正在檢視「本月」時才標注今天；monthKey 格式為 YYYY-M（月份不補零）
   const now = new Date();
   const todayDay = monthKey === `${now.getFullYear()}-${now.getMonth() + 1}` ? now.getDate() : null;
 
+  const [year, month] = monthKey.split('-').map(Number);
+
   return (
     <>
+      {isMobile ? (
+        <WorkCalendarMobile
+          year={year}
+          month={month}
+          days={days}
+          startDay={startDay}
+          monthKey={monthKey}
+          monthDirection={monthDirection}
+          todayDay={todayDay}
+          agendaDay={agendaDay ?? todayDay ?? 1}
+          isMultiSelectMode={isMultiSelectMode}
+          selectedDays={selectedDays}
+          roles={roles}
+          getShiftsForDate={getShiftsForDate}
+          getTodosForDate={getTodosForDate}
+          onDayClick={onDayClick}
+          onAddShift={onAddShift}
+          onOpenEditShift={onOpenEditShift}
+          onOpenEditTodo={onOpenEditTodo}
+        />
+      ) : (
       <div
         key={monthKey}
         className={`${styles.calendarGrid} ${
@@ -164,12 +177,12 @@ export default function WorkCalendarView({
                 </div>
                 {dayShifts.map((shift) => {
                   const title = shift.shiftCategory || shift.note || '打工';
-                  const badgeStyle = getShiftBadgeStyle(title, shift.role);
+                  const badgeStyle = getShiftColor(title, shift.role);
                   return (
                     <div
                       key={shift.id}
                       className={styles.shiftBadge}
-                      style={{ background: badgeStyle.background, color: badgeStyle.color }}
+                      style={badgeStyle}
                       draggable
                       role="button"
                       tabIndex={0}
@@ -220,8 +233,10 @@ export default function WorkCalendarView({
           })}
         </div>
       </div>
+      )}
 
-      <details className={styles.detailsSection} open>
+      {/* 手機已有當日行程卡片，整月清單預設收合，避免頁面長到要一直往下捲 */}
+      <details key={isMobile ? 'details-mobile' : 'details-desktop'} className={styles.detailsSection} open={!isMobile}>
         <summary className={styles.detailsSummary}>
           <span className={styles.sectionTitle}>本月詳細列表</span>
           <span className={styles.detailsHints}>
@@ -248,7 +263,7 @@ export default function WorkCalendarView({
                 const roleLabel = getWorkRoleLabel(shift.role, roles, shift.roleName);
                 const rate = shift.hourlyRate ?? getWorkRoleHourlyRate(shift.role, roles);
                 const title = shift.shiftCategory || shift.note || '打工';
-                const badgeStyle = getShiftBadgeStyle(title, shift.role);
+                const badgeStyle = getShiftColor(title, shift.role);
                 return (
                   <div
                     key={shift.id}
@@ -266,7 +281,7 @@ export default function WorkCalendarView({
                       </div>
                     </div>
                     <div className={styles.cardBody}>
-                      <div className={styles.shiftNameTag} style={{ background: badgeStyle.background, color: badgeStyle.color }}>
+                      <div className={styles.shiftNameTag} style={badgeStyle}>
                         {title}
                       </div>
                       <div className={styles.shiftTimeText}>

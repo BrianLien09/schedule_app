@@ -1,0 +1,411 @@
+/*
+ * 手機版行程月曆（Woven & Weft 大地色系）
+ * 設計方向：格子去框留白，只用日期圓點與色條說話；細節集中到下方「當日行程」卡片，
+ * 像翻開一本手帳：上半頁看整個月的節奏，下半頁看選中那天的安排。
+ */
+
+/* ===== 週標題 ===== */
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  margin-bottom: 0.35rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--line-subtle);
+}
+
+.weekdays span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  text-align: center;
+}
+
+.weekdays .weekend {
+  color: var(--color-primary);
+}
+
+/* ===== 日期格 ===== */
+.grid {
+  --grid-offset: 12px;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  row-gap: 0.15rem;
+  animation: gridEnter 240ms var(--ease-out) both;
+}
+
+.gridPrevious {
+  --grid-offset: -12px;
+}
+
+.gridNext {
+  --grid-offset: 12px;
+}
+
+@keyframes gridEnter {
+  from {
+    opacity: 0;
+    transform: translateX(var(--grid-offset));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+  height: 56px;
+  padding: 0.3rem 0 0;
+  border: 0;
+  border-radius: 14px;
+  background-color: transparent;
+  color: var(--foreground);
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--dur-fast) ease, transform var(--dur-fast) var(--ease-out);
+}
+
+.cell:active {
+  transform: scale(0.94);
+}
+
+.cell:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.dayNumber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 0.92rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color var(--dur-base) var(--ease-out),
+    color var(--dur-base) ease,
+    box-shadow var(--dur-base) ease;
+}
+
+.cellWeekend .dayNumber {
+  color: var(--color-primary);
+}
+
+/* 今天：石板藍細圈，和「當日行程」的實心圓分開，兩者同一天時實心圓優先 */
+.cellToday .dayNumber {
+  color: var(--color-secondary);
+  box-shadow: inset 0 0 0 1.5px var(--color-secondary);
+}
+
+.cellActive {
+  background-color: rgba(184, 126, 107, 0.1);
+}
+
+.cellActive .dayNumber {
+  background-color: var(--color-primary);
+  color: #f0ece1;
+  box-shadow: 0 4px 10px rgba(184, 126, 107, 0.35);
+  animation: numberPop var(--dur-base) var(--ease-spring) both;
+}
+
+@keyframes numberPop {
+  from {
+    transform: scale(0.7);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* 多選勾選：改用石板藍，和單日選取的鐵鏽紅區隔 */
+.cellPicked {
+  background-color: rgba(95, 113, 134, 0.12);
+}
+
+.cellPicked .dayNumber {
+  background-color: var(--color-secondary);
+  color: #f0ece1;
+  animation: numberPop var(--dur-base) var(--ease-spring) both;
+}
+
+/* ===== 色條 ===== */
+.bars {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 64%;
+}
+
+.bar {
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background-color: var(--bar-color);
+}
+
+/* 代辦用淡色，和實心的班次一眼分開 */
+.barTodo {
+  background-color: color-mix(in srgb, var(--bar-color) 40%, transparent);
+}
+
+.barMore {
+  font-size: 0.6rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--muted);
+}
+
+/* ===== 當日行程卡片 ===== */
+.agenda {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-top: 1rem;
+  padding: 1.5rem;
+  border: 1px solid var(--line-subtle);
+  border-radius: 20px;
+  background-color: var(--panel-bg);
+  box-shadow: 0 10px 24px rgba(139, 121, 101, 0.1);
+  animation: agendaEnter 260ms var(--ease-out) both;
+}
+
+@keyframes agendaEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.agendaHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.agendaDate {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+/* 大號日期當作卡片的視覺錨點，捲到這裡不必回頭看月曆就知道是哪一天 */
+.agendaDayNumber {
+  font-size: 2.4rem;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-primary);
+}
+
+.agendaDateText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.agendaWeekday {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.agendaToday {
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  background-color: var(--color-secondary);
+  color: #f0ece1;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.agendaMonth {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.agendaAdd {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 44px;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 999px;
+  background-color: var(--color-primary);
+  color: #f0ece1;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(184, 126, 107, 0.3);
+  transition: background-color var(--dur-fast) ease, transform var(--dur-fast) var(--ease-out);
+}
+
+.agendaAdd:active {
+  transform: scale(0.95);
+}
+
+.agendaEmpty {
+  margin: 0;
+  padding: 1rem;
+  border: 1.5px dashed var(--field-line-strong);
+  border-radius: 14px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.agendaList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agendaItem {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 0.85rem;
+  width: 100%;
+  padding: 0.75rem 0.9rem 0.75rem 1.1rem;
+  overflow: hidden;
+  border: 1px solid var(--field-line);
+  border-radius: 14px;
+  background-color: var(--field-bg);
+  color: var(--foreground);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur-fast) ease;
+}
+
+/* 左側色條沿用月曆上的班別顏色，格子與卡片一對一對得起來 */
+.agendaItem::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 5px;
+  background-color: var(--bar-color);
+}
+
+.agendaItem:active {
+  transform: scale(0.98);
+  background-color: var(--field-bg-hover);
+}
+
+.agendaItemTodo::before {
+  background-color: color-mix(in srgb, var(--bar-color) 45%, transparent);
+}
+
+.agendaItemDone {
+  opacity: 0.6;
+}
+
+.agendaItemDone .agendaTitle {
+  text-decoration: line-through;
+}
+
+.agendaTime {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.1rem;
+  min-width: 3rem;
+  padding-right: 0.85rem;
+  border-right: 1px dashed var(--field-line-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.agendaTime strong {
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.agendaTime span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.agendaBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.agendaTitle {
+  overflow: hidden;
+  font-size: 0.95rem;
+  font-weight: 800;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.agendaMeta {
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.agendaFooter {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--field-line-strong);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.agendaFooter strong {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grid,
+  .agenda,
+  .cellActive .dayNumber,
+  .cellPicked .dayNumber {
+    animation: none;
+  }
+
+  .cell,
+  .agendaItem,
+  .agendaAdd {
+    transition: none;
+  }
+}

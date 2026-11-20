@@ -29,6 +29,10 @@
 }
 
 .monthNavButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
   flex-shrink: 0;
   background-color: var(--surface-soft);
   color: var(--foreground);
@@ -101,56 +105,67 @@
   background-color: var(--color-primary-hover);
 }
 
+/*
+ * 手機頁首：「‹ 年月 ›」收成一列，同步與多選縮成置中的小膠囊。
+ * 原本四顆大按鈕各佔半列，月曆還沒出現就吃掉三分之一個螢幕。
+ */
 @media (max-width: 768px) {
   .calendarContainer {
-    padding: 0.75rem;
+    padding: 1rem 0.75rem;
     min-height: 0;
   }
 
   .calendarHeader {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.75rem;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 0.6rem 0.5rem;
+    margin-bottom: 1.1rem;
   }
 
+  /* 讓標題與操作膠囊直接參與外層格線，才能把操作列放到第二列 */
   .monthHeadingGroup {
-    grid-column: 1 / -1;
-    grid-row: 1;
-    flex-direction: column;
-    width: 100%;
-    gap: 0.75rem;
+    display: contents;
   }
 
   .monthTitle {
+    grid-column: 2;
+    grid-row: 1;
     max-width: 100%;
-    font-size: clamp(1.25rem, 6vw, 1.5rem);
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
   }
 
   .monthActions {
-    width: 100%;
+    grid-column: 1 / -1;
+    grid-row: 2;
   }
 
-  .headerAction,
   .monthNavButton {
-    min-height: 44px;
-    padding: 0.65rem 0.5rem;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 50%;
+  }
+
+  .monthNavLabel {
+    display: none;
   }
 
   .headerAction {
-    flex: 1 1 0;
-    min-width: 0;
-    white-space: normal;
+    min-height: 36px;
+    padding: 0.4rem 0.95rem;
+    font-size: 0.8rem;
+    font-weight: 700;
   }
 
   .previousMonthButton {
     grid-column: 1;
-    grid-row: 2;
-    justify-self: stretch;
+    grid-row: 1;
   }
 
   .nextMonthButton {
-    grid-column: 2;
-    grid-row: 2;
-    justify-self: stretch;
+    grid-column: 3;
+    grid-row: 1;
   }
 }
 
@@ -1119,5 +1134,12 @@
   .dayCellToday {
     outline-width: 2px;
     outline-offset: -2px;
+  }
+}
+
+/* 手機沒有拖曳，日期格也不再直接開編輯；「點擊班次編輯／拖曳複製」提示只會誤導，改由當日行程卡片自己說明 */
+@media (max-width: 768px) {
+  .detailsHints {
+    display: none;
   }
 }

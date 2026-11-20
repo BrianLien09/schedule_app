@@ -20,6 +20,8 @@ import type { ShiftTemplate } from '@/data/shiftTemplates';
 import { getWorkRoleHourlyRate, getWorkRoleLabel } from '@/data/workRoles';
 import WorkCalendarView from '@/components/schedule/work/WorkCalendarView';
 import DataReadError from '@/components/shared/DataReadError';
+import { ChevronLeftIcon, ChevronRightIcon } from '@/components/shared/Icons';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import {
   findWorkShiftConflicts,
   formatConflictMessage,
@@ -65,9 +67,15 @@ export default function WorkSchedulePage() {
   const [monthDirection, setMonthDirection] = useState<'previous' | 'next'>('next');
   const monthKey = `${currentMonth.getFullYear()}-${currentMonth.getMonth() + 1}`;
 
+  // 與頁面 CSS 的 768px 斷點一致，手機改用色條月曆與當日行程卡片
+  const isMobile = useIsMobile(769);
+  // 手機上點日期只切換下方「當日行程」，不直接開新增彈窗；null 代表跟著預設（今天或 1 日）
+  const [agendaDay, setAgendaDay] = useState<number | null>(null);
+
   const handleMonthChange = (offset: number) => {
     setMonthDirection(offset < 0 ? 'previous' : 'next');
     setSelectedDays([]);
+    setAgendaDay(null);
     changeMonth(offset);
   };
 
@@ -217,7 +225,9 @@ export default function WorkSchedulePage() {
     }
     // 一般點擊日期（無論有無班次）：
     // 若該天已有班次，同步標記選擇該日期，並開啟該日期的「新增打工班表」彈窗！
-    else {
+    else if (isMobile) {
+      setAgendaDay(day);
+    } else {
       if (dayShifts.length > 0) {
         handleDateClick(day);
       }
@@ -441,8 +451,10 @@ export default function WorkSchedulePage() {
             <button
               onClick={() => handleMonthChange(-1)}
               className={`btn ${styles.monthNavButton} ${styles.previousMonthButton}`}
+              aria-label="上個月"
             >
-              &larr; 上個月
+              <ChevronLeftIcon size={18} />
+              <span className={styles.monthNavLabel}>上個月</span>
             </button>
             <div className={styles.monthHeadingGroup}>
               <h2 className={styles.monthTitle}>
@@ -474,8 +486,10 @@ export default function WorkSchedulePage() {
             <button
               onClick={() => handleMonthChange(1)}
               className={`btn ${styles.monthNavButton} ${styles.nextMonthButton}`}
+              aria-label="下個月"
             >
-              下個月 &rarr;
+              <span className={styles.monthNavLabel}>下個月</span>
+              <ChevronRightIcon size={18} />
             </button>
           </div>
 
@@ -536,6 +550,9 @@ export default function WorkSchedulePage() {
             onDrop={handleDrop}
             onOpenEditShift={handleOpenEditShift}
             onDeleteShift={handleDeleteShift}
+            isMobile={isMobile}
+            isMultiSelectMode={isMultiSelectMode}
+            agendaDay={agendaDay}
           />
         </div>
       </div>
