@@ -8,6 +8,7 @@ import GlassRadioNav from './GlassRadioNav';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { brandFont } from '@/lib/brandFont';
 import styles from './Navbar.module.css';
 
 const BASE_PATH = process.env.NODE_ENV === 'production' ? '/schedule_app' : '';
@@ -161,15 +162,7 @@ export default function Navbar() {
                     border: '2px solid rgba(255,255,255,0.2)'
                   }}
                 />
-                <h1 style={{ 
-                  fontSize: '1.1rem', 
-                  fontWeight: 'bold', 
-                  background: 'linear-gradient(to right, var(--color-primary), var(--color-secondary))', 
-                  WebkitBackgroundClip: 'text', 
-                  WebkitTextFillColor: 'transparent',
-                  whiteSpace: 'nowrap',
-                  letterSpacing: '0.05em'
-                }}>
+                <h1 className={`${brandFont.className} ${styles.brandName} ${styles.brandNameMobile}`}>
                   DayMate
                 </h1>
               </Link>
@@ -196,7 +189,7 @@ export default function Navbar() {
               style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginLeft: '-0.75rem', textDecoration: 'none' }}
             >
               <img
-                src={`${BASE_PATH}/icon.png?v=2`}
+                src={`${BASE_PATH}/icon-192.png?v=3`}
                 alt="DayMate Logo"
                 style={{
                   width: '40px',
@@ -206,15 +199,7 @@ export default function Navbar() {
                   border: '2px solid rgba(255,255,255,0.2)'
                 }}
               />
-              <h1 style={{ 
-                fontSize: '1.25rem', 
-                fontWeight: 'bold', 
-                background: 'linear-gradient(to right, var(--color-primary), var(--color-secondary))', 
-                WebkitBackgroundClip: 'text', 
-                WebkitTextFillColor: 'transparent',
-                whiteSpace: 'nowrap',
-                letterSpacing: '0.05em'
-              }}>
+              <h1 className={`${brandFont.className} ${styles.brandName} ${styles.brandNameDesktop}`}>
                 DayMate
               </h1>
             </Link>

@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { LoadingSpinner } from '@/components/shared/Loading';
+import { brandFont } from '@/lib/brandFont';
 import styles from './login.module.css';
 
 export default function LoginPage() {
@@ -57,7 +58,7 @@ export default function LoginPage() {
     <div className={styles.container}>
       <div className={styles.card}>
         <div className={styles.header}>
-          <h1 className={styles.title}>DayMate</h1>
+          <h1 className={`${brandFont.className} ${styles.title}`}>DayMate</h1>
           <p className={styles.subtitle}>個人日程、打工班表與薪資管理助手</p>
         </div>
 

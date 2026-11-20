@@ -18,6 +18,25 @@
   pointer-events: none;
 }
 
+/* ===== 品牌名稱 ===== */
+/* 草寫體字身比無襯線小、筆畫相連，字級放大且不加字距，才不會被拆成一個個字母 */
+.brandName {
+  margin: 0;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  /* 品牌字用墨黑（同 family-web 的 #3d3a36），比漸層更像手寫簽名 */
+  color: var(--foreground);
+}
+
+.brandNameMobile {
+  font-size: 1.85rem;
+}
+
+.brandNameDesktop {
+  font-size: 2rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .navbar {
     transition: none !important;
