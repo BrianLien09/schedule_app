@@ -1,4 +1,4 @@
 :HL["/schedule_app/_next/static/chunks/9b14cc515b4e39f4.css","style"]
 :HL["/schedule_app/_next/static/chunks/e3d251bc8b5277c5.css","style"]
-:HL["/schedule_app/_next/static/chunks/918b77e2b83be910.css","style"]
-0:{"buildId":"tSDmYwWLlM0Cq7tT0oBcM","tree":{"name":"","paramType":null,"paramKey":"","hasRuntimePrefetch":false,"slots":{"children":{"name":"schedule","paramType":null,"paramKey":"schedule","hasRuntimePrefetch":false,"slots":{"children":{"name":"school","paramType":null,"paramKey":"school","hasRuntimePrefetch":false,"slots":{"children":{"name":"__PAGE__","paramType":null,"paramKey":"__PAGE__","hasRuntimePrefetch":false,"slots":null,"isRootLayout":false}},"isRootLayout":false}},"isRootLayout":false}},"isRootLayout":true},"staleTime":300}
+:HL["/schedule_app/_next/static/chunks/d2b7a33c8e93fd9b.css","style"]
+0:{"buildId":"hwzZAc11C8zybC8z38GCU","tree":{"name":"","paramType":null,"paramKey":"","hasRuntimePrefetch":false,"slots":{"children":{"name":"schedule","paramType":null,"paramKey":"schedule","hasRuntimePrefetch":false,"slots":{"children":{"name":"school","paramType":null,"paramKey":"school","hasRuntimePrefetch":false,"slots":{"children":{"name":"__PAGE__","paramType":null,"paramKey":"__PAGE__","hasRuntimePrefetch":false,"slots":null,"isRootLayout":false}},"isRootLayout":false}},"isRootLayout":false}},"isRootLayout":true},"staleTime":300}
