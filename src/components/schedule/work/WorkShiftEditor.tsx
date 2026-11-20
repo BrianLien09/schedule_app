@@ -10,12 +10,11 @@ import { EditorField, EditorRow } from '../../shared/EditorForm';
 import { BriefcaseIcon, PlusIcon } from '../../shared/Icons';
 import DatePicker from '../../shared/pickers/DatePicker';
 import TimeRangePicker, { type DurationPreset, type TimeField } from '../../shared/pickers/TimeRangePicker';
-import { OptionAddCard, OptionCardGroup, OptionSelect, PillGroup } from '../../shared/pickers/OptionPicker';
+import { OptionSelect, PillGroup } from '../../shared/pickers/OptionPicker';
 import styles from '../../shared/EditorForm.module.css';
 
 import { useShiftTemplates } from '@/hooks/useShiftTemplates';
 import { useWorkRoles } from '@/hooks/useWorkRoles';
-import { useIsMobile } from '@/hooks/useIsMobile';
 import { findWorkShiftConflicts, formatConflictMessage } from '@/utils/scheduleConflicts';
 import { getAccentColorByName } from '@/utils/todos';
 
@@ -82,8 +81,6 @@ export default function WorkShiftEditor({
   const [isSubmitting, setIsSubmitting] = useState(false);
   // 同一時間只展開一個選擇器面板，避免日期與時間面板同時撐開整張卡片
   const [activePicker, setActivePicker] = useState<ActivePicker>(null);
-  // 與 Pickers.module.css 的 640px 斷點一致：兩欄並排的觸發按鈕在這以下開始精簡
-  const isMobile = useIsMobile(641);
   const [formData, setFormData] = useState<Partial<WorkShift>>({
     date: new Date().toISOString().split('T')[0],
     startTime: '09:00',
@@ -335,8 +332,8 @@ export default function WorkShiftEditor({
                 </button>
               )}
             </div>
-          ) : isMobile ? (
-            // 手機一張卡片佔一整列，範本一多就把日期與時間擠到下面；收成下拉選單只佔一列
+          ) : (
+            // 範本一多，卡片就把日期與時間擠到下面；桌面與手機統一收成下拉選單只佔一列
             <OptionSelect
               ariaLabel="班別範本"
               placeholder="選擇班別範本"
@@ -347,14 +344,6 @@ export default function WorkShiftEditor({
               isOpen={activePicker === 'category'}
               onOpenChange={(open) => setActivePicker(open ? 'category' : null)}
               trailingAction={{ label: '自訂班別', icon: <PlusIcon size={16} />, onClick: () => handleSelectTemplate(CUSTOM_CATEGORY) }}
-            />
-          ) : (
-            <OptionCardGroup
-              ariaLabel="班別範本"
-              value={formData.shiftCategory || ''}
-              onChange={handleSelectTemplate}
-              options={templateOptions}
-              trailing={<OptionAddCard label="自訂班別" icon={<PlusIcon size={16} />} onClick={() => handleSelectTemplate(CUSTOM_CATEGORY)} />}
             />
           )}
         </EditorField>
