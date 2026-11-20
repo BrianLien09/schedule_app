@@ -1,5 +1,5 @@
 :HL["/schedule_app/_next/static/chunks/4650bca747e62b55.css","style"]
-:HL["/schedule_app/_next/static/chunks/bcc54b08d9486f77.css","style"]
+:HL["/schedule_app/_next/static/chunks/b130b0e5f6f51bb6.css","style"]
 :HL["/schedule_app/_next/static/media/8495c7a64396f454-s.p.ad066a9e.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
 :HL["/schedule_app/_next/static/chunks/c1c303fd613021f6.css","style"]
-0:{"buildId":"8sUIRdMbj9IzEN6hiIikw","tree":{"name":"","paramType":null,"paramKey":"","hasRuntimePrefetch":false,"slots":{"children":{"name":"games","paramType":null,"paramKey":"games","hasRuntimePrefetch":false,"slots":{"children":{"name":"migration","paramType":null,"paramKey":"migration","hasRuntimePrefetch":false,"slots":{"children":{"name":"__PAGE__","paramType":null,"paramKey":"__PAGE__","hasRuntimePrefetch":false,"slots":null,"isRootLayout":false}},"isRootLayout":false}},"isRootLayout":false}},"isRootLayout":true},"staleTime":300}
+0:{"buildId":"f7tClKNxH8FXCBXuOEP5w","tree":{"name":"","paramType":null,"paramKey":"","hasRuntimePrefetch":false,"slots":{"children":{"name":"games","paramType":null,"paramKey":"games","hasRuntimePrefetch":false,"slots":{"children":{"name":"migration","paramType":null,"paramKey":"migration","hasRuntimePrefetch":false,"slots":{"children":{"name":"__PAGE__","paramType":null,"paramKey":"__PAGE__","hasRuntimePrefetch":false,"slots":null,"isRootLayout":false}},"isRootLayout":false}},"isRootLayout":false}},"isRootLayout":true},"staleTime":300}
